@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn-primary   { @apply bg-red-800 text-white px-4 py-2 rounded-lg hover:bg-red-900 transition-colors font-medium text-sm disabled:opacity-60; }
+  .btn-secondary { @apply border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm; }
+  .card          { @apply bg-white rounded-xl border border-gray-100 shadow-sm p-6; }
+  .badge-pending   { @apply inline-flex text-xs font-medium px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800; }
+  .badge-published { @apply inline-flex text-xs font-medium px-2.5 py-0.5 rounded-full bg-green-100 text-green-800; }
+  .badge-rejected  { @apply inline-flex text-xs font-medium px-2.5 py-0.5 rounded-full bg-red-100  text-red-800; }
+  .badge-draft     { @apply inline-flex text-xs font-medium px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700; }
+}
