@@ -1,18 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getCinemaSession } from "../../api/cinema.api";
+
+const POLL_INTERVAL = 10_000;
 
 const CinemaRoom = () => {
   const { id } = useParams();
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const intervalRef = useRef(null);
+
+  const fetchSession = (initial = false) => {
+    if (initial) setLoading(true);
+    getCinemaSession(id)
+      .then((data) => {
+        setSession(data);
+        // stop polling once session has ended or been cancelled
+        if (["ended", "cancelled"].includes(data.status)) {
+          clearInterval(intervalRef.current);
+        }
+      })
+      .catch(() => setError("Session not found or failed to load."))
+      .finally(() => { if (initial) setLoading(false); });
+  };
 
   useEffect(() => {
-    getCinemaSession(id)
-      .then(setSession)
-      .catch(() => setError("Session not found or failed to load."))
-      .finally(() => setLoading(false));
+    fetchSession(true);
+    intervalRef.current = setInterval(() => fetchSession(false), POLL_INTERVAL);
+    return () => clearInterval(intervalRef.current);
   }, [id]);
 
   if (loading) {
@@ -77,7 +93,15 @@ const CinemaRoom = () => {
 
       {/* Stream player */}
       <div className="rounded-2xl overflow-hidden bg-black aspect-video mb-4">
-        {isVideo ? (
+        {session.status === "scheduled" ? (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-white px-4">
+            <svg className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+            </svg>
+            <p className="text-sm font-medium text-gray-300">Session hasn't started yet</p>
+            <p className="text-xs text-gray-500">This page refreshes automatically every 10 seconds</p>
+          </div>
+        ) : isVideo ? (
           <video src={session.stream_url} controls autoPlay className="w-full h-full" />
         ) : (
           <iframe

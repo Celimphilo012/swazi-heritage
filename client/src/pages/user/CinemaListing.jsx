@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getCinemaSessions, bookSession, getMyBookings } from "../../api/cinema.api";
+
+const POLL_INTERVAL = 30_000;
 
 const STATUS_STYLE = {
   scheduled: "bg-blue-100 text-blue-800",
@@ -27,8 +29,10 @@ const CinemaListing = () => {
   const [error, setError] = useState("");
   const [booking, setBooking] = useState(null);
   const [bookMsg, setBookMsg] = useState("");
+  const intervalRef = useRef(null);
 
-  useEffect(() => {
+  const fetchSessions = (initial = false) => {
+    if (initial) setLoading(true);
     const fetches = [getCinemaSessions({ limit: 20 })];
     if (user) fetches.push(getMyBookings());
     Promise.all(fetches)
@@ -36,8 +40,14 @@ const CinemaListing = () => {
         setSessions(s.data || []);
         if (b) setMyBookings(new Set(b.map((bk) => bk.cinema_id)));
       })
-      .catch(() => setError("Failed to load sessions."))
-      .finally(() => setLoading(false));
+      .catch(() => { if (initial) setError("Failed to load sessions."); })
+      .finally(() => { if (initial) setLoading(false); });
+  };
+
+  useEffect(() => {
+    fetchSessions(true);
+    intervalRef.current = setInterval(() => fetchSessions(false), POLL_INTERVAL);
+    return () => clearInterval(intervalRef.current);
   }, [user]);
 
   const handleBook = async (sessionId) => {
