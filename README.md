@@ -34,10 +34,6 @@ cd client && npm run dev      # http://localhost:5173
 ```
 
 ## Default admin account
-Email: admin@swaziheritage.sz
-Password: Admin@1234
-**Change this immediately after first login.**
-
 ## Roles
 | Role             | Access                                           |
 |------------------|--------------------------------------------------|
