@@ -12,7 +12,7 @@ const getCulturalContext = async () => {
 };
 
 const getSystemPrompt = async () => {
-  const rows = await query("SELECT value FROM system_config WHERE config_key = 'ai_system_prompt'");
+  const rows = await query("SELECT value FROM system_config WHERE `key` = 'ai_system_prompt'");
   return rows[0]?.value ||
     `You are a knowledgeable cultural assistant for the Kingdom of Eswatini (Swaziland).
 Answer questions about Swazi traditions, royal ceremonies, clan lineages, and cultural practices.

@@ -6,5 +6,10 @@ uploads/images/*
 uploads/audio/*
 !uploads/images/.gitkeep
 !uploads/audio/.gitkeep
+server/uploads/*.png
+server/uploads/*.jpg
+server/uploads/*.jpeg
+server/uploads/*.gif
+server/uploads/*.webp
 *.log
 .DS_Store

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from '../components/common/ProtectedRoute/ProtectedRoute';
 
 import Login                 from '../pages/auth/Login';
+import Register              from '../pages/auth/Register';
 import UserHome              from '../pages/user/UserHome';
 import CultureExplorer       from '../pages/user/CultureExplorer';
 import CeremonyDetail        from '../pages/user/CeremonyDetail';
@@ -27,6 +28,7 @@ import CinemaManagement      from '../pages/admin/CinemaManagement';
 import SystemConfig          from '../pages/admin/SystemConfig';
 import Analytics             from '../pages/admin/Analytics';
 import AuditLog              from '../pages/admin/AuditLog';
+import ModelTraining         from '../pages/admin/ModelTraining';
 import UserLayout            from '../components/layout/UserLayout/UserLayout';
 import PractitionerLayout    from '../components/layout/PractitionerLayout/PractitionerLayout';
 import AdminLayout           from '../components/layout/AdminLayout/AdminLayout';
@@ -36,6 +38,7 @@ const PR = ['history_keeper', 'ceremony_keeper'];
 const AppRouter = () => (
   <Routes>
     <Route path="/login"         element={<Login />} />
+    <Route path="/register"      element={<Register />} />
     <Route path="/unauthorized"  element={<div className="p-8 text-center text-gray-600">Access denied.</div>} />
 
     <Route element={<UserLayout />}>
@@ -80,6 +83,7 @@ const AppRouter = () => (
         <Route path="/admin/config"       element={<SystemConfig />} />
         <Route path="/admin/analytics"    element={<Analytics />} />
         <Route path="/admin/audit"        element={<AuditLog />} />
+        <Route path="/admin/model"        element={<ModelTraining />} />
       </Route>
     </Route>
 

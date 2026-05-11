@@ -20,6 +20,7 @@ const AdminLayout = () => {
         <NavLink to="/admin/analytics"    className={link}>Analytics</NavLink>
         <NavLink to="/admin/config"       className={link}>Config</NavLink>
         <NavLink to="/admin/audit"        className={link}>Audit Log</NavLink>
+        <NavLink to="/admin/model"        className={link}>ML Model</NavLink>
         <div className="mt-auto pt-4 border-t border-gray-100">
           <button onClick={logout} className="block px-3 py-2 text-sm text-gray-500 hover:text-red-700 w-full text-left">Sign out</button>
         </div>

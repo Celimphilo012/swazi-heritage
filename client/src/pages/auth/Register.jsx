@@ -1,26 +1,29 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ROLE_HOME } from '../../utils/constants';
 
-const Login = () => {
-  const [form, setForm]       = useState({ email: '', password: '' });
+const Register = () => {
+  const { register } = useAuth();
+  const navigate     = useNavigate();
+  const [form, setForm]       = useState({ name: '', email: '', password: '' });
   const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
-  const { login }  = useAuth();
-  const navigate   = useNavigate();
 
-  const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+  const set = (f) => (e) => setForm((d) => ({ ...d, [f]: e.target.value }));
 
-  const submit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
     setLoading(true);
+    setError('');
     try {
-      const user = await login(form.email, form.password);
-      navigate(ROLE_HOME[user.role] || '/');
+      await register(form.name, form.email, form.password);
+      navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -42,7 +45,7 @@ const Login = () => {
               </svg>
             </div>
             <h1 className="text-xl font-bold text-white">Swazi Cultural Heritage</h1>
-            <p className="text-red-200 text-sm mt-1">Welcome back</p>
+            <p className="text-red-200 text-sm mt-1">Create your account</p>
           </div>
 
           {/* Form body */}
@@ -53,7 +56,22 @@ const Login = () => {
               </div>
             )}
 
-            <form onSubmit={submit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={form.name}
+                  onChange={set('name')}
+                  placeholder="Your full name"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm
+                             focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400"
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email address
@@ -63,7 +81,7 @@ const Login = () => {
                   required
                   value={form.email}
                   onChange={set('email')}
-                  placeholder="your@email.com"
+                  placeholder="you@example.com"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm
                              focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400"
                 />
@@ -78,7 +96,7 @@ const Login = () => {
                   required
                   value={form.password}
                   onChange={set('password')}
-                  placeholder="••••••••"
+                  placeholder="At least 8 characters"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm
                              focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400"
                 />
@@ -94,14 +112,14 @@ const Login = () => {
                 {loading && (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 )}
-                {loading ? 'Signing in…' : 'Sign in'}
+                {loading ? 'Creating account…' : 'Create account'}
               </button>
             </form>
 
             <p className="text-center text-sm text-gray-500 mt-5">
-              No account?{' '}
-              <Link to="/register" className="text-red-800 font-medium hover:underline">
-                Create one
+              Already have an account?{' '}
+              <Link to="/login" className="text-red-800 font-medium hover:underline">
+                Sign in
               </Link>
             </p>
           </div>
@@ -115,4 +133,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register;

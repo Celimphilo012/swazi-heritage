@@ -15,8 +15,8 @@ export const CeremonyModel = {
     );
   },
 
-  updateStatus: (id, status, reviewed_by) =>
-    query('UPDATE ceremonies SET status = ?, reviewed_by = ? WHERE id = ?', [status, reviewed_by, id]),
+  updateStatus: (id, status, reviewed_by, rejection_note) =>
+    query('UPDATE ceremonies SET status = ?, reviewed_by = ?, rejection_note = ? WHERE id = ?', [status, reviewed_by, rejection_note, id]),
 
   findById: (id) =>
     query('SELECT c.*, u.name AS creator_name FROM ceremonies c JOIN users u ON c.created_by = u.id WHERE c.id = ?', [id]).then(r => r[0]),
@@ -40,7 +40,7 @@ export const CeremonyModel = {
     const [ceremony, songs, imvunulo] = await Promise.all([
       query('SELECT c.*, u.name AS creator_name FROM ceremonies c JOIN users u ON c.created_by = u.id WHERE c.id = ?', [id]).then(r => r[0]),
       query('SELECT * FROM ceremony_songs WHERE ceremony_id = ?', [id]),
-      query('SELECT i.*, ip.name AS preset_name, ip.gender FROM imvunulo i JOIN imvunulo_presets ip ON i.preset_id = ip.id WHERE i.ceremony_id = ?', [id]),
+      query('SELECT i.*, ip.name AS preset_name, ip.gender, ip.image_url AS preset_image_url FROM imvunulo i JOIN imvunulo_presets ip ON i.preset_id = ip.id WHERE i.ceremony_id = ?', [id]),
     ]);
     if (!ceremony) return null;
     return { ...ceremony, songs, imvunulo };

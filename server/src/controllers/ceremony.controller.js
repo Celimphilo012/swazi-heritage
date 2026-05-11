@@ -52,9 +52,9 @@ export const getAllCeremonies = async (req, res, next) => {
 
 export const reviewCeremony = async (req, res, next) => {
   try {
-    const { status } = req.body;
-    if (!['published', 'rejected'].includes(status)) throw new AppError('Invalid status.', 400);
-    await CeremonyModel.updateStatus(req.params.id, status, req.user.id);
+    const { status, rejection_note } = req.body;
+    if (!['published', 'rejected', 'pending_review'].includes(status)) throw new AppError('Invalid status.', 400);
+    await CeremonyModel.updateStatus(req.params.id, status, req.user.id, rejection_note);
     success(res, null, `Ceremony ${status}.`);
   } catch (err) { next(err); }
 };
