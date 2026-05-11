@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getCeremony } from "../../api/ceremonies.api";
+import YouTubeAudioPlayer from "../../components/common/YouTubeAudioPlayer";
 
 const GENDER_LABEL = { male: "Men", female: "Women", both: "All", child: "Children" };
 
@@ -35,35 +36,13 @@ const ImvunuloCard = ({ item }) => {
   );
 };
 
-const toYouTubeEmbed = (url) => {
-  const m = url?.match(/(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-  return m ? `https://www.youtube.com/embed/${m[1]}?rel=0` : null;
-};
-
-const SongItem = ({ song }) => {
-  const ytEmbed = song.audio_url ? toYouTubeEmbed(song.audio_url) : null;
-  return (
-    <div className="border border-gray-100 rounded-xl p-4 bg-white">
-      <p className="font-medium text-sm text-gray-900">{song.title}</p>
-      {song.description && <p className="text-xs text-gray-500 mt-1">{song.description}</p>}
-      {song.audio_url && (
-        ytEmbed ? (
-          <div className="mt-3 rounded-lg overflow-hidden aspect-video">
-            <iframe
-              src={ytEmbed}
-              title={song.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="w-full h-full border-0"
-            />
-          </div>
-        ) : (
-          <audio controls src={song.audio_url} className="w-full mt-3" style={{ height: "36px" }} />
-        )
-      )}
-    </div>
-  );
-};
+const SongItem = ({ song }) => (
+  <div className="border border-gray-100 rounded-xl p-4 bg-white">
+    <p className="font-medium text-sm text-gray-900">{song.title}</p>
+    {song.description && <p className="text-xs text-gray-500 mt-1">{song.description}</p>}
+    {song.audio_url && <YouTubeAudioPlayer url={song.audio_url} title={song.title} />}
+  </div>
+);
 
 const CeremonyDetail = () => {
   const { id } = useParams();

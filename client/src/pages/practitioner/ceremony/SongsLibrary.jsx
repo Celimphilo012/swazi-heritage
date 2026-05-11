@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getMyCeremonies } from "../../../api/ceremonies.api";
 import { getCeremony } from "../../../api/ceremonies.api";
+import YouTubeAudioPlayer from "../../../components/common/YouTubeAudioPlayer";
 
 const SongsLibrary = () => {
   const [grouped, setGrouped] = useState([]); // [{ceremony, songs:[]}]
@@ -75,22 +76,12 @@ const SongsLibrary = () => {
               </div>
               <div className="space-y-2">
                 {songs.map((song) => {
-                  const ytMatch = song.audio_url?.match(/(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-                  const ytEmbed = ytMatch ? `https://www.youtube.com/embed/${ytMatch[1]}?rel=0` : null;
                   return (
                     <div key={song.id} className="border border-gray-100 rounded-xl p-3">
                       <p className="text-sm font-medium text-gray-900">{song.title}</p>
                       {song.description && <p className="text-xs text-gray-500 mt-0.5">{song.description}</p>}
                       {song.audio_url && (
-                        ytEmbed ? (
-                          <div className="mt-2 rounded-lg overflow-hidden aspect-video">
-                            <iframe src={ytEmbed} title={song.title}
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen className="w-full h-full border-0" />
-                          </div>
-                        ) : (
-                          <audio controls src={song.audio_url} className="w-full mt-2" style={{ height: "36px" }} />
-                        )
+                        <YouTubeAudioPlayer url={song.audio_url} title={song.title} />
                       )}
                     </div>
                   );
