@@ -296,18 +296,18 @@ export const AuditLogModel = {
 // ─── System Config ────────────────────────────────────────────────────────────
 export const ConfigModel = {
   get: (key) =>
-    query(`SELECT value FROM system_config WHERE \`key\` = ?`, [key]).then(
+    query(`SELECT value FROM system_config WHERE config_key = ?`, [key]).then(
       (r) => r[0]?.value,
     ),
 
   getAll: () =>
     query(
-      `SELECT \`key\`, value, description FROM system_config ORDER BY \`key\``,
+      `SELECT config_key AS \`key\`, value, description FROM system_config ORDER BY config_key`,
     ),
 
   upsert: (key, value) =>
     query(
-      `INSERT INTO system_config (\`key\`, value) VALUES (?, ?)
+      `INSERT INTO system_config (config_key, value) VALUES (?, ?)
            ON DUPLICATE KEY UPDATE value = VALUES(value)`,
       [key, value],
     ),
