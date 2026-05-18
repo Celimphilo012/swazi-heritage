@@ -1,32 +1,48 @@
 import { useState, useEffect } from "react";
 import { getAnalyticsSummary } from "../../api/admin.api";
 
-const Bar = ({ value, max, color = "bg-red-600", label, sublabel }) => (
-  <div className="flex items-center gap-3">
-    <div className="w-24 text-right flex-shrink-0">
-      <p className="text-xs text-gray-700 font-medium truncate">{label}</p>
-      {sublabel && <p className="text-xs text-gray-400">{sublabel}</p>}
-    </div>
-    <div className="flex-1 h-6 bg-gray-100 rounded-lg overflow-hidden relative">
-      <div
-        className={`h-full ${color} rounded-lg transition-all duration-500`}
-        style={{ width: max > 0 ? `${Math.max(2, (value / max) * 100)}%` : "2%" }}
-      />
-      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-700">
+const AnimBar = ({ value, max, color }) => {
+  const [w, setW] = useState(0);
+  const pct = max > 0 ? Math.max(2, Math.round((value / max) * 100)) : 2;
+  useEffect(() => { const t = setTimeout(() => setW(pct), 100); return () => clearTimeout(t); }, [pct]);
+  return (
+    <div className="flex-1 h-7 rounded-xl overflow-hidden relative" style={{ background:"#f1f5f9" }}>
+      <div className="h-full rounded-xl transition-all duration-700 ease-out" style={{ width:`${w}%`, background: color }} />
+      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold" style={{ color:"#0f172a" }}>
         {value}
       </span>
+    </div>
+  );
+};
+
+const BarRow = ({ label, sublabel, value, max, color }) => (
+  <div className="flex items-center gap-3">
+    <div className="w-24 flex-shrink-0 text-right">
+      <p className="text-xs font-semibold text-slate-600 capitalize">{label}</p>
+      {sublabel && <p className="text-xs text-slate-400">{sublabel}</p>}
+    </div>
+    <AnimBar value={value} max={max} color={color} />
+  </div>
+);
+
+const ROLE_CFG   = { admin:"#7c3aed", user:"#94a3b8", history_keeper:"#d97706", ceremony_keeper:"#ea580c" };
+const STATUS_CFG = { pending_review:"#f59e0b", published:"#10b981", rejected:"#CE1126", draft:"#94a3b8" };
+const SOURCE_CFG = { db_only:"#10b981", hybrid:"#002395", ai_only:"#7c3aed" };
+
+const Card = ({ title, total, totalLabel, children }) => (
+  <div className="rounded-2xl p-5" style={{ background:"#fff", boxShadow:"0 1px 6px rgba(0,0,0,0.06)" }}>
+    <h2 className="text-sm font-bold text-slate-800 mb-4">{title}</h2>
+    <div className="space-y-3">{children}</div>
+    <div className="mt-4 pt-3 border-t border-slate-50 text-xs font-semibold text-slate-400">
+      Total: <span className="text-slate-700 font-bold">{total}</span> {totalLabel}
     </div>
   </div>
 );
 
-const ROLE_COLOR = { admin: "bg-purple-500", user: "bg-gray-400", history_keeper: "bg-amber-500", ceremony_keeper: "bg-orange-500" };
-const STATUS_COLOR = { pending_review: "bg-amber-400", published: "bg-green-500", rejected: "bg-red-500", draft: "bg-gray-300" };
-const SOURCE_COLOR = { db_only: "bg-green-500", hybrid: "bg-blue-500", ai_only: "bg-purple-500" };
-
 const Analytics = () => {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error,   setError]   = useState("");
 
   useEffect(() => {
     getAnalyticsSummary()
@@ -35,115 +51,108 @@ const Analytics = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return (
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">Analytics</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {[...Array(4)].map((_, i) => <div key={i} className="card animate-pulse h-40" />)}
-        </div>
+  if (loading) return (
+    <div className="p-6 space-y-5 animate-pulse">
+      <div className="rounded-2xl h-24" style={{ background:"linear-gradient(135deg,#0f172a,#1e293b)" }} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {[...Array(4)].map((_,i) => <div key={i} className="rounded-2xl h-48 bg-white" style={{ boxShadow:"0 1px 6px rgba(0,0,0,0.06)" }} />)}
       </div>
-    );
-  }
+    </div>
+  );
 
-  const maxUser = summary?.userCounts ? Math.max(...summary.userCounts.map((r) => Number(r.count)), 1) : 1;
-  const maxContent = summary?.contentCounts ? Math.max(...summary.contentCounts.map((r) => Number(r.count)), 1) : 1;
-  const maxPrompt = summary?.promptStats ? Math.max(...summary.promptStats.map((r) => Number(r.count)), 1) : 1;
-  const maxBooking = summary?.bookingStats ? Math.max(...summary.bookingStats.map((r) => Number(r.count)), 1) : 1;
+  const maxUser    = Math.max(...(summary?.userCounts?.map(r=>Number(r.count))??[1]),1);
+  const maxContent = Math.max(...(summary?.contentCounts?.map(r=>Number(r.count))??[1]),1);
+  const maxPrompt  = Math.max(...(summary?.promptStats?.map(r=>Number(r.count))??[1]),1);
+  const maxBooking = Math.max(...(summary?.bookingStats?.map(r=>Number(r.count))??[1]),1);
+  const totalUsers    = summary?.userCounts?.reduce((a,r)=>a+Number(r.count),0)??0;
+  const totalContent  = summary?.contentCounts?.reduce((a,r)=>a+Number(r.count),0)??0;
+  const totalPrompts  = summary?.promptStats?.reduce((a,r)=>a+Number(r.count),0)??0;
+  const totalBookings = summary?.bookingStats?.reduce((a,r)=>a+Number(r.count),0)??0;
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Analytics</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Platform usage at a glance</p>
+    <div className="p-6 space-y-5">
+
+      {/* Header */}
+      <div className="relative rounded-2xl overflow-hidden px-6 py-5"
+        style={{ background:"linear-gradient(135deg,#0f172a,#1e293b)", boxShadow:"0 4px 20px rgba(15,23,42,0.2)" }}>
+        <div className="absolute top-0 left-0 right-0 flex" style={{ height:3 }}>
+          <div className="flex-1" style={{ background:"#002395" }} />
+          <div style={{ width:"5%", background:"#FFD600" }} />
+          <div className="flex-1" style={{ background:"#CE1126" }} />
+          <div style={{ width:"5%", background:"#FFD600" }} />
+          <div className="flex-1" style={{ background:"#002395" }} />
+        </div>
+        <h1 className="text-xl font-black text-white">Analytics</h1>
+        <p className="text-xs mt-0.5" style={{ color:"#94a3b8" }}>Platform usage overview</p>
       </div>
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
-      )}
+      {/* Summary stat row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label:"Users",    value:totalUsers,    color:"#7c3aed" },
+          { label:"Content",  value:totalContent,  color:"#10b981" },
+          { label:"AI Queries",value:totalPrompts, color:"#002395" },
+          { label:"Bookings", value:totalBookings, color:"#CE1126" },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="rounded-2xl p-4 flex items-center gap-3"
+            style={{ background:"#fff", boxShadow:"0 1px 6px rgba(0,0,0,0.06)" }}>
+            <div className="w-2 h-10 rounded-full flex-shrink-0" style={{ background: color }} />
+            <div>
+              <p className="text-xs font-semibold text-slate-400">{label}</p>
+              <p className="text-2xl font-black text-slate-800">{value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
         {/* Users by role */}
-        <div className="card">
-          <h2 className="text-sm font-semibold text-gray-800 mb-4">Users by Role</h2>
-          <div className="space-y-2.5">
-            {summary?.userCounts?.map((r) => (
-              <Bar
-                key={r.role}
-                label={r.role.replace("_", " ")}
-                value={Number(r.count)}
-                max={maxUser}
-                color={ROLE_COLOR[r.role] || "bg-gray-400"}
-              />
-            ))}
-            {!summary?.userCounts?.length && <p className="text-sm text-gray-400">No data</p>}
-          </div>
-          <div className="mt-3 pt-3 border-t border-gray-50 text-xs text-gray-500">
-            Total: {summary?.userCounts?.reduce((a, r) => a + Number(r.count), 0) ?? 0} users
-          </div>
-        </div>
+        <Card title="Users by Role" total={totalUsers} totalLabel="users">
+          {summary?.userCounts?.map(r => (
+            <BarRow key={r.role} label={r.role.replace(/_/g," ")}
+              value={Number(r.count)} max={maxUser} color={ROLE_CFG[r.role]||"#94a3b8"} />
+          ))}
+          {!summary?.userCounts?.length && <p className="text-sm text-slate-400">No data</p>}
+        </Card>
 
         {/* Ceremonies by status */}
-        <div className="card">
-          <h2 className="text-sm font-semibold text-gray-800 mb-4">Ceremonies by Status</h2>
-          <div className="space-y-2.5">
-            {summary?.contentCounts?.map((r) => (
-              <Bar
-                key={r.status}
-                label={r.status.replace("_", " ")}
-                value={Number(r.count)}
-                max={maxContent}
-                color={STATUS_COLOR[r.status] || "bg-gray-400"}
-              />
-            ))}
-            {!summary?.contentCounts?.length && <p className="text-sm text-gray-400">No data</p>}
-          </div>
-          <div className="mt-3 pt-3 border-t border-gray-50 text-xs text-gray-500">
-            Total: {summary?.contentCounts?.reduce((a, r) => a + Number(r.count), 0) ?? 0} ceremonies
-          </div>
-        </div>
+        <Card title="Ceremonies by Status" total={totalContent} totalLabel="ceremonies">
+          {summary?.contentCounts?.map(r => (
+            <BarRow key={r.status} label={r.status.replace(/_/g," ")}
+              value={Number(r.count)} max={maxContent} color={STATUS_CFG[r.status]||"#94a3b8"} />
+          ))}
+          {!summary?.contentCounts?.length && <p className="text-sm text-slate-400">No data</p>}
+        </Card>
 
         {/* AI prompt sources */}
-        <div className="card">
-          <h2 className="text-sm font-semibold text-gray-800 mb-4">AI Query Sources</h2>
-          <div className="space-y-2.5">
-            {summary?.promptStats?.map((r) => (
-              <Bar
-                key={r.source}
-                label={r.source?.replace("_", " ") || "unknown"}
-                sublabel={r.source === "db_only" ? "Platform data" : r.source === "hybrid" ? "Combined" : "AI fallback"}
-                value={Number(r.count)}
-                max={maxPrompt}
-                color={SOURCE_COLOR[r.source] || "bg-gray-400"}
-              />
-            ))}
-            {!summary?.promptStats?.length && <p className="text-sm text-gray-400">No AI queries yet</p>}
-          </div>
-          <div className="mt-3 pt-3 border-t border-gray-50 text-xs text-gray-500">
-            Total: {summary?.promptStats?.reduce((a, r) => a + Number(r.count), 0) ?? 0} queries
-          </div>
-        </div>
+        <Card title="AI Query Sources" total={totalPrompts} totalLabel="queries">
+          {summary?.promptStats?.map(r => (
+            <BarRow key={r.source}
+              label={r.source?.replace(/_/g," ")||"unknown"}
+              sublabel={r.source==="db_only"?"Platform data":r.source==="hybrid"?"Combined":"AI fallback"}
+              value={Number(r.count)} max={maxPrompt} color={SOURCE_CFG[r.source]||"#94a3b8"} />
+          ))}
+          {!summary?.promptStats?.length && <p className="text-sm text-slate-400">No AI queries yet</p>}
+        </Card>
 
-        {/* Booking trend (last 30 days) */}
-        <div className="card">
-          <h2 className="text-sm font-semibold text-gray-800 mb-4">Booking Trend (Last 30 Days)</h2>
+        {/* Booking trend */}
+        <div className="rounded-2xl p-5" style={{ background:"#fff", boxShadow:"0 1px 6px rgba(0,0,0,0.06)" }}>
+          <h2 className="text-sm font-bold text-slate-800 mb-4">Booking Trend (Last 30 Days)</h2>
           {summary?.bookingStats?.length > 0 ? (
-            <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
-              {[...summary.bookingStats].slice(0, 30).map((r) => (
-                <Bar
-                  key={r.date}
-                  label={new Date(r.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                  value={Number(r.count)}
-                  max={maxBooking}
-                  color="bg-blue-500"
-                />
+            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+              {summary.bookingStats.slice(0,30).map(r => (
+                <BarRow key={r.date}
+                  label={new Date(r.date).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+                  value={Number(r.count)} max={maxBooking}
+                  color="linear-gradient(90deg,#002395,#CE1126)" />
               ))}
             </div>
-          ) : (
-            <p className="text-sm text-gray-400">No bookings yet</p>
-          )}
-          <div className="mt-3 pt-3 border-t border-gray-50 text-xs text-gray-500">
-            Total recent: {summary?.bookingStats?.reduce((a, r) => a + Number(r.count), 0) ?? 0} bookings
+          ) : <p className="text-sm text-slate-400">No bookings yet</p>}
+          <div className="mt-4 pt-3 border-t border-slate-50 text-xs font-semibold text-slate-400">
+            Total recent: <span className="text-slate-700 font-bold">{totalBookings}</span> bookings
           </div>
         </div>
       </div>
