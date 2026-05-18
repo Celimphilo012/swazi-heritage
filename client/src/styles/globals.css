@@ -2,6 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(26px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes floatDiamond {
+  0%, 100% { opacity: 0.18; transform: rotate(45deg) translateY(0px); }
+  50%       { opacity: 0.45; transform: rotate(45deg) translateY(-18px); }
+}
+@keyframes pulseShield {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.05); }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50%       { transform: translateY(-6px); opacity: 1; }
+}
+
+@layer utilities {
+  .animate-fade-in-down { animation: fadeInDown 0.75s ease-out both; }
+  .animate-fade-in-up   { animation: fadeInUp  0.85s ease-out both; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
 @layer components {
   .btn-primary   { @apply bg-red-800 text-white px-4 py-2 rounded-lg hover:bg-red-900 transition-colors font-medium text-sm disabled:opacity-60; }
   .btn-secondary { @apply border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm; }

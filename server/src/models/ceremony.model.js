@@ -26,10 +26,14 @@ export const CeremonyModel = {
     return query(`SELECT * FROM ceremonies ${where} ORDER BY created_at DESC`, status ? [userId, status] : [userId]);
   },
 
-  getAll: ({ status, page = 1, limit = 20 }) => {
+  getAll: ({ status, month, search, page = 1, limit = 20 }) => {
     const offset = (page - 1) * limit;
-    const where = status ? 'WHERE c.status = ?' : '';
-    const params = status ? [status] : [];
+    const conditions = [];
+    const params = [];
+    if (status) { conditions.push('c.status = ?'); params.push(status); }
+    if (month)  { conditions.push('c.month_celebrated = ?'); params.push(month); }
+    if (search) { conditions.push('(c.name LIKE ? OR c.description LIKE ?)'); params.push(`%${search}%`, `%${search}%`); }
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     return Promise.all([
       query(`SELECT c.*, u.name AS creator_name FROM ceremonies c JOIN users u ON c.created_by = u.id ${where} ORDER BY c.created_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]),
       query(`SELECT COUNT(*) AS total FROM ceremonies c ${where}`, params),

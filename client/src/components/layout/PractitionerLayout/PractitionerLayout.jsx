@@ -13,7 +13,7 @@ const PractitionerLayout = () => {
 
   return (
     <div className="min-h-screen flex">
-      <aside className="w-56 bg-white border-r border-gray-100 p-4 flex flex-col gap-1">
+      <aside className="sticky top-0 h-screen w-56 bg-white border-r border-gray-100 p-4 flex flex-col gap-1 overflow-y-auto">
         <p className="text-xs text-gray-400 font-medium uppercase tracking-wider px-3 mb-2">Practitioner</p>
         <NavLink to="/practitioner" end className={link}>Overview</NavLink>
         {isHistory && <>

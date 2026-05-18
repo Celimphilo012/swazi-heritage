@@ -36,8 +36,8 @@ export const getMyCeremonies = async (req, res, next) => {
 
 export const getPublishedCeremonies = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
-    const { rows, total } = await CeremonyModel.getAll({ status: 'published', page: +page, limit: +limit });
+    const { page = 1, limit = 20, month, search } = req.query;
+    const { rows, total } = await CeremonyModel.getAll({ status: 'published', month, search, page: +page, limit: +limit });
     paginated(res, rows, { total, page: +page, limit: +limit });
   } catch (err) { next(err); }
 };
