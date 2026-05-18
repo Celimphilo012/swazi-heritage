@@ -70,6 +70,7 @@ const AppRouter = () => (
         <Route path="/practitioner/ceremonies/new"         element={<CeremonyFormPage />} />
         <Route path="/practitioner/ceremonies/:id/edit"    element={<CeremonyFormPage />} />
         <Route path="/practitioner/songs"                  element={<SongsLibrary />} />
+        <Route path="/practitioner/profile"               element={<ProfileSettings />} />
       </Route>
     </Route>
 
