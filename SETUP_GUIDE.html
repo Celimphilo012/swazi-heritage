@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Swazi Cultural Heritage Platform — Setup Guide</title>
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 13px; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #1e293b;
+      background: #fff;
+      line-height: 1.65;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 32px 80px;
+    }
+
+    /* ── Print rules ── */
+    @media print {
+      body { max-width: 100%; padding: 0 20px 40px; font-size: 11.5px; }
+      .no-break { page-break-inside: avoid; }
+      .page-break { page-break-before: always; }
+      a { color: inherit; text-decoration: none; }
+    }
+
+    /* ── Color tokens ── */
+    :root {
+      --navy:  #001540;
+      --blue:  #002395;
+      --red:   #CE1126;
+      --gold:  #FFD600;
+      --slate: #475569;
+      --light: #f8fafc;
+      --border:#e2e8f0;
+    }
+
+    /* ── Cover page ── */
+    .cover {
+      min-height: 260px;
+      background: linear-gradient(135deg, #001540 0%, #002d80 60%, #0f172a 100%);
+      border-radius: 0 0 28px 28px;
+      padding: 48px 40px 40px;
+      margin: 0 -32px 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    .cover::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--blue) 33%, var(--gold) 33% 40%, var(--red) 40% 73%, var(--gold) 73% 80%, var(--blue) 80%);
+    }
+    .cover-diamond {
+      position: absolute;
+      transform: rotate(45deg);
+      opacity: 0.07;
+    }
+    .cover h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .cover .subtitle {
+      font-size: 1rem;
+      color: rgba(147,197,253,0.9);
+      font-weight: 400;
+      position: relative;
+      z-index: 1;
+    }
+    .cover .flag-strip {
+      display: flex;
+      gap: 8px;
+      margin-top: 24px;
+      position: relative;
+      z-index: 1;
+    }
+    .cover .flag-strip span {
+      display: inline-block;
+      height: 4px;
+      width: 32px;
+      border-radius: 2px;
+    }
+    .cover-meta {
+      display: flex;
+      gap: 24px;
+      margin-top: 20px;
+      position: relative;
+      z-index: 1;
+    }
+    .cover-meta .pill {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.75);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── TOC ── */
+    .toc {
+      background: var(--light);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 40px;
+    }
+    .toc h2 {
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--slate);
+      margin-bottom: 14px;
+    }
+    .toc ol {
+      list-style: none;
+      counter-reset: toc;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 32px;
+    }
+    .toc li {
+      counter-increment: toc;
+      font-size: 0.82rem;
+      color: var(--blue);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toc li::before {
+      content: counter(toc, decimal-leading-zero);
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: var(--slate);
+      opacity: 0.6;
+      min-width: 18px;
+    }
+
+    /* ── Section headings ── */
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      margin-top: 44px;
+    }
+    .section-num {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: var(--navy);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .section-label h2 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.01em;
+    }
+    .section-rule {
+      height: 2px;
+      background: linear-gradient(90deg, var(--blue), var(--gold), transparent);
+      border-radius: 1px;
+      margin-bottom: 20px;
+    }
+
+    /* ── Sub-headings ── */
+    h3 {
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--slate);
+      margin: 24px 0 10px;
+    }
+
+    /* ── Paragraphs & lists ── */
+    p { margin-bottom: 10px; font-size: 0.88rem; color: #334155; }
+    ul, ol { padding-left: 20px; margin-bottom: 12px; }
+    li { font-size: 0.88rem; color: #334155; margin-bottom: 4px; }
+    strong { color: var(--navy); }
+
+    /* ── Code / commands ── */
+    code {
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 1px 6px;
+      font-size: 0.8rem;
+      color: var(--red);
+    }
+    pre {
+      background: #0f172a;
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin: 12px 0 18px;
+      overflow-x: auto;
+      position: relative;
+    }
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.8rem;
+      color: #e2e8f0;
+      line-height: 1.7;
+    }
+    pre .comment { color: #64748b; }
+    pre .key     { color: #93c5fd; }
+    pre .val     { color: #86efac; }
+    pre .cmd     { color: #fde68a; }
+    pre .flag    { color: #f9a8d4; }
+
+    /* ── Info / warning / tip boxes ── */
+    .box {
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: 0.84rem;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .box-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .box-body { flex: 1; }
+    .box-body strong { display: block; margin-bottom: 3px; }
+    .box.info    { background: rgba(0,35,149,0.05);  border: 1px solid rgba(0,35,149,0.15); }
+    .box.info .box-icon { color: var(--blue); }
+    .box.warn    { background: rgba(255,214,0,0.08); border: 1px solid rgba(255,214,0,0.35); }
+    .box.warn .box-icon { color: #b45309; }
+    .box.success { background: rgba(16,185,129,0.06);border: 1px solid rgba(16,185,129,0.2); }
+    .box.success .box-icon { color: #059669; }
+    .box.danger  { background: rgba(206,17,38,0.05); border: 1px solid rgba(206,17,38,0.15); }
+    .box.danger .box-icon { color: var(--red); }
+
+    /* ── Step cards ── */
+    .steps { counter-reset: step; margin: 16px 0 24px; }
+    .step {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 14px;
+      position: relative;
+    }
+    .step::before {
+      content: '';
+      position: absolute;
+      left: 15px; top: 34px;
+      width: 2px;
+      bottom: -14px;
+      background: var(--border);
+    }
+    .step:last-child::before { display: none; }
+    .step-num {
+      counter-increment: step;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .step-body { flex: 1; padding-top: 6px; }
+    .step-body strong { font-size: 0.88rem; color: var(--navy); }
+    .step-body p, .step-body pre, .step-body .box { margin-top: 6px; }
+
+    /* ── Credential card ── */
+    .cred-card {
+      background: linear-gradient(135deg, #001540, #002d80);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .cred-card .label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(147,197,253,0.7); margin-bottom: 4px; }
+    .cred-card .value { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.9rem; font-weight: 700; color: #fff; }
+    .cred-card .badge { background: rgba(255,214,0,0.15); border: 1px solid rgba(255,214,0,0.3); border-radius: 8px; padding: 6px 14px; font-size: 0.7rem; font-weight: 800; color: #FFD600; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+
+    /* ── Role table ── */
+    table { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: 0.83rem; }
+    th { background: var(--navy); color: #fff; font-weight: 700; text-align: left; padding: 10px 14px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    th:first-child { border-radius: 8px 0 0 0; }
+    th:last-child  { border-radius: 0 8px 0 0; }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: #334155; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: var(--light); }
+
+    /* ── Dir tree ── */
+    .tree {
+      background: #0f172a;
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin: 12px 0 18px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.78rem;
+      line-height: 1.8;
+      color: #94a3b8;
+    }
+    .tree .dir  { color: #93c5fd; font-weight: 700; }
+    .tree .file { color: #e2e8f0; }
+    .tree .note { color: #64748b; font-style: italic; }
+
+    /* ── SQL block ── */
+    .sql pre { background: #0a0f1e; }
+    .sql pre code { color: #c4b5fd; }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 56px;
+      padding-top: 20px;
+      border-top: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: #94a3b8;
+    }
+    .footer-stripe { display: flex; gap: 4px; }
+    .footer-stripe span { width: 20px; height: 3px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════
+       COVER
+  ══════════════════════════════════════════════════ -->
+  <div class="cover">
+    <!-- decorative diamonds -->
+    <div class="cover-diamond" style="width:120px;height:120px;background:#FFD600;top:-30px;right:80px;"></div>
+    <div class="cover-diamond" style="width:60px;height:60px;background:#CE1126;top:80px;right:40px;"></div>
+    <div class="cover-diamond" style="width:80px;height:80px;background:#fff;bottom:-20px;right:160px;"></div>
+
+    <h1>Swazi Cultural Heritage<br>Platform</h1>
+    <p class="subtitle">Developer Setup &amp; Installation Guide</p>
+
+    <div class="flag-strip">
+      <span style="background:#002395; width:48px;"></span>
+      <span style="background:#FFD600; width:16px;"></span>
+      <span style="background:#CE1126; width:48px;"></span>
+      <span style="background:#FFD600; width:16px;"></span>
+      <span style="background:#002395; width:48px;"></span>
+    </div>
+
+    <div class="cover-meta">
+      <span class="pill">Full-Stack Web App</span>
+      <span class="pill">React + Node.js + MySQL</span>
+      <span class="pill">v1.0.0</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       TABLE OF CONTENTS
+  ══════════════════════════════════════════════════ -->
+  <div class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li>Project Overview</li>
+      <li>Prerequisites</li>
+      <li>Clone the Repository</li>
+      <li>Project Structure</li>
+      <li>Server Setup</li>
+      <li>Client Setup</li>
+      <li>Database Setup &amp; Migrations</li>
+      <li>Running the Project</li>
+      <li>Default Credentials &amp; Roles</li>
+      <li>Post-Setup Checklist</li>
+      <li>Production Build</li>
+      <li>Troubleshooting</li>
+    </ol>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════
+       1. PROJECT OVERVIEW
+  ══════════════════════════════════════════════════ -->
+  <div class="section-label no-break">
+    <div class="section-num">01</div>
+    <h2>Project Overview</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <p>
+    The <strong>Swazi Cultural Heritage Platform</strong> is a full-stack web application designed to
+    preserve, document, and share the cultural traditions of the Kingdom of Eswatini. It serves three
+    distinct user roles — general users, cultural practitioners, and administrators — each with a
+    dedicated dashboard.
+  </p>
+
+  <table>
+    <thead><tr><th>Layer</th><th>Technology</th><th>Port</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Frontend</strong></td><td>React 18, Vite 5, Tailwind CSS 3, React Router 6</td><td>5173</td></tr>
+      <tr><td><strong>Backend</strong></td><td>Node.js, Express 4, JWT Auth, Multer, Winston</td><td>5000</td></tr>
+      <tr><td><strong>Database</strong></td><td>MySQL 8 (via mysql2)</td><td>3306</td></tr>
+      <tr><td><strong>AI Chat</strong></td><td>Google Gemini API (with local NLP fallback)</td><td>—</td></tr>
+      <tr><td><strong>Cinema Scheduler</strong></td><td>Built-in Node.js interval (auto-starts sessions)</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box info">
+    <span class="box-icon">ℹ️</span>
+    <div class="box-body">
+      <strong>Monorepo structure</strong>
+      The project uses a single Git repository with two separate Node.js packages:
+      <code>client/</code> (Vite React app) and <code>server/</code> (Express API).
+      Each has its own <code>package.json</code> and must be installed independently.
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════
+       2. PREREQUISITES
+  ══════════════════════════════════════════════════ -->
+  <div class="section-label no-break">
+    <div class="section-num">02</div>
+    <h2>Prerequisites</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <p>Install the following tools before proceeding. Verify each version with the commands shown.</p>
+
+  <table>
+    <thead><tr><th>Tool</th><th>Minimum Version</th><th>Verify</th><th>Download</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Node.js</strong></td>
+        <td>v18.x LTS or higher</td>
+        <td><code>node -v</code></td>
+        <td>nodejs.org</td>
+      </tr>
+      <tr>
+        <td><strong>npm</strong></td>
+        <td>v9 or higher</td>
+        <td><code>npm -v</code></td>
+        <td>bundled with Node.js</td>
+      </tr>
+      <tr>
+        <td><strong>MySQL Server</strong></td>
+        <td>8.0 or higher</td>
+        <td><code>mysql --version</code></td>
+        <td>dev.mysql.com</td>
+      </tr>
+      <tr>
+        <td><strong>Git</strong></td>
+        <td>2.x</td>
+        <td><code>git --version</code></td>
+        <td>git-scm.com</td>
+      </tr>
+      <tr>
+        <td><strong>Gemini API Key</strong></td>
+        <td>—</td>
+        <td>Required for AI chat</td>
+        <td>aistudio.google.com (free)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="box warn">
+    <span class="box-icon">⚠️</span>
+    <div class="box-body">
+      <strong>MySQL must be running</strong>
+      Ensure your MySQL server is started before running migrations. On Windows you can start it
+      from MySQL Workbench, MySQL Notifier, or via <code>net start MySQL80</code> in an admin terminal.
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════
+       3. CLONE THE REPOSITORY
+  ══════════════════════════════════════════════════ -->
+  <div class="section-label no-break">
+    <div class="section-num">03</div>
+    <h2>Clone the Repository</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <pre><code><span class="comment"># Clone via HTTPS</span>
+<span class="cmd">git clone</span> https://github.com/Celimphilo012/swazi-heritage.git
+
+<span class="comment"># Enter the project root</span>
+<span class="cmd">cd</span> swazi-heritage</code></pre>
+
+  <div class="box info">
+    <span class="box-icon">📁</span>
+    <div class="box-body">
+      All following commands assume you are inside the <code>swazi-heritage/</code> root directory
+      unless otherwise noted.
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════
+       4. PROJECT STRUCTURE
+  ══════════════════════════════════════════════════ -->
+  <div class="section-label no-break">
+    <div class="section-num">04</div>
+    <h2>Project Structure</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <div class="tree">
+    <span class="dir">swazi-heritage/</span><br>
+    ├── <span class="dir">client/</span>                   <span class="note">React frontend (Vite)</span><br>
+    │   ├── <span class="dir">src/</span><br>
+    │   │   ├── <span class="dir">api/</span>              <span class="note">Axios API calls per feature</span><br>
+    │   │   ├── <span class="dir">components/</span>       <span class="note">Shared UI components &amp; layouts</span><br>
+    │   │   ├── <span class="dir">context/</span>          <span class="note">AuthContext (JWT state)</span><br>
+    │   │   ├── <span class="dir">lib/</span>              <span class="note">Static assets (shield.png)</span><br>
+    │   │   ├── <span class="dir">pages/</span>            <span class="note">Route-level pages (user/practitioner/admin)</span><br>
+    │   │   ├── <span class="dir">routes/</span>           <span class="note">React Router config</span><br>
+    │   │   └── <span class="dir">utils/</span>            <span class="note">Constants, helpers</span><br>
+    │   ├── <span class="file">.env.example</span>         <span class="note">Frontend env template</span><br>
+    │   ├── <span class="file">vite.config.js</span><br>
+    │   └── <span class="file">package.json</span><br>
+    │<br>
+    └── <span class="dir">server/</span>                   <span class="note">Express API backend</span><br>
+        ├── <span class="dir">database/</span><br>
+        │   ├── <span class="dir">migrations/</span>       <span class="note">schema.sql — full DB schema</span><br>
+        │   ├── <span class="dir">seeds/</span>            <span class="note">runSeeds.js — default admin + config data</span><br>
+        │   └── <span class="file">migrate.js</span>       <span class="note">Migration runner script</span><br>
+        ├── <span class="dir">ml/</span>                   <span class="note">model.json — trained NLP model</span><br>
+        ├── <span class="dir">src/</span><br>
+        │   ├── <span class="dir">config/</span>           <span class="note">db.js, env.js, gemini.js</span><br>
+        │   ├── <span class="dir">controllers/</span>      <span class="note">ceremony.controller.js etc.</span><br>
+        │   ├── <span class="dir">middleware/</span>       <span class="note">auth, roles, validate, rate-limit</span><br>
+        │   ├── <span class="dir">models/</span>           <span class="note">models.js, ceremony.model.js etc.</span><br>
+        │   ├── <span class="dir">routes/</span>           <span class="note">index.js — all API routes</span><br>
+        │   └── <span class="dir">utils/</span>            <span class="note">apiResponse, logger, scheduler, jwtHelper</span><br>
+        ├── <span class="dir">uploads/</span>              <span class="note">Multer file uploads (auto-created)</span><br>
+        ├── <span class="file">.env.example</span>         <span class="note">Backend env template</span><br>
+        ├── <span class="file">server.js</span>            <span class="note">Entry point</span><br>
+        └── <span class="file">package.json</span>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════
+       5. SERVER SETUP
+  ══════════════════════════════════════════════════ -->
+  <div class="page-break"></div>
+  <div class="section-label no-break">
+    <div class="section-num">05</div>
+    <h2>Server Setup</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <div class="steps">
+
+    <div class="step no-break">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Navigate to the server directory</strong>
+        <pre><code><span class="cmd">cd</span> server</code></pre>
+      </div>
+    </div>
+
+    <div class="step no-break">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Install dependencies</strong>
+        <pre><code><span class="cmd">npm install</span></code></pre>
+      </div>
+    </div>
+
+    <div class="step no-break">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Create the environment file</strong>
+        <p>Copy the example file and fill in your values:</p>
+        <pre><code><span class="comment"># Windows</span>
+<span class="cmd">copy</span> .env.example .env
+
+<span class="comment"># macOS / Linux</span>
+<span class="cmd">cp</span> .env.example .env</code></pre>
+
+        <p>Then open <code>.env</code> in your editor and set each value:</p>
+        <pre><code><span class="comment"># ── Server ────────────────────────────</span>
+<span class="key">PORT</span>=<span class="val">5000</span>
+<span class="key">NODE_ENV</span>=<span class="val">development</span>
+<span class="key">CLIENT_URL</span>=<span class="val">http://localhost:5173</span>
+
+<span class="comment"># ── Database ──────────────────────────</span>
+<span class="key">DB_HOST</span>=<span class="val">localhost</span>
+<span class="key">DB_PORT</span>=<span class="val">3306</span>
+<span class="key">DB_USER</span>=<span class="val">root</span>
+<span class="key">DB_PASSWORD</span>=<span class="val">your_mysql_password</span>
+<span class="key">DB_NAME</span>=<span class="val">swazi_heritage</span>
+
+<span class="comment"># ── JWT (use long random strings) ─────</span>
+<span class="key">JWT_SECRET</span>=<span class="val">change_this_to_a_long_random_secret</span>
+<span class="key">JWT_EXPIRES_IN</span>=<span class="val">7d</span>
+<span class="key">JWT_REFRESH_SECRET</span>=<span class="val">change_this_to_another_long_random_secret</span>
+<span class="key">JWT_REFRESH_EXPIRES_IN</span>=<span class="val">30d</span>
+
+<span class="comment"># ── Gemini AI ─────────────────────────</span>
+<span class="key">GEMINI_API_KEY</span>=<span class="val">your_gemini_api_key</span>
+
+<span class="comment"># ── Uploads ───────────────────────────</span>
+<span class="key">MAX_FILE_SIZE_MB</span>=<span class="val">5</span></code></pre>
+
+        <div class="box warn">
+          <span class="box-icon">⚠️</span>
+          <div class="box-body">
+            <strong>Never commit your <code>.env</code> file</strong>
+            It is already in <code>.gitignore</code>. Keep JWT secrets long and random.
+            You can generate a random string with:<br>
+            <code>node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"</code>
+          </div>
+        </div>
+
+        <div class="box info">
+          <span class="box-icon">🔑</span>
+          <div class="box-body">
+            <strong>Getting a Gemini API Key (free)</strong>
+            Go to <strong>aistudio.google.com</strong> → Sign in with Google →
+            Click "Get API key" → Create API key. Paste the key into
+            <code>GEMINI_API_KEY</code>. Without this key the server will
+            refuse to start. The AI chat falls back to a local NLP model
+            if Gemini is unavailable at runtime.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════
+       6. CLIENT SETUP
+  ══════════════════════════════════════════════════ -->
+  <div class="section-label no-break">
+    <div class="section-num">06</div>
+    <h2>Client Setup</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <div class="steps">
+
+    <div class="step no-break">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Navigate to the client directory</strong>
+        <pre><code><span class="comment"># From project root</span>
+<span class="cmd">cd</span> client</code></pre>
+      </div>
+    </div>
+
+    <div class="step no-break">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Install dependencies</strong>
+        <pre><code><span class="cmd">npm install</span></code></pre>
+      </div>
+    </div>
+
+    <div class="step no-break">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Create the environment file</strong>
+        <pre><code><span class="comment"># Windows</span>
+<span class="cmd">copy</span> .env.example .env
+
+<span class="comment"># macOS / Linux</span>
+<span class="cmd">cp</span> .env.example .env</code></pre>
+
+        <p>The default content is:</p>
+        <pre><code><span class="key">VITE_API_URL</span>=<span class="val">http://localhost:5000/api/v1</span></code></pre>
+
+        <div class="box info">
+          <span class="box-icon">ℹ️</span>
+          <div class="box-body">
+            Vite's development server is configured to proxy all <code>/api</code> and
+            <code>/uploads</code> requests to <code>http://localhost:5000</code> automatically
+            (see <code>vite.config.js</code>), so in development you do not need to worry about CORS.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════
+       7. DATABASE SETUP & MIGRATIONS
+  ══════════════════════════════════════════════════ -->
+  <div class="page-break"></div>
+  <div class="section-label no-break">
+    <div class="section-num">07</div>
+    <h2>Database Setup &amp; Migrations</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <p>
+    The project ships with a single migration script that creates the database, applies the full schema,
+    and seeds default data (admin account, imvunulo presets, and system config).
+  </p>
+
+  <div class="steps">
+
+    <div class="step no-break">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Ensure MySQL is running</strong>
+        <p>Your MySQL user must have CREATE DATABASE privileges. The migration script will create the database automatically if it does not exist.</p>
+      </div>
+    </div>
+
+    <div class="step no-break">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Run the migration from the server directory</strong>
+        <pre><code><span class="comment"># Make sure you are inside server/</span>
+<span class="cmd">npm run migrate</span></code></pre>
+
+        <p>Expected output:</p>
+        <pre><code><span class="val">Running migrations...</span>
+<span class="val">Schema applied.</span>
+<span class="val">Seeding...</span>
+<span class="val">  Admin created: admin@swaziheritage.sz / Admin@1234</span>
+<span class="val">  CHANGE THIS PASSWORD after first login!</span>
+<span class="val">  10 imvunulo presets seeded.</span>
+<span class="val">  3 config entries seeded.</span>
+<span class="val">Done.</span></code></pre>
+      </div>
+    </div>
+
+    <div class="step no-break">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <strong>Apply cinema status migration (if the DB was seeded before v1.1)</strong>
+        <p>If the database was initialised before the recorded-video feature was added, run these two SQL statements in MySQL Workbench or the MySQL CLI:</p>
+        <div class="sql">
+        <pre><code>ALTER TABLE cinemas
+  MODIFY COLUMN status
+  ENUM('scheduled','live','ended','cancelled','available','unavailable')
+  NOT NULL DEFAULT 'scheduled';
+
+<span class="comment">-- Set existing recorded sessions to available</span>
+UPDATE cinemas SET status = 'available' WHERE type = 'recorded';</code></pre>
+        </div>
+        <div class="box info">
+          <span class="box-icon">ℹ️</span>
+          <div class="box-body">
+            The <code>npm run migrate</code> command re-applies <code>schema.sql</code> which already
+            contains the updated ENUM, so this manual step is only needed if you ran migrations
+            on an older version of the project.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <h3>Database Tables Created</h3>
+  <table>
+    <thead><tr><th>Table</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>users</code></td><td>All platform accounts with roles and status flags</td></tr>
+      <tr><td><code>ceremonies</code></td><td>Cultural ceremony records with review workflow</td></tr>
+      <tr><td><code>ceremony_songs</code></td><td>Songs linked to a ceremony</td></tr>
+      <tr><td><code>imvunulo_presets</code></td><td>Pre-seeded traditional attire reference data</td></tr>
+      <tr><td><code>ceremony_imvunulo</code></td><td>Attire items attached to ceremonies</td></tr>
+      <tr><td><code>lineage_records</code></td><td>Historical lineage records with review workflow</td></tr>
+      <tr><td><code>clans</code></td><td>Clan entries linked to lineage records</td></tr>
+      <tr><td><code>notifications</code></td><td>In-app notifications for practitioners</td></tr>
+      <tr><td><code>cinemas</code></td><td>Live &amp; recorded cinema sessions</td></tr>
+      <tr><td><code>bookings</code></td><td>User seat reservations for cinema sessions</td></tr>
+      <tr><td><code>audit_logs</code></td><td>Admin audit trail of user and content actions</td></tr>
+      <tr><td><code>system_config</code></td><td>Key-value platform configuration (AI prompt, etc.)</td></tr>
+    </tbody>
+  </table>
+
+
+  <!-- ═══════════════════════════════════════════════
+       8. RUNNING THE PROJECT
+  ══════════════════════════════════════════════════ -->
+  <div class="section-label no-break">
+    <div class="section-num">08</div>
+    <h2>Running the Project</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <p>
+    Both the server and client must run simultaneously. Open <strong>two separate terminal windows</strong>
+    and run one process in each.
+  </p>
+
+  <h3>Terminal 1 — Start the API server</h3>
+  <pre><code><span class="comment"># From project root</span>
+<span class="cmd">cd</span> server
+<span class="cmd">npm run dev</span>       <span class="comment"># uses nodemon for auto-reload on file changes</span>
+
+<span class="comment"># OR for a stable (non-reloading) process:</span>
+<span class="cmd">npm start</span></code></pre>
+
+  <div class="box success">
+    <span class="box-icon">✅</span>
+    <div class="box-body">
+      Server is ready when you see: <code>Server running in development mode on port 5000</code>
+    </div>
+  </div>
+
+  <h3>Terminal 2 — Start the frontend</h3>
+  <pre><code><span class="comment"># From project root</span>
+<span class="cmd">cd</span> client
+<span class="cmd">npm run dev</span></code></pre>
+
+  <div class="box success">
+    <span class="box-icon">✅</span>
+    <div class="box-body">
+      Frontend is ready when you see: <code>Local: http://localhost:5173/</code>
+    </div>
+  </div>
+
+  <p>Open <strong>http://localhost:5173</strong> in your browser.</p>
+
+  <div class="box info">
+    <span class="box-icon">🔄</span>
+    <div class="box-body">
+      <strong>Cinema session auto-scheduler</strong>
+      The server runs a background task every 30 seconds that automatically transitions
+      cinema sessions from <code>scheduled → live</code> once their <code>scheduled_at</code>
+      datetime is reached.
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════
+       9. DEFAULT CREDENTIALS & ROLES
+  ══════════════════════════════════════════════════ -->
+  <div class="page-break"></div>
+  <div class="section-label no-break">
+    <div class="section-num">09</div>
+    <h2>Default Credentials &amp; Roles</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <p>The migration seed creates one admin account. All other accounts are registered through the platform.</p>
+
+  <div class="cred-card">
+    <div>
+      <div class="label">Email</div>
+      <div class="value">admin@swaziheritage.sz</div>
+    </div>
+    <div>
+      <div class="label">Password</div>
+      <div class="value">Admin@1234</div>
+    </div>
+    <div class="badge">Change after first login</div>
+  </div>
+
+  <h3>User Roles</h3>
+  <table>
+    <thead><tr><th>Role</th><th>Access</th><th>How to assign</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>user</code></td>
+        <td>Browse ceremonies &amp; lineage, use AI chat, book &amp; watch cinema sessions</td>
+        <td>Default on self-registration</td>
+      </tr>
+      <tr>
+        <td><code>history_keeper</code></td>
+        <td>Practitioner dashboard — create/edit lineage records and clans</td>
+        <td>Admin upgrades via User Management</td>
+      </tr>
+      <tr>
+        <td><code>ceremony_keeper</code></td>
+        <td>Practitioner dashboard — create/edit ceremonies and songs</td>
+        <td>Admin upgrades via User Management</td>
+      </tr>
+      <tr>
+        <td><code>admin</code></td>
+        <td>Full access — users, content review, cinema, config, analytics, audit log, ML model</td>
+        <td>Only via direct DB or by another admin</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="box warn">
+    <span class="box-icon">⚠️</span>
+    <div class="box-body">
+      <strong>Content review workflow</strong>
+      All ceremony and lineage records submitted by practitioners start with status
+      <code>pending_review</code>. An admin must approve (publish) or reject them from
+      the <strong>Content Review</strong> page before they appear publicly.
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════
+       10. POST-SETUP CHECKLIST
+  ══════════════════════════════════════════════════ -->
+  <div class="section-label no-break">
+    <div class="section-num">10</div>
+    <h2>Post-Setup Checklist</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <ul style="list-style:none;padding:0;">
+    <li style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+      <span style="width:20px;height:20px;border-radius:5px;border:2px solid #002395;flex-shrink:0;margin-top:1px;"></span>
+      <span>Log in as admin and immediately change the default password in <strong>Profile Settings</strong></span>
+    </li>
+    <li style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+      <span style="width:20px;height:20px;border-radius:5px;border:2px solid #002395;flex-shrink:0;margin-top:1px;"></span>
+      <span>Verify the AI chat works at <code>/chat</code> — this confirms the Gemini API key is valid</span>
+    </li>
+    <li style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+      <span style="width:20px;height:20px;border-radius:5px;border:2px solid #002395;flex-shrink:0;margin-top:1px;"></span>
+      <span>Visit <strong>Admin → Config</strong> and review the AI system prompt and platform name</span>
+    </li>
+    <li style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+      <span style="width:20px;height:20px;border-radius:5px;border:2px solid #002395;flex-shrink:0;margin-top:1px;"></span>
+      <span>Create at least one <code>history_keeper</code> and one <code>ceremony_keeper</code> account to test the practitioner workflows</span>
+    </li>
+    <li style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+      <span style="width:20px;height:20px;border-radius:5px;border:2px solid #002395;flex-shrink:0;margin-top:1px;"></span>
+      <span>Confirm the <code>server/uploads/</code> folder exists and is writable (the server creates it on first file upload)</span>
+    </li>
+    <li style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+      <span style="width:20px;height:20px;border-radius:5px;border:2px solid #002395;flex-shrink:0;margin-top:1px;"></span>
+      <span>Replace JWT secrets in <code>.env</code> with real random values (see Section 5 for the generation command)</span>
+    </li>
+  </ul>
+
+
+  <!-- ═══════════════════════════════════════════════
+       11. PRODUCTION BUILD
+  ══════════════════════════════════════════════════ -->
+  <div class="section-label no-break">
+    <div class="section-num">11</div>
+    <h2>Production Build</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <h3>Build the frontend</h3>
+  <pre><code><span class="cmd">cd</span> client
+<span class="cmd">npm run build</span>     <span class="comment"># outputs to client/dist/</span></code></pre>
+
+  <p>
+    The <code>dist/</code> folder contains static files. Serve them with Nginx, Apache, or any static host.
+    Configure your web server to proxy <code>/api</code> requests to the Node.js server.
+  </p>
+
+  <h3>Run the server in production</h3>
+  <pre><code><span class="key">NODE_ENV</span>=<span class="val">production</span> <span class="cmd">node</span> server/server.js
+
+<span class="comment"># Recommended: use PM2 for process management</span>
+<span class="cmd">npm install</span> <span class="flag">-g</span> pm2
+<span class="cmd">pm2 start</span> server/server.js <span class="flag">--name</span> swazi-heritage-api
+<span class="cmd">pm2 save</span>
+<span class="cmd">pm2 startup</span></code></pre>
+
+  <div class="box warn">
+    <span class="box-icon">⚠️</span>
+    <div class="box-body">
+      In production, set <code>NODE_ENV=production</code>, update <code>CLIENT_URL</code> to your
+      live domain, and serve the frontend over HTTPS. Make sure the database credentials
+      and JWT secrets are strong unique values.
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════
+       12. TROUBLESHOOTING
+  ══════════════════════════════════════════════════ -->
+  <div class="page-break"></div>
+  <div class="section-label no-break">
+    <div class="section-num">12</div>
+    <h2>Troubleshooting</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <table>
+    <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>ECONNREFUSED 3306</code></td>
+        <td>MySQL not running or wrong host/port in <code>.env</code></td>
+        <td>Start MySQL service; double-check <code>DB_HOST</code> and <code>DB_PORT</code></td>
+      </tr>
+      <tr>
+        <td><code>Missing required variables: GEMINI_API_KEY</code></td>
+        <td><code>.env</code> file missing or key not filled in</td>
+        <td>Create <code>server/.env</code> from <code>.env.example</code> and add your key</td>
+      </tr>
+      <tr>
+        <td><code>Access denied for user 'root'</code></td>
+        <td>Wrong MySQL password</td>
+        <td>Update <code>DB_PASSWORD</code> in <code>server/.env</code></td>
+      </tr>
+      <tr>
+        <td>API calls return 404 in browser</td>
+        <td>Server not running or wrong port</td>
+        <td>Ensure <code>npm run dev</code> is running in <code>server/</code> on port 5000</td>
+      </tr>
+      <tr>
+        <td>Vite proxy errors / CORS</td>
+        <td>Server not on port 5000, or <code>CLIENT_URL</code> mismatch</td>
+        <td>Confirm server runs on 5000; check <code>CLIENT_URL=http://localhost:5173</code> in <code>server/.env</code></td>
+      </tr>
+      <tr>
+        <td>Recorded videos not showing on cinema page</td>
+        <td>Old DB schema missing <code>available</code> status in ENUM</td>
+        <td>Run the ALTER TABLE command in Section 7, Step 3</td>
+      </tr>
+      <tr>
+        <td>File upload fails silently</td>
+        <td><code>server/uploads/</code> folder missing or not writable</td>
+        <td>Create the folder manually: <code>mkdir server/uploads</code></td>
+      </tr>
+      <tr>
+        <td><code>npm run migrate</code> fails with "ER_PARSE_ERROR"</td>
+        <td>MySQL version &lt; 8 or <code>multipleStatements</code> disabled</td>
+        <td>Upgrade to MySQL 8. The migrate script enables <code>multipleStatements</code> automatically</td>
+      </tr>
+      <tr>
+        <td>AI chat returns "Fallback" responses only</td>
+        <td>Invalid or expired Gemini API key</td>
+        <td>Regenerate key at aistudio.google.com and update <code>GEMINI_API_KEY</code></td>
+      </tr>
+      <tr>
+        <td><code>nodemon</code> not found</td>
+        <td>Dev dependencies not installed</td>
+        <td>Run <code>npm install</code> inside <code>server/</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Useful commands at a glance</h3>
+  <pre><code><span class="comment"># Re-run migrations (safe to run again — uses IF NOT EXISTS)</span>
+<span class="cmd">cd</span> server &amp;&amp; <span class="cmd">npm run migrate</span>
+
+<span class="comment"># Check server logs (if using PM2)</span>
+<span class="cmd">pm2 logs</span> swazi-heritage-api
+
+<span class="comment"># Connect to the database manually</span>
+<span class="cmd">mysql</span> <span class="flag">-u</span> root <span class="flag">-p</span> swazi_heritage
+
+<span class="comment"># Inspect the cinemas table schema</span>
+<span class="cmd">DESCRIBE</span> cinemas;
+
+<span class="comment"># Generate a secure random JWT secret</span>
+<span class="cmd">node</span> <span class="flag">-e</span> "console.log(require('crypto').randomBytes(48).toString('hex'))"</code></pre>
+
+
+  <!-- ═══════════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════════════ -->
+  <div class="footer">
+    <div>
+      <strong>Swazi Cultural Heritage Platform</strong> — Developer Setup Guide
+    </div>
+    <div class="footer-stripe">
+      <span style="background:#002395;"></span>
+      <span style="background:#FFD600;"></span>
+      <span style="background:#CE1126;"></span>
+      <span style="background:#FFD600;"></span>
+      <span style="background:#002395;"></span>
+    </div>
+    <div>github.com/Celimphilo012/swazi-heritage</div>
+  </div>
+
+</body>
+</html>
