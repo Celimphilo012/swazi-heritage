@@ -85,6 +85,13 @@ const CinemaRoom = () => {
     return () => clearInterval(intervalRef.current);
   }, [id]);
 
+  // Stop polling once we know this is a recorded (static) session
+  useEffect(() => {
+    if (session?.status === "available") {
+      clearInterval(intervalRef.current);
+    }
+  }, [session?.status]);
+
   if (loading) return <LoadingSkeleton />;
 
   if (error || !session) {
@@ -110,6 +117,7 @@ const CinemaRoom = () => {
   const isScheduled = session.status === "scheduled";
   const isEnded     = session.status === "ended";
   const isCancelled = session.status === "cancelled";
+  const isAvailable = session.status === "available";
   const embedUrl    = toEmbedUrl(session.stream_url);
   const isVideoFile = session.stream_url?.match(/\.(mp4|webm|ogg)(\?.*)?$/i);
 
@@ -153,6 +161,12 @@ const CinemaRoom = () => {
               <span className="px-3 py-1 rounded-full text-xs font-bold"
                 style={{ background: "rgba(255,214,0,0.15)", color: "#FFD600", border: "1px solid rgba(255,214,0,0.3)" }}>
                 Scheduled
+              </span>
+            )}
+            {isAvailable && (
+              <span className="px-3 py-1 rounded-full text-xs font-bold"
+                style={{ background: "rgba(124,58,237,0.2)", color: "#c4b5fd", border: "1px solid rgba(124,58,237,0.3)" }}>
+                Recorded
               </span>
             )}
             {isEnded && (
@@ -234,6 +248,8 @@ const CinemaRoom = () => {
               ? "linear-gradient(90deg,#CE1126,#ff4d6d,#CE1126)"
               : isScheduled
               ? "linear-gradient(90deg,#002395,#FFD600,#CE1126)"
+              : isAvailable
+              ? "linear-gradient(90deg,#7c3aed,#a78bfa,#7c3aed)"
               : "#374151",
           }} />
 

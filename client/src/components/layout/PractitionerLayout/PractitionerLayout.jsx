@@ -1,7 +1,10 @@
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { ROLES } from '../../../utils/constants';
 import shieldPng from '../../../lib/shield.png';
+import { getMyCeremonies } from '../../../api/ceremonies.api';
+import { getMyLineageRecords } from '../../../api/lineage.api';
 
 const Icon = ({ d, d2, viewBox = "0 0 24 24" }) => (
   <svg style={{ width: 18, height: 18, flexShrink: 0 }}
@@ -40,6 +43,17 @@ const PractitionerLayout = () => {
   const roleLabel = isHistory ? "History Keeper" : "Ceremony Keeper";
   const accent    = isHistory ? "#002395" : "#d97706";
 
+  const [notifCount, setNotifCount] = useState(0);
+
+  useEffect(() => {
+    const fetch = isHistory ? getMyLineageRecords() : getMyCeremonies();
+    fetch
+      .then(items => {
+        setNotifCount(items.filter(i => i.status === 'rejected' || i.status === 'published').length);
+      })
+      .catch(() => {});
+  }, [isHistory]);
+
   const handleLogout = () => { logout(); navigate("/login"); };
 
   return (
@@ -74,8 +88,8 @@ const PractitionerLayout = () => {
               { to: "/practitioner/ceremonies", label: "Ceremonies",   icon: "ceremonies" },
               { to: "/practitioner/songs",      label: "Songs Library",icon: "songs"      },
             ]),
-            { to: "/practitioner/notifications", label: "Notifications", icon: "notifications" },
-          ].map(({ to, end, label, icon }) => (
+            { to: "/practitioner/notifications", label: "Notifications", icon: "notifications", badge: notifCount },
+          ].map(({ to, end, label, icon, badge }) => (
             <NavLink key={to} to={to} end={end}>
               {({ isActive }) => (
                 <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer"
@@ -88,7 +102,14 @@ const PractitionerLayout = () => {
                   <span className="text-sm font-semibold" style={{ color: isActive ? "#fff" : "#94a3b8" }}>
                     {label}
                   </span>
-                  {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: accent }} />}
+                  {badge > 0 ? (
+                    <span className="ml-auto flex items-center justify-center rounded-full font-bold text-white flex-shrink-0"
+                      style={{ minWidth: 18, height: 18, fontSize: 10, background: "#CE1126", padding: "0 4px" }}>
+                      {badge > 99 ? "99+" : badge}
+                    </span>
+                  ) : isActive ? (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: accent }} />
+                  ) : null}
                 </div>
               )}
             </NavLink>

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import shieldPng from '../../../lib/shield.png';
+import { getAdminCeremonies, getAdminLineage } from '../../../api/admin.api';
 
 /* ── Icons ── */
 const Icon = ({ d, d2, viewBox = "0 0 24 24" }) => (
@@ -54,7 +55,7 @@ const Avatar = ({ name, size = 32 }) => {
 };
 
 /* ── Single nav item ── */
-const NavItem = ({ to, end, label, icon }) => (
+const NavItem = ({ to, end, label, icon, badge }) => (
   <NavLink to={to} end={end}
     className={({ isActive }) =>
       `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group relative ${
@@ -73,10 +74,15 @@ const NavItem = ({ to, end, label, icon }) => (
           <Icon d={ICONS[icon]} />
         </span>
         <span>{label}</span>
-        {isActive && (
+        {badge > 0 ? (
+          <span className="ml-auto flex items-center justify-center rounded-full font-bold text-white flex-shrink-0"
+            style={{ minWidth: 18, height: 18, fontSize: 10, background: "#CE1126", padding: "0 4px" }}>
+            {badge > 99 ? "99+" : badge}
+          </span>
+        ) : isActive ? (
           <span className="ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0"
             style={{ background: "#CE1126" }} />
-        )}
+        ) : null}
       </>
     )}
   </NavLink>
@@ -87,6 +93,18 @@ const AdminLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    Promise.all([
+      getAdminCeremonies({ status: 'pending_review', limit: 1 }),
+      getAdminLineage({ status: 'pending_review', limit: 1 }),
+    ])
+      .then(([cer, lin]) => {
+        setPendingCount((cer.meta?.total || 0) + (lin.meta?.total || 0));
+      })
+      .catch(() => {});
+  }, []);
 
   const handleLogout = () => { logout(); navigate("/login"); };
 
@@ -116,7 +134,8 @@ const AdminLayout = () => {
             Management
           </p>
           {NAV_ITEMS.slice(0, 5).map(item => (
-            <NavItem key={item.to} {...item} />
+            <NavItem key={item.to} {...item}
+              badge={item.to === "/admin/review" ? pendingCount : 0} />
           ))}
 
           <p className="text-xs font-bold uppercase tracking-widest px-3 mb-3 mt-5" style={{ color: "rgba(148,163,184,0.5)" }}>

@@ -155,12 +155,13 @@ export const CinemaModel = {
     type,
     stream_url,
     scheduled_at,
+    status = 'scheduled',
     created_by,
   }) =>
     query(
-      `INSERT INTO cinemas (title, description, type, stream_url, scheduled_at, created_by)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-      [title, description, type, stream_url, scheduled_at, created_by],
+      `INSERT INTO cinemas (title, description, type, stream_url, scheduled_at, status, created_by)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [title, description, type, stream_url, scheduled_at, status, created_by],
     ),
 
   update: (id, fields) => {
@@ -193,7 +194,7 @@ export const CinemaModel = {
       [id],
     ).then((r) => r[0]),
 
-  getAll: ({ type, status, page = 1, limit = 20 }) => {
+  getAll: ({ type, status, statuses, page = 1, limit = 20 }) => {
     const offset = (page - 1) * limit;
     const conditions = [];
     const params = [];
@@ -204,6 +205,9 @@ export const CinemaModel = {
     if (status) {
       conditions.push("c.status = ?");
       params.push(status);
+    } else if (statuses && statuses.length) {
+      conditions.push(`c.status IN (${statuses.map(() => "?").join(",")})`);
+      params.push(...statuses);
     }
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
     return Promise.all([

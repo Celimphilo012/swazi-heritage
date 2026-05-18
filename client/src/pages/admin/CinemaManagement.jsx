@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { getAdminCinema, createCinema, updateCinema } from "../../api/admin.api";
 
 const STATUS_CFG = {
-  scheduled: { label:"Scheduled", color:"#002395", bg:"rgba(0,35,149,0.1)"  },
-  live:      { label:"Live",      color:"#10b981", bg:"rgba(16,185,129,0.1)" },
-  ended:     { label:"Ended",     color:"#64748b", bg:"rgba(100,116,139,0.1)"},
-  cancelled: { label:"Cancelled", color:"#CE1126", bg:"rgba(206,17,38,0.1)" },
+  scheduled: { label:"Scheduled", color:"#002395", bg:"rgba(0,35,149,0.1)"   },
+  live:      { label:"Live",      color:"#10b981", bg:"rgba(16,185,129,0.1)"  },
+  ended:     { label:"Ended",     color:"#64748b", bg:"rgba(100,116,139,0.1)" },
+  cancelled: { label:"Cancelled", color:"#CE1126", bg:"rgba(206,17,38,0.1)"  },
+  available: { label:"Available", color:"#7c3aed", bg:"rgba(124,58,237,0.1)" },
 };
 
 const fmt = d => d ? new Date(d).toLocaleString("en-GB", {
@@ -135,7 +136,7 @@ const CinemaManagement = () => {
 
       {/* Filter */}
       <div className="flex gap-2 flex-wrap">
-        {[["","All statuses"],["scheduled","Scheduled"],["live","Live"],["ended","Ended"],["cancelled","Cancelled"]].map(([v,l]) => (
+        {[["","All"],["scheduled","Scheduled"],["live","Live"],["available","Available"],["ended","Ended"],["cancelled","Cancelled"]].map(([v,l]) => (
           <button key={v} onClick={() => { setStaFil(v); setPage(1); }}
             className="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
             style={statusFilt===v
@@ -275,19 +276,28 @@ const CinemaManagement = () => {
                 focus:outline-none focus:ring-2 focus:ring-blue-200" />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <FSelect label="Type" required value={formData.type} onChange={setField("type")}>
+            <FSelect label="Type" required value={formData.type} onChange={e => {
+              const t = e.target.value;
+              setFormData(d => ({ ...d, type: t, status: t === "recorded" ? "available" : "scheduled" }));
+            }}>
               <option value="live">Live</option>
               <option value="recorded">Recorded</option>
             </FSelect>
             <FSelect label="Status" required value={formData.status} onChange={setField("status")}>
-              <option value="scheduled">Scheduled</option>
-              <option value="live">Live</option>
-              <option value="ended">Ended</option>
-              <option value="cancelled">Cancelled</option>
+              {formData.type === "recorded" ? (
+                <option value="available">Available</option>
+              ) : (
+                <>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="live">Live</option>
+                  <option value="ended">Ended</option>
+                  <option value="cancelled">Cancelled</option>
+                </>
+              )}
             </FSelect>
           </div>
-          <FInput label="Stream / Video URL" required type="url" value={formData.stream_url} onChange={setField("stream_url")}
-            placeholder={formData.type==="recorded" ? "https://youtube.com/watch?v=..." : "https://..."} />
+          <FInput label="Video URL" required type="url" value={formData.stream_url} onChange={setField("stream_url")}
+            placeholder={formData.type==="recorded" ? "https://youtube.com/watch?v=..." : "https://live-stream-url..."} />
           {formData.type === "recorded" && (
             <p className="text-xs text-slate-400 -mt-2">YouTube watch links are automatically converted to embed format.</p>
           )}

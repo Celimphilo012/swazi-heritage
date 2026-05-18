@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getCinemaSessions, bookSession, getMyBookings } from "../../api/cinema.api";
 
 const POLL_INTERVAL = 30_000;
-const STATUS_ORDER  = { live: 0, scheduled: 1, ended: 2, cancelled: 3 };
+const STATUS_ORDER  = { live: 0, available: 1, scheduled: 2, ended: 3, cancelled: 4 };
 
 const fmt = (d) =>
   d ? new Date(d).toLocaleString("en-GB", {
@@ -75,6 +75,43 @@ const LiveCard = ({ s }) => (
           <path d="M8 5v14l11-7z" />
         </svg>
         Watch Live
+      </div>
+    </div>
+  </Link>
+);
+
+/* ── Recorded / always-available card ── */
+const RecordedCard = ({ s }) => (
+  <Link to={`/cinema/${s.id}`}
+    className="block rounded-2xl overflow-hidden group hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
+    style={{
+      background: "linear-gradient(135deg,#1e1a3a 0%,#2d2060 100%)",
+      boxShadow: "0 0 30px rgba(124,58,237,0.2)",
+    }}>
+    <div className="h-1.5" style={{ background: "#7c3aed" }} />
+    <div className="p-5 text-white">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xs font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full"
+          style={{ background: "rgba(124,58,237,0.3)", color: "#c4b5fd" }}>
+          Recorded
+        </span>
+        <span className="ml-auto text-xs font-semibold px-2.5 py-0.5 rounded-full"
+          style={{ background: "rgba(255,255,255,0.1)" }}>
+          {s.type}
+        </span>
+      </div>
+
+      <h3 className="font-bold leading-snug mb-2" style={{ color: "#fff" }}>{s.title}</h3>
+      {s.description && (
+        <p className="text-sm mb-4 line-clamp-2" style={{ color: "rgba(196,181,253,0.8)" }}>{s.description}</p>
+      )}
+
+      <div className="inline-flex items-center gap-2 font-black px-4 py-2 rounded-xl text-sm transition-all group-hover:scale-105"
+        style={{ background: "#7c3aed", color: "#fff" }}>
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M8 5v14l11-7z" />
+        </svg>
+        Watch Now
       </div>
     </div>
   </Link>
@@ -225,9 +262,10 @@ const CinemaListing = () => {
     }
   };
 
-  const sorted       = [...sessions].sort((a, b) => (STATUS_ORDER[a.status] ?? 4) - (STATUS_ORDER[b.status] ?? 4));
-  const liveSessions = sorted.filter(s => s.status === "live");
-  const restSessions = sorted.filter(s => s.status !== "live");
+  const sorted            = [...sessions].sort((a, b) => (STATUS_ORDER[a.status] ?? 5) - (STATUS_ORDER[b.status] ?? 5));
+  const liveSessions      = sorted.filter(s => s.status === "live");
+  const recordedSessions  = sorted.filter(s => s.status === "available");
+  const restSessions      = sorted.filter(s => s.status !== "live" && s.status !== "available");
 
   return (
     <div className="-mt-8 -mx-4">
@@ -342,12 +380,29 @@ const CinemaListing = () => {
               </div>
             )}
 
+            {/* RECORDED — always available */}
+            {recordedSessions.length > 0 && (
+              <div className="mt-7">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-3.5 h-3.5" style={{ color: "#7c3aed" }} fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                  <h2 className="text-xs font-black uppercase tracking-widest" style={{ color: "#7c3aed" }}>
+                    Recorded
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {recordedSessions.map(s => <RecordedCard key={s.id} s={s} />)}
+                </div>
+              </div>
+            )}
+
             {/* SCHEDULED + ENDED */}
             {restSessions.length > 0 && (
               <div className="mt-7">
-                {liveSessions.length > 0 && (
+                {(liveSessions.length > 0 || recordedSessions.length > 0) && (
                   <h2 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">
-                    All Sessions
+                    Upcoming &amp; Past
                   </h2>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

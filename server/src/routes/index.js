@@ -348,7 +348,7 @@ cinemaRouter.get("/", async (req, res, next) => {
     const { type, page = 1, limit = 20 } = req.query;
     const { rows, total } = await CinemaModel.getAll({
       type,
-      status: "scheduled",
+      statuses: ["scheduled", "live", "available"],
       page: Number(page),
       limit: Number(limit),
     });
@@ -409,11 +409,13 @@ cinemaRouter.post(
   validate,
   async (req, res, next) => {
     try {
+      const status = req.body.type === "recorded" ? "available" : (req.body.status || "scheduled");
       const result = await CinemaModel.create({
         ...req.body,
+        status,
         created_by: req.user.id,
       });
-      created(res, { id: result.insertId, ...req.body });
+      created(res, { id: result.insertId, ...req.body, status });
     } catch (err) {
       next(err);
     }
