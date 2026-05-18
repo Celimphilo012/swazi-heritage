@@ -6,7 +6,8 @@ const STATUS_CFG = {
   live:      { label:"Live",      color:"#10b981", bg:"rgba(16,185,129,0.1)"  },
   ended:     { label:"Ended",     color:"#64748b", bg:"rgba(100,116,139,0.1)" },
   cancelled: { label:"Cancelled", color:"#CE1126", bg:"rgba(206,17,38,0.1)"  },
-  available: { label:"Available", color:"#7c3aed", bg:"rgba(124,58,237,0.1)" },
+  available:   { label:"Available",   color:"#7c3aed", bg:"rgba(124,58,237,0.1)"  },
+  unavailable: { label:"Unavailable", color:"#94a3b8", bg:"rgba(148,163,184,0.1)" },
 };
 
 const fmt = d => d ? new Date(d).toLocaleString("en-GB", {
@@ -136,7 +137,7 @@ const CinemaManagement = () => {
 
       {/* Filter */}
       <div className="flex gap-2 flex-wrap">
-        {[["","All"],["scheduled","Scheduled"],["live","Live"],["available","Available"],["ended","Ended"],["cancelled","Cancelled"]].map(([v,l]) => (
+        {[["","All"],["scheduled","Scheduled"],["live","Live"],["available","Available"],["unavailable","Unavailable"],["ended","Ended"],["cancelled","Cancelled"]].map(([v,l]) => (
           <button key={v} onClick={() => { setStaFil(v); setPage(1); }}
             className="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
             style={statusFilt===v
@@ -222,6 +223,20 @@ const CinemaManagement = () => {
                         Cancel
                       </button>
                     )}
+                    {s.type === "recorded" && s.status === "available" && (
+                      <button onClick={() => handleStatusChange(s, "unavailable")}
+                        className="text-xs px-3 py-1.5 rounded-xl font-semibold transition-colors"
+                        style={{ background:"rgba(148,163,184,0.12)", color:"#64748b" }}>
+                        Hide
+                      </button>
+                    )}
+                    {s.type === "recorded" && s.status === "unavailable" && (
+                      <button onClick={() => handleStatusChange(s, "available")}
+                        className="text-xs px-3 py-1.5 rounded-xl font-semibold transition-colors"
+                        style={{ background:"rgba(124,58,237,0.1)", color:"#7c3aed" }}>
+                        Make Available
+                      </button>
+                    )}
                     <button onClick={() => {
                       setFormData({ title:s.title, description:s.description||"", type:s.type,
                         stream_url:s.stream_url, scheduled_at:s.scheduled_at?s.scheduled_at.slice(0,16):"", status:s.status });
@@ -285,7 +300,10 @@ const CinemaManagement = () => {
             </FSelect>
             <FSelect label="Status" required value={formData.status} onChange={setField("status")}>
               {formData.type === "recorded" ? (
-                <option value="available">Available</option>
+                <>
+                  <option value="available">Available</option>
+                  <option value="unavailable">Unavailable</option>
+                </>
               ) : (
                 <>
                   <option value="scheduled">Scheduled</option>

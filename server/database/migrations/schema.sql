@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS cinemas (
   type         ENUM('live','recorded') NOT NULL,
   stream_url   VARCHAR(500) NOT NULL,
   scheduled_at DATETIME,
-  status       ENUM('scheduled','live','ended','cancelled','available') NOT NULL DEFAULT 'scheduled',
+  status       ENUM('scheduled','live','ended','cancelled','available','unavailable') NOT NULL DEFAULT 'scheduled',
   created_by   INT NOT NULL,
   created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
