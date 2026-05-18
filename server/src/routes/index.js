@@ -277,8 +277,13 @@ lineageRouter.post(
 );
 lineageRouter.put("/:id", historyKeeperOnly, async (req, res, next) => {
   try {
+    const record = await LineageModel.findById(req.params.id);
+    if (!record) throw new AppError("Lineage record not found.", 404);
+    if (record.created_by !== req.user.id) throw new AppError("You can only edit your own records.", 403);
+    if (record.status === "published" || record.status === "rejected")
+      await LineageModel.updateStatus(req.params.id, "pending_review", null, null);
     await LineageModel.update(req.params.id, req.body);
-    success(res, null, "Lineage record updated.");
+    success(res, null, "Lineage record updated and resubmitted for review.");
   } catch (err) {
     next(err);
   }

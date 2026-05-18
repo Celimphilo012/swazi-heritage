@@ -15,7 +15,7 @@ export const updateCeremony = async (req, res, next) => {
     if (!c) throw new AppError('Ceremony not found.', 404);
     if (c.created_by !== req.user.id && req.user.role !== 'admin')
       throw new AppError('You can only edit your own ceremonies.', 403);
-    if (c.status === 'published')
+    if (c.status === 'published' || c.status === 'rejected')
       await CeremonyModel.updateStatus(req.params.id, 'pending_review', null);
     await CeremonyModel.update(req.params.id, req.body);
     success(res, await CeremonyModel.getFullDetail(req.params.id), 'Ceremony updated and re-submitted for review.');
