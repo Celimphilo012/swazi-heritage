@@ -2,24 +2,11 @@ import { useState, useEffect } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { ROLE_HOME } from '../../../utils/constants';
+import shieldPng from '../../../lib/shield.png';
 
 /* ── Mini Swazi shield ── */
 const ShieldIcon = () => (
-  <svg width="22" height="27" viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <line x1="16" y1="4"  x2="16" y2="96" stroke="#A07840" strokeWidth="3"   strokeLinecap="round" opacity="0.85"/>
-    <polygon points="16,1 11,13 21,13"     fill="#B8B8B8" opacity="0.85"/>
-    <line x1="64" y1="4"  x2="64" y2="96" stroke="#A07840" strokeWidth="3"   strokeLinecap="round" opacity="0.85"/>
-    <polygon points="64,1 59,13 69,13"     fill="#B8B8B8" opacity="0.85"/>
-    <path d="M40,5 C56,5 68,18 68,40 C68,64 56,88 40,100 C24,88 12,64 12,40 C12,18 24,5 40,5Z"
-          fill="white" stroke="#111" strokeWidth="2"/>
-    <clipPath id="nav-clip">
-      <path d="M40,5 C56,5 68,18 68,40 C68,64 56,88 40,100 C24,88 12,64 12,40 C12,18 24,5 40,5Z"/>
-    </clipPath>
-    <rect x="12" y="5" width="28" height="95" fill="#111" clipPath="url(#nav-clip)"/>
-    <path d="M14,42 Q40,35 66,42" stroke="white" strokeWidth="5" fill="none" strokeLinecap="round"/>
-    <line x1="40" y1="3"  x2="40" y2="98" stroke="#7B4A28" strokeWidth="3.5" strokeLinecap="round"/>
-    <circle cx="40" cy="2" r="3.5" fill="#FFD600"/>
-  </svg>
+  <img src={shieldPng} alt="Nguni Shield" width="22" height="27" style={{ objectFit: "contain" }} />
 );
 
 /* ── Flag stripe ── */

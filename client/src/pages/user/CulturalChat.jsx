@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { askQuestion, getPromptHistory } from "../../api/prompts.api";
+import shieldPng from "../../lib/shield.png";
 
 const SOURCE_LABEL = {
   db_only: "From Platform",
@@ -61,17 +62,7 @@ const SUGGESTIONS = [
 const ShieldAvatar = () => (
   <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
        style={{ background: "linear-gradient(135deg,#001540,#002d80)" }}>
-    <svg width="16" height="20" viewBox="0 0 80 100" fill="none">
-      <path d="M40,5 C56,5 68,18 68,40 C68,64 56,88 40,100 C24,88 12,64 12,40 C12,18 24,5 40,5Z"
-            fill="white" stroke="#111" strokeWidth="2.5"/>
-      <clipPath id="cc">
-        <path d="M40,5 C56,5 68,18 68,40 C68,64 56,88 40,100 C24,88 12,64 12,40 C12,18 24,5 40,5Z"/>
-      </clipPath>
-      <rect x="12" y="5" width="28" height="95" fill="#111" clipPath="url(#cc)"/>
-      <path d="M14,42 Q40,35 66,42" stroke="white" strokeWidth="6" fill="none" strokeLinecap="round"/>
-      <line x1="40" y1="3" x2="40" y2="98" stroke="#7B4A28" strokeWidth="4" strokeLinecap="round"/>
-      <circle cx="40" cy="2" r="4" fill="#FFD600"/>
-    </svg>
+    <img src={shieldPng} alt="Nguni Shield" width="16" height="20" style={{ objectFit: "contain" }} />
   </div>
 );
 
@@ -189,17 +180,7 @@ const CulturalChat = () => {
         <div className="px-5 py-4 flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
                style={{ background: "rgba(255,214,0,0.12)", border: "1px solid rgba(255,214,0,0.2)" }}>
-            <svg width="22" height="27" viewBox="0 0 80 100" fill="none">
-              <path d="M40,5 C56,5 68,18 68,40 C68,64 56,88 40,100 C24,88 12,64 12,40 C12,18 24,5 40,5Z"
-                    fill="white" stroke="#111" strokeWidth="2.5"/>
-              <clipPath id="hc">
-                <path d="M40,5 C56,5 68,18 68,40 C68,64 56,88 40,100 C24,88 12,64 12,40 C12,18 24,5 40,5Z"/>
-              </clipPath>
-              <rect x="12" y="5" width="28" height="95" fill="#111" clipPath="url(#hc)"/>
-              <path d="M14,42 Q40,35 66,42" stroke="white" strokeWidth="6" fill="none" strokeLinecap="round"/>
-              <line x1="40" y1="3" x2="40" y2="98" stroke="#7B4A28" strokeWidth="4" strokeLinecap="round"/>
-              <circle cx="40" cy="2" r="4" fill="#FFD600"/>
-            </svg>
+            <img src={shieldPng} alt="Nguni Shield" width="22" height="27" style={{ objectFit: "contain" }} />
           </div>
           <div>
             <h1 className="text-lg font-bold text-white">Cultural AI Chat</h1>
@@ -236,17 +217,7 @@ const CulturalChat = () => {
           <div className="flex flex-col items-center justify-center h-full text-center px-4 py-8">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
                  style={{ background: "linear-gradient(135deg,#001540,#002d80)" }}>
-              <svg width="28" height="35" viewBox="0 0 80 100" fill="none">
-                <path d="M40,5 C56,5 68,18 68,40 C68,64 56,88 40,100 C24,88 12,64 12,40 C12,18 24,5 40,5Z"
-                      fill="white" stroke="#111" strokeWidth="2.5"/>
-                <clipPath id="ec">
-                  <path d="M40,5 C56,5 68,18 68,40 C68,64 56,88 40,100 C24,88 12,64 12,40 C12,18 24,5 40,5Z"/>
-                </clipPath>
-                <rect x="12" y="5" width="28" height="95" fill="#111" clipPath="url(#ec)"/>
-                <path d="M14,42 Q40,35 66,42" stroke="white" strokeWidth="6" fill="none" strokeLinecap="round"/>
-                <line x1="40" y1="3" x2="40" y2="98" stroke="#7B4A28" strokeWidth="4" strokeLinecap="round"/>
-                <circle cx="40" cy="2" r="4" fill="#FFD600"/>
-              </svg>
+              <img src={shieldPng} alt="Nguni Shield" width="28" height="35" style={{ objectFit: "contain" }} />
             </div>
             <h2 className="text-lg font-bold text-gray-800 mb-1">Ask about Swazi culture</h2>
             <p className="text-sm text-gray-500 max-w-sm mb-6">

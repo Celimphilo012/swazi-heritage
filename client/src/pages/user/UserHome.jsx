@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getPublishedCeremonies } from "../../api/ceremonies.api";
 import { getPublishedLineage } from "../../api/lineage.api";
+import shieldPng from "../../lib/shield.png";
 
 const FACTS = [
   "The Kingdom of Eswatini is one of Africa's last absolute monarchies",
@@ -43,27 +44,8 @@ const DiamondParticles = () => (
 
 /* ── Swazi Nguni shield with spears ── */
 const ShieldSVG = ({ style }) => (
-  <svg style={style} viewBox="0 0 80 104" fill="none" xmlns="http://www.w3.org/2000/svg" width="96" height="104">
-    {/* Left spear */}
-    <line x1="14" y1="4"  x2="14" y2="100" stroke="#A07840" strokeWidth="2.5" strokeLinecap="round" opacity="0.85"/>
-    <polygon points="14,2 9,16 19,16"  fill="#C0C0C0" opacity="0.85"/>
-    {/* Right spear */}
-    <line x1="66" y1="4"  x2="66" y2="100" stroke="#A07840" strokeWidth="2.5" strokeLinecap="round" opacity="0.85"/>
-    <polygon points="66,2 61,16 71,16" fill="#C0C0C0" opacity="0.85"/>
-    {/* Shield body */}
-    <path d="M40,5 C56,5 68,18 68,40 C68,64 56,88 40,100 C24,88 12,64 12,40 C12,18 24,5 40,5Z"
-          fill="white" stroke="#111" strokeWidth="1.5"/>
-    {/* Black left half */}
-    <clipPath id="sh-clip">
-      <path d="M40,5 C56,5 68,18 68,40 C68,64 56,88 40,100 C24,88 12,64 12,40 C12,18 24,5 40,5Z"/>
-    </clipPath>
-    <rect x="12" y="5" width="28" height="95" fill="#111" clipPath="url(#sh-clip)"/>
-    {/* White horizontal stripe */}
-    <path d="M14,42 Q40,35 66,42" stroke="white" strokeWidth="5" fill="none" strokeLinecap="round"/>
-    {/* Central stick */}
-    <line x1="40" y1="3" x2="40" y2="101" stroke="#7B4A28" strokeWidth="3.5" strokeLinecap="round"/>
-    <circle cx="40" cy="2" r="4" fill="#FFD600"/>
-  </svg>
+  <img src={shieldPng} alt="Nguni Shield" width="96" height="104"
+    style={{ objectFit: "contain", ...style }} />
 );
 
 /* ── Hooks ── */
