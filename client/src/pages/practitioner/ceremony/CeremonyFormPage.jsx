@@ -271,7 +271,7 @@ const CeremonyFormPage = () => {
           c.imvunulo.map((iv) => ({
             ...iv,
             _key: `iv-${iv.id}`,
-            preset_name: iv.name, // joined from preset in API
+            preset_name: iv.preset_name,
           })),
         );
       })

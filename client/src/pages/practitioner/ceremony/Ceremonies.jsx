@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getMyCeremonies } from "../../../api/ceremonies.api";
+import {
+  getMyCeremonies,
+  getCeremony,
+  getImvunuloPresets,
+  addImvunulo,
+  deleteImvunulo,
+} from "../../../api/ceremonies.api";
 
 const STATUS_CFG = {
   pending_review: { label: "Pending",   color: "#d97706", bg: "rgba(217,119,6,0.1)"   },
@@ -23,11 +29,188 @@ const StatusPill = ({ status }) => {
   );
 };
 
-const Ceremonies = () => {
-  const [ceremonies, setCeremonies] = useState([]);
+// ─── Attire preset card (used in the manage-attire modal) ────────────────────
+const ModalPresetCard = ({ preset, selected, busy, onToggle }) => (
+  <button
+    type="button"
+    onClick={() => onToggle(preset)}
+    disabled={busy}
+    className={`w-full text-left border-2 rounded-xl p-3 transition-all ${
+      busy
+        ? "opacity-60 cursor-wait"
+        : selected
+          ? "border-red-600 bg-red-50"
+          : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+    }`}
+  >
+    <div className="flex items-start gap-2">
+      <div className={`mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+        selected ? "border-red-600 bg-red-600" : "border-gray-300"
+      }`}>
+        {selected && (
+          <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 8" fill="none">
+            <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.5"
+              strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        {preset.image_url && (
+          <img src={preset.image_url} alt={preset.name}
+            className="w-full h-16 object-cover rounded-lg mb-2 border border-gray-100"
+            onError={(e) => { e.target.style.display = "none"; }} />
+        )}
+        <p className="text-sm font-medium text-gray-900">{preset.name}</p>
+        {preset.description && (
+          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-relaxed">
+            {preset.description}
+          </p>
+        )}
+        <span className={`inline-block mt-1 text-xs px-1.5 py-0.5 rounded font-medium ${
+          preset.gender === "male"   ? "bg-blue-50 text-blue-700"   :
+          preset.gender === "female" ? "bg-pink-50 text-pink-700"   :
+          preset.gender === "child"  ? "bg-purple-50 text-purple-700" :
+          "bg-gray-100 text-gray-600"
+        }`}>{preset.gender}</span>
+      </div>
+    </div>
+  </button>
+);
+
+// ─── Manage Attire modal ──────────────────────────────────────────────────────
+const AttireModal = ({ ceremony, onClose }) => {
+  const [presets,    setPresets]    = useState([]);
+  const [imvunulo,   setImvunulo]   = useState([]);
   const [loading,    setLoading]    = useState(true);
-  const [error,      setError]      = useState("");
-  const [filter,     setFilter]     = useState("");
+  const [togglingId, setTogglingId] = useState(null);
+  const [modalError, setModalError] = useState("");
+
+  useEffect(() => {
+    Promise.all([getImvunuloPresets(), getCeremony(ceremony.id)])
+      .then(([p, c]) => { setPresets(p); setImvunulo(c.imvunulo); })
+      .catch(() => setModalError("Could not load attire data. Please try again."))
+      .finally(() => setLoading(false));
+  }, [ceremony.id]);
+
+  const isSelected = (presetId) => imvunulo.some(iv => iv.preset_id === presetId);
+
+  const handleToggle = async (preset) => {
+    setTogglingId(preset.id);
+    setModalError("");
+    try {
+      const existing = imvunulo.find(iv => iv.preset_id === preset.id);
+      if (existing) {
+        await deleteImvunulo(ceremony.id, existing.id);
+        setImvunulo(prev => prev.filter(iv => iv.id !== existing.id));
+      } else {
+        await addImvunulo(ceremony.id, { preset_id: preset.id });
+        const updated = await getCeremony(ceremony.id);
+        setImvunulo(updated.imvunulo);
+      }
+    } catch {
+      setModalError("Could not update attire. Please try again.");
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.5)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+        {/* Header */}
+        <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <h2 className="text-base font-bold text-gray-900">Manage Attire (Imvunulo)</h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {ceremony.name} · changes save immediately
+            </p>
+          </div>
+          <button type="button" onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-5">
+          {modalError && (
+            <div className="mb-3 p-3 rounded-xl text-xs text-red-700"
+              style={{ background: "rgba(206,17,38,0.06)", border: "1px solid rgba(206,17,38,0.2)" }}>
+              {modalError}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="grid grid-cols-2 gap-2">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="border border-gray-200 rounded-xl p-3 animate-pulse">
+                  <div className="h-3 bg-gray-200 rounded w-2/3 mb-2" />
+                  <div className="h-2 bg-gray-100 rounded w-full mb-1" />
+                  <div className="h-2 bg-gray-100 rounded w-4/5" />
+                </div>
+              ))}
+            </div>
+          ) : presets.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-8">
+              No attire presets configured yet. Ask the admin to add them in System Config.
+            </p>
+          ) : (
+            <>
+              <p className="text-xs text-gray-500 mb-3">
+                <span className="font-semibold text-gray-700">{imvunulo.length}</span> item{imvunulo.length !== 1 ? "s" : ""} selected
+                {" "}— click to add or remove
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {presets.map(preset => (
+                  <ModalPresetCard
+                    key={preset.id}
+                    preset={preset}
+                    selected={isSelected(preset.id)}
+                    busy={togglingId === preset.id}
+                    onToggle={handleToggle}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-gray-100">
+          <p className="text-xs text-gray-400 mb-3">
+            For colour descriptions, images, or notes per attire item, use the full{" "}
+            <Link
+              to={`/practitioner/ceremonies/${ceremony.id}/edit`}
+              onClick={onClose}
+              className="text-red-700 underline"
+            >
+              edit form
+            </Link>.
+          </p>
+          <button type="button" onClick={onClose}
+            className="w-full px-4 py-2 rounded-xl text-sm font-semibold text-white transition-colors"
+            style={{ background: "#0f172a" }}>
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Main component ───────────────────────────────────────────────────────────
+const Ceremonies = () => {
+  const [ceremonies,  setCeremonies]  = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [error,       setError]       = useState("");
+  const [filter,      setFilter]      = useState("");
+  const [attireModal, setAttireModal] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -182,12 +365,26 @@ const Ceremonies = () => {
                         Edit
                       </Link>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => setAttireModal(ceremony)}
+                      className="px-3 py-1.5 rounded-xl text-xs font-semibold border text-center transition-colors hover:bg-red-50"
+                      style={{ borderColor: "rgba(206,17,38,0.25)", color: "#CE1126", background: "rgba(206,17,38,0.04)" }}>
+                      Attire
+                    </button>
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {attireModal && (
+        <AttireModal
+          ceremony={attireModal}
+          onClose={() => setAttireModal(null)}
+        />
       )}
     </div>
   );
