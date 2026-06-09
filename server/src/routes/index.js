@@ -35,6 +35,7 @@ import {
 } from "../middleware/role.middleware.js";
 import { authLimiter } from "../middleware/rateLimit.middleware.js";
 import { aiLimiter } from "../middleware/rateLimit.middleware.js";
+import { attachAuditLogger, auditLog } from "../middleware/audit.middleware.js";
 
 // Controllers
 import * as AuthCtrl from "../controllers/auth.controller.js";
@@ -56,6 +57,7 @@ import {
 import { success, created, paginated, AppError } from "../utils/apiResponse.js";
 
 const router = Router();
+router.use(attachAuditLogger);
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 const authRouter = Router();
@@ -205,6 +207,7 @@ ceremonyRouter.delete(
 ceremonyRouter.patch(
   "/:id/review",
   adminOnly,
+  auditLog("review_ceremony"),
   [body("status").isIn(["published", "rejected", "pending_review"])],
   validate,
   CeremonyCtrl.reviewCeremony,
@@ -291,6 +294,7 @@ lineageRouter.put("/:id", historyKeeperOnly, async (req, res, next) => {
 lineageRouter.patch(
   "/:id/review",
   adminOnly,
+  auditLog("review_lineage"),
   [body("status").isIn(["published", "rejected", "pending_review"])],
   validate,
   async (req, res, next) => {
@@ -401,6 +405,7 @@ cinemaRouter.get("/my/bookings", async (req, res, next) => {
 cinemaRouter.post(
   "/",
   adminOnly,
+  auditLog("create_cinema"),
   [
     body("title").notEmpty(),
     body("type").isIn(["live", "recorded"]),
@@ -421,7 +426,7 @@ cinemaRouter.post(
     }
   },
 );
-cinemaRouter.put("/:id", adminOnly, async (req, res, next) => {
+cinemaRouter.put("/:id", adminOnly, auditLog("update_cinema"), async (req, res, next) => {
   try {
     await CinemaModel.update(req.params.id, req.body);
     success(res, null, "Session updated.");
@@ -477,6 +482,7 @@ adminRouter.get("/users", async (req, res, next) => {
 });
 adminRouter.patch(
   "/users/:id/status",
+  auditLog("update_user_status"),
   [body("status").isIn(["active", "suspended"])],
   validate,
   async (req, res, next) => {
@@ -490,6 +496,7 @@ adminRouter.patch(
 );
 adminRouter.patch(
   "/users/:id/role",
+  auditLog("update_user_role"),
   [body("role").isIn(["user", "history_keeper", "ceremony_keeper", "admin"])],
   validate,
   async (req, res, next) => {
@@ -504,6 +511,7 @@ adminRouter.patch(
 // ─── New user routes: create, full-update, delete
 adminRouter.post(
   "/users",
+  auditLog("create_user"),
   [
     body("name").exists().notEmpty().withMessage("Name is required"),
     body("email").exists().isEmail().withMessage("Valid email is required"),
@@ -541,6 +549,7 @@ adminRouter.post(
 );
 adminRouter.put(
   "/users/:id",
+  auditLog("update_user"),
   [
     body("name").notEmpty(),
     body("email").isEmail(),
@@ -561,7 +570,7 @@ adminRouter.put(
     }
   },
 );
-adminRouter.delete("/users/:id", async (req, res, next) => {
+adminRouter.delete("/users/:id", auditLog("delete_user"), async (req, res, next) => {
   try {
     if (Number(req.params.id) === req.user.id)
       throw new AppError("You cannot delete your own account.", 400);
@@ -596,6 +605,7 @@ adminRouter.get("/imvunulo-presets", async (_req, res, next) => {
 });
 adminRouter.post(
   "/imvunulo-presets",
+  auditLog("create_imvunulo_preset"),
   [body("name").notEmpty()],
   validate,
   async (req, res, next) => {
@@ -607,7 +617,7 @@ adminRouter.post(
     }
   },
 );
-adminRouter.put("/imvunulo-presets/:id", async (req, res, next) => {
+adminRouter.put("/imvunulo-presets/:id", auditLog("update_imvunulo_preset"), async (req, res, next) => {
   try {
     await ImvunuloModel.updatePreset(req.params.id, req.body);
     success(res, null, "Preset updated.");
@@ -625,6 +635,7 @@ adminRouter.get("/config", async (_req, res, next) => {
 });
 adminRouter.put(
   "/config/:key",
+  auditLog("update_config"),
   [body("value").notEmpty()],
   validate,
   async (req, res, next) => {

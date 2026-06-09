@@ -90,10 +90,10 @@ const AuditLog = () => {
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-xs text-slate-400">
-                    {log.entity_type && (
+                    {log.target_type && (
                       <span className="capitalize">
-                        {log.entity_type.replace(/_/g," ")}
-                        {log.entity_id ? ` #${log.entity_id}` : ""}
+                        {log.target_type.replace(/_/g," ")}
+                        {log.target_id ? ` #${log.target_id}` : ""}
                       </span>
                     )}
                   </td>
