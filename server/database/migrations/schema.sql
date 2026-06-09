@@ -50,8 +50,10 @@ CREATE TABLE IF NOT EXISTS imvunulo_presets (
   description TEXT,
   gender      ENUM('male','female','both','child') NOT NULL DEFAULT 'both',
   active      TINYINT(1) NOT NULL DEFAULT 1,
+  image_url   VARCHAR(500) DEFAULT NULL,
   created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE imvunulo_presets ADD COLUMN IF NOT EXISTS image_url VARCHAR(500) DEFAULT NULL;
 
 -- 005 imvunulo  (ceremony-linked attire)
 CREATE TABLE IF NOT EXISTS imvunulo (

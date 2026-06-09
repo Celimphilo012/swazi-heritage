@@ -25,11 +25,11 @@ const FSelect = ({ children, ...props }) => (
   </select>
 );
 
-const BtnPrimary = ({ children, ...props }) => (
+const BtnPrimary = ({ children, style, ...props }) => (
   <button
     className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white
                transition-all hover:opacity-90 disabled:opacity-50"
-    style={{ background: "linear-gradient(135deg,#0f172a,#1e293b)" }}
+    style={{ background: "linear-gradient(135deg,#0f172a,#1e293b)", ...style }}
     {...props}
   >
     {children}
