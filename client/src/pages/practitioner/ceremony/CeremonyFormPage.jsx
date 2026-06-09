@@ -10,6 +10,7 @@ import {
   deleteImvunulo,
   getImvunuloPresets,
   getCeremonyMonths,
+  createImvunuloPreset,
 } from "../../../api/ceremonies.api";
 import MediaInput from "../../../components/common/MediaInput";
 
@@ -205,6 +206,81 @@ const ImvunuloDetail = ({ selection, presetName, onUpdate, onRemove }) => (
   </div>
 );
 
+// ─── Inline new-preset form ───────────────────────────────────────────────────
+const GENDER_OPTIONS = ["both", "male", "female", "child"];
+
+const NewPresetForm = ({ onCreated, onCancel }) => {
+  const [fields, setFields] = useState({ name: "", description: "", gender: "both", image_url: "" });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  const set = (k) => (e) => setFields((f) => ({ ...f, [k]: e.target.value }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!fields.name.trim()) { setErr("Name is required."); return; }
+    setSaving(true); setErr("");
+    try {
+      const preset = await createImvunuloPreset({
+        name: fields.name.trim(),
+        description: fields.description.trim() || undefined,
+        gender: fields.gender,
+        image_url: fields.image_url.trim() || undefined,
+      });
+      onCreated(preset);
+    } catch {
+      setErr("Could not create attire. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="border-2 border-dashed border-red-200 rounded-xl p-4 bg-red-50 space-y-3 mt-3">
+      <p className="text-xs font-semibold text-red-800">New attire item</p>
+      {err && <p className="text-xs text-red-600">{err}</p>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <Label required>Name</Label>
+          <Input value={fields.name} onChange={set("name")} placeholder="e.g. Ligcebesha" />
+        </div>
+        <div>
+          <Label>Gender</Label>
+          <select value={fields.gender} onChange={set("gender")}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 bg-white">
+            {GENDER_OPTIONS.map((g) => (
+              <option key={g} value={g}>{g.charAt(0).toUpperCase() + g.slice(1)}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div>
+        <Label>Description</Label>
+        <Textarea rows={2} value={fields.description} onChange={set("description")}
+          placeholder="Brief description of this attire item..." />
+      </div>
+      <div>
+        <Label>Image URL (optional)</Label>
+        <Input value={fields.image_url} onChange={set("image_url")}
+          placeholder="https://..." />
+      </div>
+      <div className="flex gap-2 justify-end">
+        <button type="button" onClick={onCancel}
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100">
+          Cancel
+        </button>
+        <button type="button" onClick={handleSubmit} disabled={saving}
+          className="px-3 py-1.5 text-xs font-semibold rounded-lg text-white flex items-center gap-1.5"
+          style={{ background: saving ? "#9ca3af" : "#CE1126" }}>
+          {saving && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+          {saving ? "Creating…" : "Create & select"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // ─── Main component ───────────────────────────────────────────────────────────
 const CeremonyFormPage = () => {
   const { id } = useParams();
@@ -228,6 +304,7 @@ const CeremonyFormPage = () => {
   const [presets, setPresets] = useState([]);
   const [imvSelections, setImvSelections] = useState([]);
   const [removedImvIds, setRemovedImvIds] = useState([]);
+  const [showNewPresetForm, setShowNewPresetForm] = useState(false);
 
   // ── Resources state ──────────────────────────────────────────────────────────
   const [months, setMonths] = useState([]);
@@ -346,6 +423,23 @@ const CeremonyFormPage = () => {
         s.preset_id === presetId ? { ...s, [field]: value } : s,
       ),
     );
+  }, []);
+
+  const handlePresetCreated = useCallback((preset) => {
+    setPresets((prev) => [...prev, preset]);
+    setImvSelections((prev) => [
+      ...prev,
+      {
+        _key: `new-${Date.now()}`,
+        id: null,
+        preset_id: preset.id,
+        preset_name: preset.name,
+        notes: "",
+        color_desc: "",
+        image_url: "",
+      },
+    ]);
+    setShowNewPresetForm(false);
   }, []);
 
   // ── Submit ────────────────────────────────────────────────────────────────────
@@ -638,6 +732,18 @@ const CeremonyFormPage = () => {
           <SectionHeader
             title="Traditional Attire (Imvunulo)"
             subtitle="Select all attire items associated with this ceremony, then add details for each"
+            action={
+              <button
+                type="button"
+                onClick={() => setShowNewPresetForm((v) => !v)}
+                className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                New attire
+              </button>
+            }
           />
 
           {presetsLoading ? (
@@ -671,6 +777,14 @@ const CeremonyFormPage = () => {
                   />
                 ))}
               </div>
+
+              {/* Inline new-preset form */}
+              {showNewPresetForm && (
+                <NewPresetForm
+                  onCreated={handlePresetCreated}
+                  onCancel={() => setShowNewPresetForm(false)}
+                />
+              )}
 
               {/* Detail forms for selected presets */}
               {imvSelections.length > 0 && (

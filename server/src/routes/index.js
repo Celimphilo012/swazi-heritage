@@ -135,6 +135,23 @@ ceremonyRouter.get(
     }
   },
 );
+ceremonyRouter.post(
+  "/resources/presets",
+  protect,
+  ceremonyKeeperOnly,
+  [body("name").notEmpty()],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { name, description, gender = "both", image_url } = req.body;
+      const result = await ImvunuloModel.createPreset({ name, description, gender, image_url });
+      const preset = { id: result.insertId, name, description, gender, image_url: image_url || null, active: 1 };
+      created(res, preset, "Attire preset created.");
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 ceremonyRouter.get("/resources/months", protect, async (_req, res, next) => {
   try {
     const raw = await ConfigModel.get("ceremony_months");

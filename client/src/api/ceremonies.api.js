@@ -36,5 +36,8 @@ export const deleteImvunulo = (ceremonyId, imvId) =>
 export const getImvunuloPresets = () =>
   api.get("/ceremonies/resources/presets").then((r) => r.data.data);
 
+export const createImvunuloPreset = (data) =>
+  api.post("/ceremonies/resources/presets", data).then((r) => r.data.data);
+
 export const getCeremonyMonths = () =>
   api.get("/ceremonies/resources/months").then((r) => r.data.data);
