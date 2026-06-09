@@ -37,7 +37,7 @@ const Label = ({ children, required }) => (
   </label>
 );
 
-const EMPTY_CLAN = { name: "", royal_connection: "", founding_era: "", description: "" };
+const EMPTY_CLAN = { name: "", royal_connection: "", founding_era: "", description: "", location_name: "", latitude: "", longitude: "" };
 
 const ClanForm = ({ lineageId, initialClans = [] }) => {
   const [clans, setClans] = useState(initialClans);
@@ -130,6 +130,20 @@ const ClanForm = ({ lineageId, initialClans = [] }) => {
                   <Label>Description</Label>
                   <Textarea rows={2} value={editing.description || ""} onChange={(e) => setEditing((d) => ({ ...d, description: e.target.value }))} />
                 </div>
+                <div>
+                  <Label>Location name</Label>
+                  <Input value={editing.location_name || ""} placeholder="e.g. Manzini" onChange={(e) => setEditing((d) => ({ ...d, location_name: e.target.value }))} />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label>Latitude</Label>
+                    <Input type="number" step="any" value={editing.latitude || ""} placeholder="-26.49" onChange={(e) => setEditing((d) => ({ ...d, latitude: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>Longitude</Label>
+                    <Input type="number" step="any" value={editing.longitude || ""} placeholder="31.37" onChange={(e) => setEditing((d) => ({ ...d, longitude: e.target.value }))} />
+                  </div>
+                </div>
                 <div className="flex gap-2">
                   <button onClick={() => setEditing(null)} className="btn-secondary text-xs px-3 py-1.5">Cancel</button>
                   <button onClick={handleEditSave} disabled={saving} className="btn-primary text-xs px-3 py-1.5">
@@ -176,6 +190,20 @@ const ClanForm = ({ lineageId, initialClans = [] }) => {
             <Label>Description</Label>
             <Textarea rows={2} value={formData.description} onChange={setField("description")} placeholder="Brief history of the clan..." />
           </div>
+          <div>
+            <Label>Location name</Label>
+            <Input value={formData.location_name} onChange={setField("location_name")} placeholder="e.g. Manzini region" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Latitude</Label>
+              <Input type="number" step="any" value={formData.latitude} onChange={setField("latitude")} placeholder="-26.49" />
+            </div>
+            <div>
+              <Label>Longitude</Label>
+              <Input type="number" step="any" value={formData.longitude} onChange={setField("longitude")} placeholder="31.37" />
+            </div>
+          </div>
           <div className="flex gap-2">
             <button onClick={() => setAdding(false)} className="btn-secondary text-xs px-3 py-1.5">Cancel</button>
             <button onClick={handleAdd} disabled={saving || !formData.name.trim()}
@@ -199,7 +227,7 @@ const LineageFormPage = () => {
   const navigate = useNavigate();
   const isEdit = !!id;
 
-  const [formData, setFormData] = useState({ title: "", era: "", description: "" });
+  const [formData, setFormData] = useState({ title: "", era: "", description: "", swati_title: "", swati_description: "", location_name: "", latitude: "", longitude: "" });
   const [clans, setClans] = useState([]);
   const [savedId, setSavedId] = useState(null);
   const [loading, setLoading] = useState(isEdit);
@@ -211,7 +239,7 @@ const LineageFormPage = () => {
     if (!isEdit) return;
     getLineageRecord(id)
       .then((r) => {
-        setFormData({ title: r.title, era: r.era, description: r.description || "" });
+        setFormData({ title: r.title, era: r.era, description: r.description || "", swati_title: r.swati_title || "", swati_description: r.swati_description || "", location_name: r.location_name || "", latitude: r.latitude ?? "", longitude: r.longitude ?? "" });
         setClans(r.clans || []);
         setSavedId(r.id);
       })
@@ -313,6 +341,42 @@ const LineageFormPage = () => {
             onChange={setField("description")}
             placeholder="Describe the lineage, its historical significance, notable figures, and connection to the Swazi royal family..."
           />
+        </div>
+
+        {/* siSwati translation */}
+        <div className="pt-2 border-t border-gray-100">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">siSwati Translation (Optional)</p>
+          <div className="space-y-3">
+            <div>
+              <Label>Isihloko sesiSwati (siSwati title)</Label>
+              <Input value={formData.swati_title} onChange={setField("swati_title")} placeholder="e.g. Indzawo yelikhosi..." />
+            </div>
+            <div>
+              <Label>Inchazelo yesiSwati (siSwati description)</Label>
+              <Textarea rows={3} value={formData.swati_description} onChange={setField("swati_description")} placeholder="Bhala lapha ngebsati..." />
+            </div>
+          </div>
+        </div>
+
+        {/* Location */}
+        <div className="pt-2 border-t border-gray-100">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Location (Optional)</p>
+          <div className="space-y-3">
+            <div>
+              <Label>Place name</Label>
+              <Input value={formData.location_name} onChange={setField("location_name")} placeholder="e.g. Lobamba, Hhohho Region" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>Latitude</Label>
+                <Input type="number" step="any" value={formData.latitude} onChange={setField("latitude")} placeholder="-26.4661" />
+              </div>
+              <div>
+                <Label>Longitude</Label>
+                <Input type="number" step="any" value={formData.longitude} onChange={setField("longitude")} placeholder="31.2026" />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 pt-2">

@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getCeremony } from "../../api/ceremonies.api";
 import YouTubeAudioPlayer from "../../components/common/YouTubeAudioPlayer";
+import { useLang, t } from "../../context/LanguageContext";
+const CultureMap = lazy(() => import("../../components/common/CultureMap"));
 
 const GENDER_LABEL = { male: "Men", female: "Women", both: "All", child: "Children" };
 const GENDER_STYLE = {
@@ -167,6 +169,7 @@ const LoadingSkeleton = () => (
 /* ── Page ── */
 const CeremonyDetail = () => {
   const { id } = useParams();
+  const { lang } = useLang();
   const [ceremony,  setCeremony]  = useState(null);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState("");
@@ -196,7 +199,11 @@ const CeremonyDetail = () => {
     { id: "about",  label: "About" },
     ...(ceremony.imvunulo?.length > 0 ? [{ id: "attire", label: `Attire (${ceremony.imvunulo.length})` }] : []),
     ...(ceremony.songs?.length    > 0 ? [{ id: "songs",  label: `Songs (${ceremony.songs.length})`    }] : []),
+    ...(ceremony.latitude         ? [{ id: "location", label: "Location" }]                              : []),
   ];
+
+  const displayName = t(lang, ceremony, 'name', 'swati_name');
+  const displayDesc = t(lang, ceremony, 'description', 'swati_description');
 
   return (
     <div className="-mt-8 -mx-4">
@@ -232,7 +239,7 @@ const CeremonyDetail = () => {
 
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-3 animate-fade-in-down"
               style={{ textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}>
-            {ceremony.name}
+            {displayName}
           </h1>
 
           <div className="flex gap-2 mb-3">
@@ -295,15 +302,18 @@ const CeremonyDetail = () => {
             {/* ABOUT */}
             {activeTab === "about" && (
               <div className="space-y-4">
-                {ceremony.description ? (
+                {displayDesc ? (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                     <h2 className="text-xs font-bold uppercase tracking-widest mb-3"
                         style={{ color: "#002395" }}>
                       About this ceremony
                     </h2>
                     <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
-                      {ceremony.description}
+                      {displayDesc}
                     </p>
+                    {lang === 'ss' && !ceremony.swati_description && (
+                      <p className="text-xs text-gray-400 mt-2 italic">siSwati translation not available — showing English.</p>
+                    )}
                   </div>
                 ) : null}
 
@@ -324,7 +334,7 @@ const CeremonyDetail = () => {
                   </div>
                 ) : null}
 
-                {!ceremony.description && !ceremony.immunology_notes && (
+                {!displayDesc && !ceremony.immunology_notes && (
                   <SectionEmpty message="No description documented for this ceremony yet." />
                 )}
               </div>
@@ -350,6 +360,30 @@ const CeremonyDetail = () => {
               ) : (
                 <SectionEmpty message="No songs documented for this ceremony yet." />
               )
+            )}
+
+            {/* LOCATION */}
+            {activeTab === "location" && ceremony.latitude && (
+              <div className="space-y-4">
+                {ceremony.location_name && (
+                  <div className="flex items-center gap-2 text-sm text-gray-700 font-semibold">
+                    <svg className="w-4 h-4 flex-shrink-0" style={{ color: "#CE1126" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {ceremony.location_name}
+                  </div>
+                )}
+                <Suspense fallback={<div className="h-64 bg-gray-100 rounded-2xl animate-pulse" />}>
+                  <CultureMap
+                    markers={[{ lat: ceremony.latitude, lng: ceremony.longitude, title: displayName, subtitle: ceremony.location_name, type: 'ceremony' }]}
+                    height={340}
+                    zoom={11}
+                    fitBounds={false}
+                    center={[ceremony.latitude, ceremony.longitude]}
+                  />
+                </Suspense>
+              </div>
             )}
           </div>
         </div>

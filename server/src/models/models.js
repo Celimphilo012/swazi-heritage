@@ -2,16 +2,16 @@ import { query } from "../config/db.js";
 
 // ─── Lineage Records ──────────────────────────────────────────────────────────
 export const LineageModel = {
-  create: ({ title, description, era, created_by }) =>
+  create: ({ title, description, era, swati_title, swati_description, location_name, latitude, longitude, created_by }) =>
     query(
-      `INSERT INTO lineage_records (title, description, era, created_by) VALUES (?, ?, ?, ?)`,
-      [title, description, era, created_by],
+      `INSERT INTO lineage_records (title, description, era, swati_title, swati_description, location_name, latitude, longitude, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [title, description, era, swati_title ?? null, swati_description ?? null, location_name ?? null, latitude ?? null, longitude ?? null, created_by],
     ),
 
-  update: (id, { title, description, era }) =>
+  update: (id, { title, description, era, swati_title, swati_description, location_name, latitude, longitude }) =>
     query(
-      `UPDATE lineage_records SET title = ?, description = ?, era = ? WHERE id = ?`,
-      [title, description, era, id],
+      `UPDATE lineage_records SET title = ?, description = ?, era = ?, swati_title = ?, swati_description = ?, location_name = ?, latitude = ?, longitude = ? WHERE id = ?`,
+      [title, description, era, swati_title ?? null, swati_description ?? null, location_name ?? null, latitude ?? null, longitude ?? null, id],
     ),
 
   updateStatus: (id, status, reviewed_by, rejection_note) =>
@@ -71,18 +71,18 @@ export const LineageModel = {
 
 // ─── Clans ────────────────────────────────────────────────────────────────────
 export const ClanModel = {
-  create: ({ lineage_id, name, royal_connection, founding_era, description }) =>
+  create: ({ lineage_id, name, royal_connection, founding_era, description, location_name, latitude, longitude }) =>
     query(
-      `INSERT INTO clans (lineage_id, name, royal_connection, founding_era, description)
-           VALUES (?, ?, ?, ?, ?)`,
-      [lineage_id, name, royal_connection, founding_era, description],
+      `INSERT INTO clans (lineage_id, name, royal_connection, founding_era, description, location_name, latitude, longitude)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [lineage_id, name, royal_connection, founding_era, description, location_name ?? null, latitude ?? null, longitude ?? null],
     ),
 
-  update: (id, { name, royal_connection, founding_era, description }) =>
+  update: (id, { name, royal_connection, founding_era, description, location_name, latitude, longitude }) =>
     query(
-      `UPDATE clans SET name = ?, royal_connection = ?, founding_era = ?, description = ?
+      `UPDATE clans SET name = ?, royal_connection = ?, founding_era = ?, description = ?, location_name = ?, latitude = ?, longitude = ?
            WHERE id = ?`,
-      [name, royal_connection, founding_era, description, id],
+      [name, royal_connection, founding_era, description, location_name ?? null, latitude ?? null, longitude ?? null, id],
     ),
 
   findByLineage: (lineage_id) =>

@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { getPublishedCeremonies, getCeremonyMonths } from "../../api/ceremonies.api";
+import { useLang, t } from "../../context/LanguageContext";
+const CultureMap = lazy(() => import("../../components/common/CultureMap"));
 
 /* ── Flag accent palette cycling across cards ── */
 const ACCENTS = [

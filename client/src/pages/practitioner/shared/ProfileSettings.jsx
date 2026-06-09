@@ -39,9 +39,10 @@ const Section = ({ title, description, children }) => (
 const ProfileSettings = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState({
-    name:       user?.name       || "",
-    bio:        user?.bio        || "",
-    avatar_url: user?.avatar_url || "",
+    name:               user?.name               || "",
+    bio:                user?.bio                || "",
+    avatar_url:         user?.avatar_url         || "",
+    notification_email: user?.notification_email || "",
   });
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileMsg,    setProfileMsg]    = useState("");
@@ -171,6 +172,53 @@ const ProfileSettings = () => {
             )}
           </div>
         </form>
+      </Section>
+
+      {/* Notification Email */}
+      <Section title="Email Notifications"
+        description="Where to receive notifications when your content is reviewed. Defaults to your account email if left blank.">
+        <div className="space-y-3">
+          <div>
+            <FLabel>Account email (login)</FLabel>
+            <FInput value={user?.email || ""} disabled
+              className="bg-slate-50 text-slate-400 cursor-not-allowed" />
+            <p className="text-xs text-slate-400 mt-1">Contact an admin to change your login email.</p>
+          </div>
+          <div>
+            <FLabel>Notification email (optional)</FLabel>
+            <FInput type="email" value={profile.notification_email}
+              onChange={setProf("notification_email")}
+              placeholder="e.g. personal@gmail.com" />
+            <p className="text-xs text-slate-400 mt-1">
+              Submission updates will be sent here instead of your account email.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 pt-1">
+            <BtnPrimary
+              onClick={async () => {
+                setSavingProfile(true); setProfileError(""); setProfileMsg("");
+                try {
+                  await api.patch("/auth/profile", profile);
+                  setProfileMsg("Notification email saved.");
+                  setTimeout(() => setProfileMsg(""), 2500);
+                } catch (err) {
+                  setProfileError(err.response?.data?.message || "Failed to save.");
+                } finally { setSavingProfile(false); }
+              }}
+              disabled={savingProfile}>
+              {savingProfile && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+              Save
+            </BtnPrimary>
+            {profileMsg && (
+              <span className="text-xs font-semibold flex items-center gap-1" style={{ color: "#10b981" }}>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                {profileMsg}
+              </span>
+            )}
+          </div>
+        </div>
       </Section>
 
       {/* Password form */}

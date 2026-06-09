@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { getPublishedLineage } from "../../api/lineage.api";
+import { useLang, t } from "../../context/LanguageContext";
 
 /* ── Per-record accent palette (flag colours) ── */
 const ACCENTS = [
@@ -62,9 +63,11 @@ const ClanCard = ({ clan }) => (
 );
 
 /* ── Lineage card on timeline ── */
-const LineageCard = ({ record, index }) => {
+const LineageCard = ({ record, index, lang }) => {
   const [expanded, setExpanded] = useState(false);
   const ac = ACCENTS[index % ACCENTS.length];
+  const displayTitle = t(lang, record, 'title', 'swati_title');
+  const displayDesc  = t(lang, record, 'description', 'swati_description');
 
   return (
     <div className="relative pl-10">
@@ -87,13 +90,13 @@ const LineageCard = ({ record, index }) => {
                   {record.era}
                 </span>
               )}
-              <h3 className="text-base font-bold text-gray-900 leading-snug">{record.title}</h3>
+              <h3 className="text-base font-bold text-gray-900 leading-snug">{displayTitle}</h3>
               {record.creator_name && (
                 <p className="text-xs text-gray-400 mt-0.5">Documented by {record.creator_name}</p>
               )}
-              {record.description && (
+              {displayDesc && (
                 <p className="text-sm text-gray-600 mt-2 leading-relaxed line-clamp-3">
-                  {record.description}
+                  {displayDesc}
                 </p>
               )}
             </div>
@@ -115,16 +118,18 @@ const LineageCard = ({ record, index }) => {
           </div>
 
           {/* Clan expansion with smooth animation */}
-          <div className={`overflow-hidden transition-all duration-400 ${expanded ? "max-h-[600px]" : "max-h-0"}`}>
-            <div className="pt-4 mt-4 border-t border-gray-50">
-              <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">
-                Associated Clans
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {record.clans.map(c => <ClanCard key={c.id} clan={c} />)}
+          {record.clans?.length > 0 && (
+            <div className={`overflow-hidden transition-all duration-400 ${expanded ? "max-h-[600px]" : "max-h-0"}`}>
+              <div className="pt-4 mt-4 border-t border-gray-50">
+                <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">
+                  Associated Clans
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {record.clans.map(c => <ClanCard key={c.id} clan={c} />)}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
@@ -149,6 +154,7 @@ const SkeletonCard = ({ index }) => (
 
 /* ── Page ── */
 const LineageExplorer = () => {
+  const { lang } = useLang();
   const [records, setRecords] = useState([]);
   const [meta,    setMeta]    = useState({ total: 0, page: 1, totalPages: 1 });
   const [page,    setPage]    = useState(1);
@@ -234,7 +240,7 @@ const LineageExplorer = () => {
                  style={{ background: "linear-gradient(to bottom,#002395,#CE1126,#FFD600)" }} />
 
             <div className="space-y-5">
-              {records.map((r, i) => <LineageCard key={r.id} record={r} index={i} />)}
+              {records.map((r, i) => <LineageCard key={r.id} record={r} index={i} lang={lang} />)}
             </div>
           </div>
         )}

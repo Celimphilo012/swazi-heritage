@@ -55,6 +55,9 @@ import {
   AuditLogModel,
 } from "../models/models.js";
 import { success, created, paginated, AppError } from "../utils/apiResponse.js";
+import { autoTranslateLineage } from "../utils/translate.js";
+import { sendMail } from "../utils/mailer.js";
+import { pendingReviewEmail, contentReviewedEmail } from "../utils/emailTemplates.js";
 
 const router = Router();
 router.use(attachAuditLogger);
@@ -98,8 +101,8 @@ authRouter.patch(
   validate,
   async (req, res, next) => {
     try {
-      const { name, bio, avatar_url } = req.body;
-      await UserModel.updateProfile(req.user.id, { name, bio, avatar_url });
+      const { name, bio, avatar_url, notification_email } = req.body;
+      await UserModel.updateProfile(req.user.id, { name, bio, avatar_url, notification_email });
       success(res, await UserModel.findById(req.user.id), "Profile updated.");
     } catch (err) {
       next(err);
@@ -284,12 +287,20 @@ lineageRouter.post(
   validate,
   async (req, res, next) => {
     try {
-      const result = await LineageModel.create({
-        ...req.body,
-        created_by: req.user.id,
-      });
+      const body = await autoTranslateLineage(req.body);
+      const result = await LineageModel.create({ ...body, created_by: req.user.id });
       const record = await LineageModel.findById(result.insertId);
       created(res, record, "Lineage record submitted for review.");
+      // Notify admins (fire-and-forget)
+      UserModel.getAdmins().then(admins => {
+        admins.forEach(admin => {
+          const { subject, html } = pendingReviewEmail({
+            contentType: 'Lineage Record', title: record.title,
+            practitionerName: req.user.name, adminName: admin.name,
+          });
+          sendMail({ to: admin.email, subject, html });
+        });
+      }).catch(() => {});
     } catch (err) {
       next(err);
     }
@@ -302,7 +313,8 @@ lineageRouter.put("/:id", historyKeeperOnly, async (req, res, next) => {
     if (record.created_by !== req.user.id) throw new AppError("You can only edit your own records.", 403);
     if (record.status === "published" || record.status === "rejected")
       await LineageModel.updateStatus(req.params.id, "pending_review", null, null);
-    await LineageModel.update(req.params.id, req.body);
+    const body = await autoTranslateLineage(req.body);
+    await LineageModel.update(req.params.id, body);
     success(res, null, "Lineage record updated and resubmitted for review.");
   } catch (err) {
     next(err);
@@ -316,6 +328,7 @@ lineageRouter.patch(
   validate,
   async (req, res, next) => {
     try {
+      const record = await LineageModel.findById(req.params.id);
       await LineageModel.updateStatus(
         req.params.id,
         req.body.status,
@@ -323,6 +336,18 @@ lineageRouter.patch(
         req.body.rejection_note,
       );
       success(res, null, `Lineage record ${req.body.status}.`);
+      // Notify practitioner (fire-and-forget)
+      if (record && (req.body.status === 'published' || req.body.status === 'rejected')) {
+        UserModel.findById(record.created_by).then(practitioner => {
+          if (!practitioner?.email) return;
+          const { subject, html } = contentReviewedEmail({
+            contentType: 'Lineage Record', title: record.title,
+            status: req.body.status, rejectionNote: req.body.rejection_note,
+            practitionerName: practitioner.name,
+          });
+          sendMail({ to: practitioner.notification_email || practitioner.email, subject, html });
+        }).catch(() => {});
+      }
     } catch (err) {
       next(err);
     }

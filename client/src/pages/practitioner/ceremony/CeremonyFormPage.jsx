@@ -293,6 +293,11 @@ const CeremonyFormPage = () => {
     description: "",
     month_celebrated: "",
     immunology_notes: "",
+    swati_name: "",
+    swati_description: "",
+    location_name: "",
+    latitude: "",
+    longitude: "",
   });
 
   // ── Songs state ─────────────────────────────────────────────────────────────
@@ -340,6 +345,11 @@ const CeremonyFormPage = () => {
           description: c.description || "",
           month_celebrated: c.month_celebrated || "",
           immunology_notes: c.immunology_notes || "",
+          swati_name: c.swati_name || "",
+          swati_description: c.swati_description || "",
+          location_name: c.location_name || "",
+          latitude: c.latitude ?? "",
+          longitude: c.longitude ?? "",
         });
         // Existing songs — add a _key so React can track them
         setSongs(c.songs.map((s) => ({ ...s, _key: `s-${s.id}` })));
@@ -654,6 +664,89 @@ const CeremonyFormPage = () => {
                 health-related protocols.
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* ─── siSwati Translation ───────────────────────────────────────────── */}
+        <div className="card">
+          <SectionHeader
+            title="siSwati Translation (Optional)"
+            subtitle="Provide the ceremony name and description in siSwati for bilingual display"
+          />
+          <div className="space-y-4">
+            <div>
+              <Label>Ligama lesiSwati (siSwati name)</Label>
+              <Input
+                value={form.swati_name}
+                onChange={setField("swati_name")}
+                placeholder="e.g. Incwala, Umhlanga"
+              />
+            </div>
+            <div>
+              <Label>Inchazelo yesiSwati (siSwati description)</Label>
+              <Textarea
+                rows={4}
+                value={form.swati_description}
+                onChange={setField("swati_description")}
+                placeholder="Bhala lapha ngebsati..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Location ─────────────────────────────────────────────────────── */}
+        <div className="card">
+          <SectionHeader
+            title="Location"
+            subtitle="Where is this ceremony held? Used to display on the cultural map."
+          />
+          <div className="space-y-4">
+            <div>
+              <Label>Place name</Label>
+              <Input
+                value={form.location_name}
+                onChange={setField("location_name")}
+                placeholder="e.g. Lobamba Royal Kraal, Ludzidzini"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Latitude</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  value={form.latitude}
+                  onChange={setField("latitude")}
+                  placeholder="-26.4661"
+                />
+              </div>
+              <div>
+                <Label>Longitude</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  value={form.longitude}
+                  onChange={setField("longitude")}
+                  placeholder="31.2026"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (!navigator.geolocation) return;
+                navigator.geolocation.getCurrentPosition((pos) => {
+                  setForm((f) => ({
+                    ...f,
+                    latitude: pos.coords.latitude.toFixed(7),
+                    longitude: pos.coords.longitude.toFixed(7),
+                  }));
+                });
+              }}
+              className="text-xs text-blue-700 hover:underline font-medium"
+            >
+              Use my current location
+            </button>
           </div>
         </div>
 

@@ -8,7 +8,7 @@ export const UserModel = {
 
   findById: (id) =>
     query(
-      "SELECT id, name, email, role, status, bio, avatar_url, created_at FROM users WHERE id = ? LIMIT 1",
+      "SELECT id, name, email, notification_email, role, status, bio, avatar_url, created_at FROM users WHERE id = ? LIMIT 1",
       [id],
     ).then((r) => r[0]),
 
@@ -31,12 +31,9 @@ export const UserModel = {
   updateRole: (id, role) =>
     query("UPDATE users SET role = ? WHERE id = ?", [role, id]),
 
-  updateProfile: (id, { name, bio, avatar_url }) =>
-    query("UPDATE users SET name = ?, bio = ?, avatar_url = ? WHERE id = ?", [
-      name,
-      bio,
-      avatar_url,
-      id,
+  updateProfile: (id, { name, bio, avatar_url, notification_email }) =>
+    query("UPDATE users SET name = ?, bio = ?, avatar_url = ?, notification_email = ? WHERE id = ?", [
+      name, bio, avatar_url, notification_email ?? null, id,
     ]),
 
   updatePassword: (id, password_hash) =>
@@ -75,4 +72,7 @@ export const UserModel = {
 
   countByRole: () =>
     query("SELECT role, COUNT(*) AS count FROM users GROUP BY role"),
+
+  getAdmins: () =>
+    query("SELECT id, name, email FROM users WHERE role = 'admin' AND status = 'active'"),
 };

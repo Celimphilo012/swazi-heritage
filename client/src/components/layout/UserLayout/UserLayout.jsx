@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
+import { useLang } from '../../../context/LanguageContext';
+import { ui } from '../../../lib/uiStrings';
 import { ROLE_HOME } from '../../../utils/constants';
 import shieldPng from '../../../lib/shield.png';
 
@@ -45,9 +47,36 @@ const Avatar = ({ name, email }) => {
   );
 };
 
+/* ── Language toggle ── */
+const LangToggle = () => {
+  const { lang, setLang } = useLang();
+  return (
+    <div className="flex items-center rounded-full border overflow-hidden text-xs font-bold"
+         style={{ borderColor: '#e5e7eb' }}>
+      <button
+        onClick={() => setLang('en')}
+        className="px-2.5 py-1 transition-colors"
+        style={lang === 'en'
+          ? { background: '#002395', color: '#fff' }
+          : { background: 'transparent', color: '#9ca3af' }}>
+        EN
+      </button>
+      <button
+        onClick={() => setLang('ss')}
+        className="px-2.5 py-1 transition-colors"
+        style={lang === 'ss'
+          ? { background: '#CE1126', color: '#fff' }
+          : { background: 'transparent', color: '#9ca3af' }}>
+        SS
+      </button>
+    </div>
+  );
+};
+
 /* ── Layout ── */
 const UserLayout = () => {
   const { user, logout } = useAuth();
+  const { lang } = useLang();
   const [scrolled,  setScrolled]  = useState(false);
   const [menuOpen,  setMenuOpen]  = useState(false);
 
@@ -60,9 +89,9 @@ const UserLayout = () => {
   const closeMenu = () => setMenuOpen(false);
 
   const navLinks = [
-    { to: '/explore', label: 'Explore' },
-    { to: '/cinema',  label: 'Cinema'  },
-    ...(user ? [{ to: '/chat', label: 'AI Chat' }] : []),
+    { to: '/explore', label: ui(lang, 'navExplore') },
+    { to: '/cinema',  label: ui(lang, 'navCinema')  },
+    ...(user ? [{ to: '/chat', label: ui(lang, 'navChat') }] : []),
   ];
 
   return (
@@ -92,6 +121,7 @@ const UserLayout = () => {
 
           {/* Desktop auth */}
           <div className="hidden md:flex items-center gap-3">
+            <LangToggle />
             {user ? (
               <>
                 <Link to={ROLE_HOME[user.role]}
@@ -104,14 +134,14 @@ const UserLayout = () => {
                 <button onClick={logout}
                   className="text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors hover:bg-red-50 hover:border-red-200 hover:text-red-700"
                   style={{ borderColor: '#e5e7eb', color: '#9ca3af' }}>
-                  Sign out
+                  {ui(lang, 'signOut')}
                 </button>
               </>
             ) : (
               <Link to="/login"
                 className="text-sm font-bold px-5 py-2 rounded-lg text-white transition-all hover:brightness-110 hover:scale-105"
                 style={{ background: 'linear-gradient(135deg,#002395,#1a4db0)' }}>
-                Sign in
+                {ui(lang, 'signIn')}
               </Link>
             )}
           </div>
@@ -143,7 +173,12 @@ const UserLayout = () => {
               </NavLink>
             ))}
 
-            <div className="pt-3 mt-1 border-t border-gray-100">
+            <div className="flex items-center gap-2 px-3 py-2">
+              <span className="text-xs text-gray-400 font-medium">{ui(lang, 'langLabel')}</span>
+              <LangToggle />
+            </div>
+
+            <div className="pt-1 border-t border-gray-100">
               {user ? (
                 <div className="space-y-1">
                   <Link to={ROLE_HOME[user.role]} onClick={closeMenu}
@@ -160,14 +195,14 @@ const UserLayout = () => {
                       <path strokeLinecap="round" strokeLinejoin="round"
                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    Sign out
+                    {ui(lang, 'signOut')}
                   </button>
                 </div>
               ) : (
                 <Link to="/login" onClick={closeMenu}
                   className="flex items-center justify-center text-sm font-bold px-5 py-2.5 rounded-lg text-white transition-all"
                   style={{ background: 'linear-gradient(135deg,#002395,#1a4db0)' }}>
-                  Sign in
+                  {ui(lang, 'signIn')}
                 </Link>
               )}
             </div>

@@ -1,28 +1,39 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useLang, t } from "../../context/LanguageContext";
+import { ui } from "../../lib/uiStrings";
 import { getPublishedCeremonies } from "../../api/ceremonies.api";
 import { getPublishedLineage } from "../../api/lineage.api";
 import shieldPng from "../../lib/shield.png";
 
-const FACTS = [
-  "The Kingdom of Eswatini is one of Africa's last absolute monarchies",
-  "Incwala — the sacred First Fruits ceremony — celebrates the power of the king",
-  "Umhlanga (Reed Dance) unites thousands of Swazi maidens each August",
-  "The sibhaca dance is famous across southern Africa for its energetic high kicks",
-  "Swazi emahiya cloth features vibrant geometric weave patterns passed down for generations",
-];
+const FACTS = {
+  en: [
+    "The Kingdom of Eswatini is one of Africa's last absolute monarchies",
+    "Incwala — the sacred First Fruits ceremony — celebrates the power of the king",
+    "Umhlanga (Reed Dance) unites thousands of Swazi maidens each August",
+    "The sibhaca dance is famous across southern Africa for its energetic high kicks",
+    "Swazi emahiya cloth features vibrant geometric weave patterns passed down for generations",
+  ],
+  ss: [
+    "INgwane yinye yemibuso yekugcina yaseAfrika lenegunya linye",
+    "Incwala — umkhosi wekucala kwemitfwalo — ugubha emandla eNgwenyama",
+    "Umhlanga uhlanganisa tinkhosatana letiyinkhulungwane ngangeNgci",
+    "Sibhaca udansa lomadzima eningizimu yeAfrika ngetigxivizo tayo letiphezulu",
+    "Emahiya amaSwati anemikhuba yekuhlotjiswa leyenikelwe kuze kube manje",
+  ],
+};
 
-/* ── Floating diamond particles (emahiya-inspired motif) ── */
+/* ── Floating diamond particles ── */
 const DIAMONDS = [
-  { s: 14, x: "6%",  y: "22%", d: "0s",   t: "4.2s", c: "#FFD600" },
-  { s:  8, x: "15%", y: "65%", d: "1.1s", t: "5.4s", c: "#ffffff" },
-  { s: 18, x: "28%", y: "33%", d: "0.5s", t: "3.8s", c: "#CE1126" },
-  { s: 10, x: "42%", y: "70%", d: "2.0s", t: "5.0s", c: "#FFD600" },
-  { s: 12, x: "60%", y: "20%", d: "0.3s", t: "4.6s", c: "#ffffff" },
-  { s:  7, x: "73%", y: "60%", d: "1.5s", t: "3.5s", c: "#FFD600" },
-  { s: 15, x: "83%", y: "38%", d: "0.8s", t: "4.9s", c: "#CE1126" },
-  { s:  9, x: "92%", y: "72%", d: "1.8s", t: "4.1s", c: "#ffffff" },
+  { s: 14, x: "6%",  y: "22%", d: "0s",   dur: "4.2s", c: "#FFD600" },
+  { s:  8, x: "15%", y: "65%", d: "1.1s", dur: "5.4s", c: "#ffffff" },
+  { s: 18, x: "28%", y: "33%", d: "0.5s", dur: "3.8s", c: "#CE1126" },
+  { s: 10, x: "42%", y: "70%", d: "2.0s", dur: "5.0s", c: "#FFD600" },
+  { s: 12, x: "60%", y: "20%", d: "0.3s", dur: "4.6s", c: "#ffffff" },
+  { s:  7, x: "73%", y: "60%", d: "1.5s", dur: "3.5s", c: "#FFD600" },
+  { s: 15, x: "83%", y: "38%", d: "0.8s", dur: "4.9s", c: "#CE1126" },
+  { s:  9, x: "92%", y: "72%", d: "1.8s", dur: "4.1s", c: "#ffffff" },
 ];
 
 const DiamondParticles = () => (
@@ -33,7 +44,7 @@ const DiamondParticles = () => (
         left: d.x, top: d.y,
         background: d.c,
         animationName: "floatDiamond",
-        animationDuration: d.t,
+        animationDuration: d.dur,
         animationDelay: d.d,
         animationIterationCount: "infinite",
         animationTimingFunction: "ease-in-out",
@@ -42,7 +53,6 @@ const DiamondParticles = () => (
   </div>
 );
 
-/* ── Swazi Nguni shield with spears ── */
 const ShieldSVG = ({ style }) => (
   <img src={shieldPng} alt="Nguni Shield" width="96" height="104"
     style={{ objectFit: "contain", ...style }} />
@@ -83,40 +93,47 @@ const useCountUp = (target, active, ms = 1200) => {
 };
 
 /* ── Cards ── */
-const CeremonyCard = ({ c }) => (
-  <Link to={`/explore/ceremonies/${c.id}`}
-    className="group bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 block">
-    <div className="h-1" style={{ background: "linear-gradient(90deg,#002395,#FFD600,#CE1126)" }} />
-    <div className="p-5">
-      <h3 className="text-sm font-semibold text-gray-900 group-hover:text-red-800 transition-colors">{c.name}</h3>
-      {c.month_celebrated && <p className="text-xs text-gray-400 mt-1">{c.month_celebrated}</p>}
-      {c.description && <p className="text-xs text-gray-600 mt-2 line-clamp-2">{c.description}</p>}
-      <span className="inline-block mt-3 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#CE1126" }}>
-        Learn more →
-      </span>
-    </div>
-  </Link>
-);
-
-const LineageCard = ({ r }) => (
-  <Link to="/explore/lineage"
-    className="group bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 block">
-    <div className="h-1" style={{ background: "linear-gradient(90deg,#FFD600,#CE1126)" }} />
-    <div className="p-5 flex items-start gap-4">
-      <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-sm"
-           style={{ background: "#002395" }}>
-        {r.title?.[0]?.toUpperCase() ?? "L"}
+const CeremonyCard = ({ c, lang }) => {
+  const name = t(lang, c, 'name', 'swati_name');
+  const desc = t(lang, c, 'description', 'swati_description');
+  return (
+    <Link to={`/explore/ceremonies/${c.id}`}
+      className="group bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 block">
+      <div className="h-1" style={{ background: "linear-gradient(90deg,#002395,#FFD600,#CE1126)" }} />
+      <div className="p-5">
+        <h3 className="text-sm font-semibold text-gray-900 group-hover:text-red-800 transition-colors">{name}</h3>
+        {c.month_celebrated && <p className="text-xs text-gray-400 mt-1">{c.month_celebrated}</p>}
+        {desc && <p className="text-xs text-gray-600 mt-2 line-clamp-2">{desc}</p>}
+        <span className="inline-block mt-3 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#CE1126" }}>
+          {ui(lang, 'viewAll')}
+        </span>
       </div>
-      <div className="min-w-0">
-        <h3 className="text-sm font-semibold text-gray-900 group-hover:text-red-800 transition-colors truncate">{r.title}</h3>
-        {r.era && <p className="text-xs text-gray-400 mt-0.5">{r.era}</p>}
-        {r.description && <p className="text-xs text-gray-600 mt-1.5 line-clamp-2">{r.description}</p>}
-      </div>
-    </div>
-  </Link>
-);
+    </Link>
+  );
+};
 
-/* ── Skeleton ── */
+const LineageCard = ({ r, lang }) => {
+  const title = t(lang, r, 'title', 'swati_title');
+  const desc  = t(lang, r, 'description', 'swati_description');
+  return (
+    <Link to="/explore/lineage"
+      className="group bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 block">
+      <div className="h-1" style={{ background: "linear-gradient(90deg,#FFD600,#CE1126)" }} />
+      <div className="p-5 flex items-start gap-4">
+        <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-sm"
+             style={{ background: "#002395" }}>
+          {title?.[0]?.toUpperCase() ?? "L"}
+        </div>
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-gray-900 group-hover:text-red-800 transition-colors truncate">{title}</h3>
+          {r.era && <p className="text-xs text-gray-400 mt-0.5">{r.era}</p>}
+          {desc && <p className="text-xs text-gray-600 mt-1.5 line-clamp-2">{desc}</p>}
+        </div>
+      </div>
+    </Link>
+  );
+};
+
 const CardSkeleton = () => (
   <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
     <div className="h-1 bg-gray-200" />
@@ -132,6 +149,7 @@ const CardSkeleton = () => (
 /* ── Page ── */
 const UserHome = () => {
   const { user } = useAuth();
+  const { lang } = useLang();
   const [ceremonies, setCeremonies] = useState([]);
   const [lineage,    setLineage]    = useState([]);
   const [loading,    setLoading]    = useState(true);
@@ -154,10 +172,12 @@ const UserHome = () => {
   useEffect(() => {
     const id = setInterval(() => {
       setFactOn(false);
-      setTimeout(() => { setFactIdx(i => (i + 1) % FACTS.length); setFactOn(true); }, 350);
+      setTimeout(() => { setFactIdx(i => (i + 1) % FACTS.en.length); setFactOn(true); }, 350);
     }, 4500);
     return () => clearInterval(id);
   }, []);
+
+  const facts = FACTS[lang] ?? FACTS.en;
 
   return (
     <div className="-mt-8 -mx-4">
@@ -171,7 +191,6 @@ const UserHome = () => {
           borderBottomRightRadius: "2.5rem",
         }}>
 
-        {/* Flag stripe at top */}
         <div className="absolute top-0 left-0 right-0 flex" style={{ height: 10 }}>
           <div className="flex-1" style={{ background: "#002395" }} />
           <div style={{ width: "7%", background: "#FFD600" }} />
@@ -182,7 +201,6 @@ const UserHome = () => {
 
         <DiamondParticles />
 
-        {/* Shield */}
         <div className="relative z-10 flex justify-center mb-6">
           <ShieldSVG style={{
             filter: "drop-shadow(0 0 20px rgba(255,214,0,0.4))",
@@ -193,13 +211,11 @@ const UserHome = () => {
           }} />
         </div>
 
-        {/* Headline */}
         <h1 className="relative z-10 text-4xl md:text-5xl font-bold text-white mb-3 animate-fade-in-down"
             style={{ textShadow: "0 2px 24px rgba(0,0,0,0.55)" }}>
-          Swazi Cultural Heritage
+          {ui(lang, 'heroTitle')}
         </h1>
 
-        {/* Flag-colour divider dots */}
         <div className="relative z-10 flex justify-center gap-2 mb-4">
           <div className="h-1 w-10 rounded-full" style={{ background: "#002395" }} />
           <div className="h-1 w-10 rounded-full" style={{ background: "#FFD600" }} />
@@ -208,29 +224,27 @@ const UserHome = () => {
 
         <p className="relative z-10 text-base md:text-lg max-w-xl mx-auto mb-4 animate-fade-in-up"
            style={{ color: "#93c5fd", animationDelay: "0.2s" }}>
-          Preserving the rich traditions, royal lineages, and ceremonies of the Kingdom of Eswatini
+          {ui(lang, 'heroSubtitle')}
         </p>
 
-        {/* Rotating cultural fact */}
         <div className="relative z-10 flex items-center justify-center mb-8" style={{ minHeight: 28 }}>
           <p className="text-sm italic max-w-lg mx-auto transition-opacity duration-300"
              style={{ color: "#FFD600", opacity: factOn ? 1 : 0 }}>
-            "{FACTS[factIdx]}"
+            "{facts[factIdx]}"
           </p>
         </div>
 
-        {/* CTAs */}
         <div className="relative z-10 flex flex-wrap justify-center gap-3 animate-fade-in-up"
              style={{ animationDelay: "0.4s" }}>
           <Link to="/explore"
             className="font-bold px-7 py-2.5 rounded-lg transition-all hover:scale-105 hover:brightness-110"
             style={{ background: "#FFD600", color: "#001540" }}>
-            Explore Ceremonies
+            {ui(lang, 'ctaExplore')}
           </Link>
           <Link to={user ? "/chat" : "/login"}
             className="font-medium px-7 py-2.5 rounded-lg text-white border transition-all hover:scale-105 hover:bg-white/10"
             style={{ borderColor: "rgba(255,255,255,0.3)" }}>
-            {user ? "Ask AI About Culture" : "Sign In to Explore"}
+            {user ? ui(lang, 'ctaAsk') : ui(lang, 'ctaSignIn')}
           </Link>
         </div>
       </section>
@@ -245,22 +259,22 @@ const UserHome = () => {
           <div className="grid grid-cols-3 divide-x divide-blue-900/50">
             {[
               {
-                val: ceremCount, label: "Ceremonies",
+                val: ceremCount, key: 'statCeremonies',
                 icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="#FFD600" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>,
               },
               {
-                val: linCount, label: "Lineage Records",
+                val: linCount, key: 'statLineage',
                 icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="#FFD600" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>,
               },
               {
-                val: foundedCount, label: "Kingdom Founded",
+                val: foundedCount, key: 'statFounded',
                 icon: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="#FFD600" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>,
               },
             ].map((s, i) => (
               <div key={i} className="py-6 px-4 text-center">
                 <div className="flex justify-center mb-2">{s.icon}</div>
                 <div className="text-3xl font-bold" style={{ color: "#FFD600" }}>{s.val}</div>
-                <div className="text-xs mt-0.5" style={{ color: "rgba(147,197,253,0.85)" }}>{s.label}</div>
+                <div className="text-xs mt-0.5" style={{ color: "rgba(147,197,253,0.85)" }}>{ui(lang, s.key)}</div>
               </div>
             ))}
           </div>
@@ -270,20 +284,20 @@ const UserHome = () => {
         <section className="mb-10">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Featured Ceremonies</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Sacred traditions of Eswatini</p>
+              <h2 className="text-xl font-bold text-gray-900">{ui(lang, 'featuredTitle')}</h2>
+              <p className="text-xs text-gray-400 mt-0.5">{ui(lang, 'featuredSub')}</p>
             </div>
-            <Link to="/explore" className="text-sm font-medium hover:underline" style={{ color: "#CE1126" }}>View all →</Link>
+            <Link to="/explore" className="text-sm font-medium hover:underline" style={{ color: "#CE1126" }}>{ui(lang, 'viewAll')}</Link>
           </div>
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => <CardSkeleton key={i} />)}
             </div>
           ) : ceremonies.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">No ceremonies published yet.</p>
+            <p className="text-sm text-gray-400 text-center py-8">{ui(lang, 'noCeremonies')}</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {ceremonies.map(c => <CeremonyCard key={c.id} c={c} />)}
+              {ceremonies.map(c => <CeremonyCard key={c.id} c={c} lang={lang} />)}
             </div>
           )}
         </section>
@@ -293,21 +307,21 @@ const UserHome = () => {
           <section className="mb-10">
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Royal Lineage Records</h2>
-                <p className="text-xs text-gray-400 mt-0.5">The lineage of Swazi kings and clans</p>
+                <h2 className="text-xl font-bold text-gray-900">{ui(lang, 'lineageTitle')}</h2>
+                <p className="text-xs text-gray-400 mt-0.5">{ui(lang, 'lineageSub')}</p>
               </div>
-              <Link to="/explore/lineage" className="text-sm font-medium hover:underline" style={{ color: "#CE1126" }}>View all →</Link>
+              <Link to="/explore/lineage" className="text-sm font-medium hover:underline" style={{ color: "#CE1126" }}>{ui(lang, 'viewAll')}</Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {lineage.map(r => <LineageCard key={r.id} r={r} />)}
+              {lineage.map(r => <LineageCard key={r.id} r={r} lang={lang} />)}
             </div>
           </section>
         )}
 
         {/* DISCOVER MORE */}
         <section className="mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Discover More</h2>
-          <p className="text-xs text-gray-400 mb-5">Explore all aspects of Swazi cultural heritage</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-1">{ui(lang, 'discoverTitle')}</h2>
+          <p className="text-xs text-gray-400 mb-5">{ui(lang, 'discoverSub')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
             {/* Explore Culture */}
@@ -320,14 +334,14 @@ const UserHome = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                   </svg>
                 </div>
-                <h3 className="font-semibold mb-1.5">Explore Culture</h3>
+                <h3 className="font-semibold mb-1.5">{ui(lang, 'exploreCardTitle')}</h3>
                 <p className="text-xs mb-5" style={{ color: "rgba(147,197,253,0.9)" }}>
-                  Browse ceremonies, songs, and traditional attire of Eswatini
+                  {ui(lang, 'exploreCardDesc')}
                 </p>
                 <Link to="/explore"
                   className="inline-block text-xs font-bold px-4 py-1.5 rounded-full transition-all group-hover:scale-105"
                   style={{ background: "#FFD600", color: "#001540" }}>
-                  Browse →
+                  {ui(lang, 'browseCta')}
                 </Link>
               </div>
             </div>
@@ -342,14 +356,14 @@ const UserHome = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
                   </svg>
                 </div>
-                <h3 className="font-semibold mb-1.5">AI Cultural Chat</h3>
+                <h3 className="font-semibold mb-1.5">{ui(lang, 'chatCardTitle')}</h3>
                 <p className="text-xs mb-5" style={{ color: "rgba(254,202,202,0.9)" }}>
-                  Ask our AI assistant anything about Swazi culture and traditions
+                  {ui(lang, 'chatCardDesc')}
                 </p>
                 <Link to={user ? "/chat" : "/login"}
                   className="inline-block text-xs font-bold px-4 py-1.5 rounded-full bg-white transition-all group-hover:scale-105"
                   style={{ color: "#CE1126" }}>
-                  {user ? "Ask now →" : "Sign in →"}
+                  {user ? ui(lang, 'askCta') : ui(lang, 'signIn') + ' →'}
                 </Link>
               </div>
             </div>
@@ -364,14 +378,14 @@ const UserHome = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.868V15.132a1 1 0 01-1.447.9L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                   </svg>
                 </div>
-                <h3 className="font-semibold mb-1.5">Cultural Cinema</h3>
+                <h3 className="font-semibold mb-1.5">{ui(lang, 'cinemaCardTitle')}</h3>
                 <p className="text-xs mb-5" style={{ color: "rgba(253,230,138,0.9)" }}>
-                  Watch live and recorded traditional cultural events
+                  {ui(lang, 'cinemaCardDesc')}
                 </p>
                 <Link to="/cinema"
                   className="inline-block text-xs font-bold px-4 py-1.5 rounded-full transition-all group-hover:scale-105"
                   style={{ background: "#FFD600", color: "#2C1800" }}>
-                  View sessions →
+                  {ui(lang, 'sessionsCta')}
                 </Link>
               </div>
             </div>

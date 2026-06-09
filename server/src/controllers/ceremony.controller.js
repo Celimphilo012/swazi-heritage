@@ -1,11 +1,26 @@
 import { CeremonyModel } from '../models/ceremony.model.js';
-import { SongModel, ImvunuloModel } from '../models/models.js';
+import { SongModel, ImvunuloModel, UserModel } from '../models/models.js';
 import { success, created, paginated, AppError } from '../utils/apiResponse.js';
+import { autoTranslateCeremony } from '../utils/translate.js';
+import { sendMail } from '../utils/mailer.js';
+import { pendingReviewEmail, contentReviewedEmail } from '../utils/emailTemplates.js';
 
 export const createCeremony = async (req, res, next) => {
   try {
-    const result = await CeremonyModel.create({ ...req.body, created_by: req.user.id });
-    created(res, await CeremonyModel.findById(result.insertId), 'Ceremony submitted for review.');
+    const body = await autoTranslateCeremony(req.body);
+    const result = await CeremonyModel.create({ ...body, created_by: req.user.id });
+    const ceremony = await CeremonyModel.findById(result.insertId);
+    created(res, ceremony, 'Ceremony submitted for review.');
+    // Notify admins (fire-and-forget)
+    UserModel.getAdmins().then(admins => {
+      admins.forEach(admin => {
+        const { subject, html } = pendingReviewEmail({
+          contentType: 'Ceremony', title: ceremony.name,
+          practitionerName: req.user.name, adminName: admin.name,
+        });
+        sendMail({ to: admin.email, subject, html });
+      });
+    }).catch(() => {});
   } catch (err) { next(err); }
 };
 
@@ -17,7 +32,8 @@ export const updateCeremony = async (req, res, next) => {
       throw new AppError('You can only edit your own ceremonies.', 403);
     if (c.status === 'published' || c.status === 'rejected')
       await CeremonyModel.updateStatus(req.params.id, 'pending_review', null);
-    await CeremonyModel.update(req.params.id, req.body);
+    const body = await autoTranslateCeremony(req.body);
+    await CeremonyModel.update(req.params.id, body);
     success(res, await CeremonyModel.getFullDetail(req.params.id), 'Ceremony updated and re-submitted for review.');
   } catch (err) { next(err); }
 };
@@ -54,8 +70,21 @@ export const reviewCeremony = async (req, res, next) => {
   try {
     const { status, rejection_note } = req.body;
     if (!['published', 'rejected', 'pending_review'].includes(status)) throw new AppError('Invalid status.', 400);
+    const ceremony = await CeremonyModel.findById(req.params.id);
     await CeremonyModel.updateStatus(req.params.id, status, req.user.id, rejection_note);
     success(res, null, `Ceremony ${status}.`);
+    // Notify practitioner (fire-and-forget)
+    if (ceremony && (status === 'published' || status === 'rejected')) {
+      UserModel.findById(ceremony.created_by).then(practitioner => {
+        if (!practitioner?.email) return;
+        const { subject, html } = contentReviewedEmail({
+          contentType: 'Ceremony', title: ceremony.name,
+          status, rejectionNote: rejection_note,
+          practitionerName: practitioner.name,
+        });
+        sendMail({ to: practitioner.notification_email || practitioner.email, subject, html });
+      }).catch(() => {});
+    }
   } catch (err) { next(err); }
 };
 

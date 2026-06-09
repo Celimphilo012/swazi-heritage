@@ -1,12 +1,12 @@
 import { query } from '../config/db.js';
 
 export const CeremonyModel = {
-  create: ({ name, description, month_celebrated, immunology_notes, created_by }) =>
-    query('INSERT INTO ceremonies (name, description, month_celebrated, immunology_notes, created_by) VALUES (?, ?, ?, ?, ?)',
-      [name, description, month_celebrated, immunology_notes, created_by]),
+  create: ({ name, description, month_celebrated, immunology_notes, swati_name, swati_description, location_name, latitude, longitude, created_by }) =>
+    query('INSERT INTO ceremonies (name, description, month_celebrated, immunology_notes, swati_name, swati_description, location_name, latitude, longitude, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [name, description, month_celebrated, immunology_notes, swati_name ?? null, swati_description ?? null, location_name ?? null, latitude ?? null, longitude ?? null, created_by]),
 
   update: (id, fields) => {
-    const allowed = ['name', 'description', 'month_celebrated', 'immunology_notes'];
+    const allowed = ['name', 'description', 'month_celebrated', 'immunology_notes', 'swati_name', 'swati_description', 'location_name', 'latitude', 'longitude'];
     const pairs = Object.entries(fields).filter(([k]) => allowed.includes(k));
     if (!pairs.length) return Promise.resolve();
     return query(

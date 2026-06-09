@@ -165,6 +165,17 @@ const SystemConfig = () => {
   const [savingMonths,  setSavingMonths] = useState(false);
   const [monthsSaved,   setMonthsSaved]  = useState(false);
 
+  // Integrations
+  const [translateKey,   setTranslateKey]   = useState("");
+  const [savingTranslate, setSavingTranslate] = useState(false);
+  const [translateSaved,  setTranslateSaved]  = useState(false);
+
+  const [emailCfg, setEmailCfg] = useState({ email_host: "", email_port: "587", email_user: "", email_pass: "", email_secure: "false" });
+  const [savingEmail,  setSavingEmail]  = useState(false);
+  const [emailSaved,   setEmailSaved]   = useState(false);
+
+  const cfgVal = (cfgs, key) => cfgs.find(c => c.key === key)?.value || "";
+
   useEffect(() => {
     Promise.all([getConfig(), getImvunuloPresets(), getCeremonyMonths()])
       .then(([cfgs, ps, ms]) => {
@@ -174,10 +185,42 @@ const SystemConfig = () => {
         const ai = cfgs.find(c => c.key === "ai_system_prompt");
         if (ai) setAiPrompt(ai.value);
         setMonthsRaw(ms.join("\n"));
+        setTranslateKey(cfgVal(cfgs, "google_translate_key"));
+        setEmailCfg({
+          email_host:   cfgVal(cfgs, "email_host")   || "",
+          email_port:   cfgVal(cfgs, "email_port")   || "587",
+          email_user:   cfgVal(cfgs, "email_user")   || "",
+          email_pass:   cfgVal(cfgs, "email_pass")   || "",
+          email_secure: cfgVal(cfgs, "email_secure") || "false",
+        });
       })
       .catch(() => setError("Failed to load config."))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleSaveTranslate = async () => {
+    if (!translateKey.trim()) return;
+    setSavingTranslate(true);
+    try {
+      await updateConfig("google_translate_key", translateKey.trim());
+      setTranslateSaved(true);
+      setTimeout(() => setTranslateSaved(false), 2000);
+    } catch { setError("Failed to save."); }
+    finally { setSavingTranslate(false); }
+  };
+
+  const handleSaveEmail = async () => {
+    if (!emailCfg.email_host || !emailCfg.email_user || !emailCfg.email_pass) return;
+    setSavingEmail(true);
+    try {
+      await Promise.all(
+        Object.entries(emailCfg).map(([k, v]) => updateConfig(k, v || " "))
+      );
+      setEmailSaved(true);
+      setTimeout(() => setEmailSaved(false), 2000);
+    } catch { setError("Failed to save email config."); }
+    finally { setSavingEmail(false); }
+  };
 
   const handleSavePrompt = async () => {
     setSavingPrompt(true);
@@ -323,6 +366,79 @@ const SystemConfig = () => {
                     Add Preset
                   </>}
             </BtnPrimary>
+          </div>
+        </Section>
+
+        {/* Integrations */}
+        <Section title="Integrations"
+          description="API keys and SMTP credentials. Values saved here override the server .env file.">
+
+          {/* Google Translate */}
+          <div className="mb-6">
+            <p className="text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h12M9 3v2m1.048 3.938A9.006 9.006 0 0121 12a9.006 9.006 0 01-7.952 4.062M3 5a2 2 0 000 4h.5M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 4h.01" />
+              </svg>
+              Google Translate API Key
+            </p>
+            <p className="text-xs text-slate-400 mb-2">Used to auto-generate siSwati translations when practitioners save content.</p>
+            <div className="flex gap-2">
+              <FInput type="password" value={translateKey}
+                onChange={e => setTranslateKey(e.target.value)}
+                placeholder="AIza..." className="flex-1" />
+              <BtnPrimary onClick={handleSaveTranslate} disabled={savingTranslate || !translateKey.trim()}
+                style={{ padding: "8px 16px", fontSize: 12, whiteSpace: "nowrap" }}>
+                {savingTranslate ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Save"}
+              </BtnPrimary>
+            </div>
+            {translateSaved && <p className="text-xs font-semibold mt-1.5" style={{ color: "#10b981" }}>✓ Saved</p>}
+          </div>
+
+          <div className="border-t border-slate-100 pt-5">
+            <p className="text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Email / SMTP Settings
+            </p>
+            <p className="text-xs text-slate-400 mb-3">Used to send email notifications to practitioners and admins. Gmail recommended — use an App Password.</p>
+            <div className="space-y-2">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <p className="text-xs text-slate-500 mb-1">SMTP Host</p>
+                  <FInput value={emailCfg.email_host} placeholder="smtp.gmail.com"
+                    onChange={e => setEmailCfg(c => ({ ...c, email_host: e.target.value }))} />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Port</p>
+                  <FInput value={emailCfg.email_port} placeholder="587"
+                    onChange={e => setEmailCfg(c => ({ ...c, email_port: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">From Email (SMTP username)</p>
+                <FInput type="email" value={emailCfg.email_user} placeholder="yourapp@gmail.com"
+                  onChange={e => setEmailCfg(c => ({ ...c, email_user: e.target.value }))} />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">App Password</p>
+                <FInput type="password" value={emailCfg.email_pass} placeholder="Gmail App Password (16 characters)"
+                  onChange={e => setEmailCfg(c => ({ ...c, email_pass: e.target.value }))} />
+              </div>
+              <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none pt-0.5">
+                <input type="checkbox" checked={emailCfg.email_secure === "true"}
+                  onChange={e => setEmailCfg(c => ({ ...c, email_secure: e.target.checked ? "true" : "false" }))}
+                  className="rounded border-slate-300" />
+                Use SSL/TLS (port 465 only — leave off for port 587)
+              </label>
+            </div>
+            <div className="flex items-center gap-3 mt-3">
+              <BtnPrimary onClick={handleSaveEmail} disabled={savingEmail || !emailCfg.email_host || !emailCfg.email_user || !emailCfg.email_pass}>
+                {savingEmail && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                {savingEmail ? "Saving…" : "Save Email Settings"}
+              </BtnPrimary>
+              {emailSaved && <span className="text-xs font-semibold" style={{ color: "#10b981" }}>✓ Saved</span>}
+            </div>
           </div>
         </Section>
 
