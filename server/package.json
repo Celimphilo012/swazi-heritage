@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "dev": "nodemon --ignore ml/model.json server.js",
     "migrate": "node database/migrate.js"
   },
   "dependencies": {
