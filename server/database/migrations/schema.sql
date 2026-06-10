@@ -185,3 +185,82 @@ CREATE TABLE IF NOT EXISTS audit_log (
   INDEX idx_admin (admin_id),
   INDEX idx_created (created_at)
 );
+
+-- 012b category columns for recommendation engine
+ALTER TABLE ceremonies
+  ADD COLUMN IF NOT EXISTS category ENUM('ceremonies','lineage','music','attire','royal','spiritual') DEFAULT NULL;
+
+ALTER TABLE lineage_records
+  ADD COLUMN IF NOT EXISTS category ENUM('ceremonies','lineage','music','attire','royal','spiritual') DEFAULT NULL;
+
+-- 013 user_preferences (Objective 2 — user profiling)
+CREATE TABLE IF NOT EXISTS user_preferences (
+  id             INT AUTO_INCREMENT PRIMARY KEY,
+  user_id        INT NOT NULL UNIQUE,
+  interests      JSON,
+  visitor_type   ENUM('local','tourist','researcher','student','other') NOT NULL DEFAULT 'local',
+  preferred_lang ENUM('en','ss') NOT NULL DEFAULT 'en',
+  created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 014 services (Objective 3 — cultural marketplace)
+CREATE TABLE IF NOT EXISTS services (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  practitioner_id INT NOT NULL,
+  title           VARCHAR(200) NOT NULL,
+  description     TEXT,
+  category        ENUM('performance','crafts','teaching','ceremony','attire','music','other') NOT NULL DEFAULT 'other',
+  price_range     VARCHAR(100),
+  contact         VARCHAR(255),
+  image_url       VARCHAR(500),
+  status          ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (practitioner_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_status (status),
+  INDEX idx_category (category)
+);
+
+-- 015 service_enquiries
+CREATE TABLE IF NOT EXISTS service_enquiries (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  service_id  INT NOT NULL,
+  user_id     INT,
+  user_name   VARCHAR(120) NOT NULL,
+  user_email  VARCHAR(255) NOT NULL,
+  message     TEXT NOT NULL,
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- 016 ceremony_steps (Objective 5 — walkthrough simulations)
+CREATE TABLE IF NOT EXISTS ceremony_steps (
+  id           INT AUTO_INCREMENT PRIMARY KEY,
+  ceremony_id  INT NOT NULL,
+  step_number  INT NOT NULL,
+  title        VARCHAR(200) NOT NULL,
+  description  TEXT,
+  media_url    VARCHAR(500),
+  created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (ceremony_id) REFERENCES ceremonies(id) ON DELETE CASCADE,
+  UNIQUE KEY uniq_ceremony_step (ceremony_id, step_number),
+  INDEX idx_ceremony (ceremony_id)
+);
+
+-- 017 ratings (Objective 5 — evaluation/feedback)
+CREATE TABLE IF NOT EXISTS ratings (
+  id           INT AUTO_INCREMENT PRIMARY KEY,
+  user_id      INT NOT NULL,
+  content_type ENUM('ceremony','lineage') NOT NULL,
+  content_id   INT NOT NULL,
+  score        TINYINT NOT NULL,
+  comment      TEXT,
+  created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_user_content (user_id, content_type, content_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_content (content_type, content_id)
+);

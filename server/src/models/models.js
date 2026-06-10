@@ -2,16 +2,16 @@ import { query } from "../config/db.js";
 
 // ─── Lineage Records ──────────────────────────────────────────────────────────
 export const LineageModel = {
-  create: ({ title, description, era, swati_title, swati_description, location_name, latitude, longitude, created_by }) =>
+  create: ({ title, description, era, swati_title, swati_description, location_name, latitude, longitude, category, created_by }) =>
     query(
-      `INSERT INTO lineage_records (title, description, era, swati_title, swati_description, location_name, latitude, longitude, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [title, description, era, swati_title ?? null, swati_description ?? null, location_name ?? null, latitude ?? null, longitude ?? null, created_by],
+      `INSERT INTO lineage_records (title, description, era, swati_title, swati_description, location_name, latitude, longitude, category, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [title, description, era, swati_title ?? null, swati_description ?? null, location_name ?? null, latitude ?? null, longitude ?? null, category ?? null, created_by],
     ),
 
-  update: (id, { title, description, era, swati_title, swati_description, location_name, latitude, longitude }) =>
+  update: (id, { title, description, era, swati_title, swati_description, location_name, latitude, longitude, category }) =>
     query(
-      `UPDATE lineage_records SET title = ?, description = ?, era = ?, swati_title = ?, swati_description = ?, location_name = ?, latitude = ?, longitude = ? WHERE id = ?`,
-      [title, description, era, swati_title ?? null, swati_description ?? null, location_name ?? null, latitude ?? null, longitude ?? null, id],
+      `UPDATE lineage_records SET title = ?, description = ?, era = ?, swati_title = ?, swati_description = ?, location_name = ?, latitude = ?, longitude = ?, category = ? WHERE id = ?`,
+      [title, description, era, swati_title ?? null, swati_description ?? null, location_name ?? null, latitude ?? null, longitude ?? null, category ?? null, id],
     ),
 
   updateStatus: (id, status, reviewed_by, rejection_note) =>
@@ -321,3 +321,9 @@ export const ConfigModel = {
 // routes/index.js imports { UserModel } from '../models/models.js'
 // UserModel lives in user.model.js — this re-export bridges them.
 export { UserModel } from "./user.model.js";
+
+// ─── Re-exports for new feature models ───────────────────────────────────────
+export { PreferencesModel } from "./preferences.model.js";
+export { ServicesModel }    from "./services.model.js";
+export { RatingsModel }     from "./ratings.model.js";
+export { StepsModel }       from "./steps.model.js";

@@ -227,7 +227,7 @@ const LineageFormPage = () => {
   const navigate = useNavigate();
   const isEdit = !!id;
 
-  const [formData, setFormData] = useState({ title: "", era: "", description: "", swati_title: "", swati_description: "", location_name: "", latitude: "", longitude: "" });
+  const [formData, setFormData] = useState({ title: "", era: "", description: "", swati_title: "", swati_description: "", location_name: "", latitude: "", longitude: "", category: "" });
   const [clans, setClans] = useState([]);
   const [savedId, setSavedId] = useState(null);
   const [loading, setLoading] = useState(isEdit);
@@ -239,7 +239,7 @@ const LineageFormPage = () => {
     if (!isEdit) return;
     getLineageRecord(id)
       .then((r) => {
-        setFormData({ title: r.title, era: r.era, description: r.description || "", swati_title: r.swati_title || "", swati_description: r.swati_description || "", location_name: r.location_name || "", latitude: r.latitude ?? "", longitude: r.longitude ?? "" });
+        setFormData({ title: r.title, era: r.era, description: r.description || "", swati_title: r.swati_title || "", swati_description: r.swati_description || "", location_name: r.location_name || "", latitude: r.latitude ?? "", longitude: r.longitude ?? "", category: r.category || "" });
         setClans(r.clans || []);
         setSavedId(r.id);
       })
@@ -341,6 +341,26 @@ const LineageFormPage = () => {
             onChange={setField("description")}
             placeholder="Describe the lineage, its historical significance, notable figures, and connection to the Swazi royal family..."
           />
+        </div>
+
+        {/* Cultural category */}
+        <div>
+          <Label>Cultural category</Label>
+          <select
+            value={formData.category}
+            onChange={setField("category")}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white
+                       focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400"
+          >
+            <option value="">— Select a category (for recommendations) —</option>
+            <option value="ceremonies">Ceremonies</option>
+            <option value="lineage">Royal Lineage</option>
+            <option value="music">Music &amp; Songs</option>
+            <option value="attire">Traditional Attire</option>
+            <option value="royal">Royal Culture</option>
+            <option value="spiritual">Spiritual Practices</option>
+          </select>
+          <p className="text-xs text-gray-400 mt-1">Used to match this record with users' cultural interests.</p>
         </div>
 
         {/* siSwati translation */}

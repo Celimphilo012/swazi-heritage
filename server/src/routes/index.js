@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { query } from "../config/db.js";
 import { body } from "express-validator";
 import multer from "multer";
 import path from "path";
@@ -53,11 +54,15 @@ import {
   UserModel,
   ConfigModel,
   AuditLogModel,
+  PreferencesModel,
+  ServicesModel,
+  RatingsModel,
+  StepsModel,
 } from "../models/models.js";
 import { success, created, paginated, AppError } from "../utils/apiResponse.js";
 import { autoTranslateLineage } from "../utils/translate.js";
 import { sendMail } from "../utils/mailer.js";
-import { pendingReviewEmail, contentReviewedEmail } from "../utils/emailTemplates.js";
+import { pendingReviewEmail, contentReviewedEmail, newEnquiryEmail } from "../utils/emailTemplates.js";
 
 const router = Router();
 router.use(attachAuditLogger);
@@ -107,6 +112,27 @@ authRouter.patch(
     } catch (err) {
       next(err);
     }
+  },
+);
+
+// Preferences
+authRouter.get("/preferences", protect, async (req, res, next) => {
+  try {
+    const prefs = await PreferencesModel.findByUser(req.user.id);
+    success(res, prefs || { interests: [], visitor_type: 'local', preferred_lang: 'en' });
+  } catch (err) { next(err); }
+});
+authRouter.put(
+  "/preferences",
+  protect,
+  [body("visitor_type").optional().isIn(["local", "tourist", "researcher", "student", "other"])],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { interests, visitor_type, preferred_lang } = req.body;
+      await PreferencesModel.upsert(req.user.id, { interests, visitor_type, preferred_lang });
+      success(res, await PreferencesModel.findByUser(req.user.id), "Preferences saved.");
+    } catch (err) { next(err); }
   },
 );
 
@@ -183,6 +209,15 @@ ceremonyRouter.get("/resources/months", protect, async (_req, res, next) => {
 });
 
 ceremonyRouter.get("/:id", CeremonyCtrl.getCeremony);
+ceremonyRouter.get("/:id/ratings", async (req, res, next) => {
+  try {
+    const [reviews, summary] = await Promise.all([
+      RatingsModel.findByContent('ceremony', req.params.id),
+      RatingsModel.getSummary('ceremony', req.params.id),
+    ]);
+    success(res, { reviews, summary });
+  } catch (err) { next(err); }
+});
 ceremonyRouter.use(protect);
 ceremonyRouter.get(
   "/mine/all",
@@ -234,6 +269,52 @@ ceremonyRouter.patch(
 );
 ceremonyRouter.get("/admin/all", adminOnly, CeremonyCtrl.getAllCeremonies);
 
+// Ratings (submit — authenticated user)
+ceremonyRouter.post(
+  "/:id/ratings",
+  [body("score").isInt({ min: 1, max: 5 })],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { score, comment } = req.body;
+      await RatingsModel.upsert({ user_id: req.user.id, content_type: 'ceremony', content_id: req.params.id, score, comment });
+      const summary = await RatingsModel.getSummary('ceremony', req.params.id);
+      success(res, summary, "Rating saved.");
+    } catch (err) { next(err); }
+  },
+);
+
+// Walkthrough steps
+ceremonyRouter.get("/:id/steps", async (req, res, next) => {
+  try { success(res, await StepsModel.findByCeremony(req.params.id)); } catch (err) { next(err); }
+});
+ceremonyRouter.post(
+  "/:id/steps",
+  ceremonyKeeperOnly,
+  [body("title").notEmpty()],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { title, description, media_url } = req.body;
+      const step_number = await StepsModel.getNextStepNumber(req.params.id);
+      const result = await StepsModel.create({ ceremony_id: req.params.id, step_number, title, description, media_url });
+      created(res, { id: result.insertId, step_number, title, description, media_url }, "Step added.");
+    } catch (err) { next(err); }
+  },
+);
+ceremonyRouter.put("/:id/steps/:stepId", ceremonyKeeperOnly, async (req, res, next) => {
+  try {
+    await StepsModel.update(req.params.stepId, req.body);
+    success(res, null, "Step updated.");
+  } catch (err) { next(err); }
+});
+ceremonyRouter.delete("/:id/steps/:stepId", ceremonyKeeperOnly, async (req, res, next) => {
+  try {
+    await StepsModel.delete(req.params.stepId);
+    success(res, null, "Step deleted.");
+  } catch (err) { next(err); }
+});
+
 // ─── LINEAGE ──────────────────────────────────────────────────────────────────
 const lineageRouter = Router();
 lineageRouter.get("/", async (req, res, next) => {
@@ -258,7 +339,29 @@ lineageRouter.get("/:id", async (req, res, next) => {
     next(err);
   }
 });
+lineageRouter.get("/:id/ratings", async (req, res, next) => {
+  try {
+    const [reviews, summary] = await Promise.all([
+      RatingsModel.findByContent('lineage', req.params.id),
+      RatingsModel.getSummary('lineage', req.params.id),
+    ]);
+    success(res, { reviews, summary });
+  } catch (err) { next(err); }
+});
 lineageRouter.use(protect);
+lineageRouter.post(
+  "/:id/ratings",
+  [body("score").isInt({ min: 1, max: 5 })],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { score, comment } = req.body;
+      await RatingsModel.upsert({ user_id: req.user.id, content_type: 'lineage', content_id: req.params.id, score, comment });
+      const summary = await RatingsModel.getSummary('lineage', req.params.id);
+      success(res, summary, "Rating saved.");
+    } catch (err) { next(err); }
+  },
+);
 lineageRouter.get("/mine/all", historyKeeperOnly, async (req, res, next) => {
   try {
     const records = await LineageModel.findByCreator(req.user.id, req.query.status);
@@ -758,6 +861,15 @@ adminRouter.post("/ollama/test", async (req, res, next) => {
   }
 });
 
+// ─── RATINGS (admin view) ─────────────────────────────────────────────────────
+adminRouter.get("/ratings", async (req, res, next) => {
+  try {
+    const { page = 1, limit = 50 } = req.query;
+    const { rows, total } = await RatingsModel.getAll({ page: +page, limit: +limit });
+    paginated(res, rows, { total, page: +page, limit: +limit });
+  } catch (err) { next(err); }
+});
+
 // ─── ML MODEL ROUTES (admin only) ────────────────────────────────────────────
 adminRouter.get("/ml/status", (_req, res) => {
   const info = getModelInfo();
@@ -782,6 +894,126 @@ adminRouter.post("/ml/test", (req, res) => {
   success(res, result || { answer: 'No trained model found or no matching results.', source: 'local' });
 });
 
+// ─── SERVICES (marketplace) ────────────────────────────────────────────────────
+const servicesRouter = Router();
+servicesRouter.get("/", async (req, res, next) => {
+  try {
+    const { category, page = 1, limit = 20 } = req.query;
+    const { rows, total } = await ServicesModel.getAll({ category, page: +page, limit: +limit });
+    paginated(res, rows, { total, page: +page, limit: +limit });
+  } catch (err) { next(err); }
+});
+servicesRouter.get("/mine", protect, practitionersOnly, async (req, res, next) => {
+  try { success(res, await ServicesModel.findByPractitioner(req.user.id)); } catch (err) { next(err); }
+});
+servicesRouter.get("/:id", async (req, res, next) => {
+  try {
+    const svc = await ServicesModel.findById(req.params.id);
+    if (!svc) throw new AppError("Service not found.", 404);
+    success(res, svc);
+  } catch (err) { next(err); }
+});
+servicesRouter.post(
+  "/",
+  protect,
+  practitionersOnly,
+  [body("title").notEmpty(), body("category").notEmpty()],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { title, description, category, price_range, contact, image_url } = req.body;
+      const result = await ServicesModel.create({ practitioner_id: req.user.id, title, description, category, price_range, contact, image_url });
+      created(res, { id: result.insertId, title, category }, "Service listed.");
+    } catch (err) { next(err); }
+  },
+);
+servicesRouter.put("/:id", protect, practitionersOnly, async (req, res, next) => {
+  try {
+    const svc = await ServicesModel.findById(req.params.id);
+    if (!svc) throw new AppError("Service not found.", 404);
+    if (svc.practitioner_id !== req.user.id) throw new AppError("Forbidden.", 403);
+    await ServicesModel.update(req.params.id, req.body);
+    success(res, null, "Service updated.");
+  } catch (err) { next(err); }
+});
+servicesRouter.delete("/:id", protect, practitionersOnly, async (req, res, next) => {
+  try {
+    const svc = await ServicesModel.findById(req.params.id);
+    if (!svc) throw new AppError("Service not found.", 404);
+    if (svc.practitioner_id !== req.user.id) throw new AppError("Forbidden.", 403);
+    await ServicesModel.delete(req.params.id);
+    success(res, null, "Service removed.");
+  } catch (err) { next(err); }
+});
+servicesRouter.post(
+  "/:id/enquire",
+  protect,
+  [body("message").notEmpty(), body("user_email").isEmail()],
+  validate,
+  async (req, res, next) => {
+    try {
+      const svc = await ServicesModel.findById(req.params.id);
+      if (!svc) throw new AppError("Service not found.", 404);
+      const { message, user_email } = req.body;
+      await ServicesModel.createEnquiry({
+        service_id: req.params.id,
+        user_id: req.user.id,
+        user_name: req.user.name,
+        user_email,
+        message,
+      });
+      success(res, null, "Enquiry sent.");
+      // Notify practitioner (fire-and-forget)
+      UserModel.findById(svc.practitioner_id).then(practitioner => {
+        if (!practitioner?.email) return;
+        const { subject, html } = newEnquiryEmail({
+          serviceName: svc.title,
+          practitionerName: practitioner.name,
+          userName: req.user.name,
+          userEmail: user_email,
+          message,
+        });
+        sendMail({ to: practitioner.notification_email || practitioner.email, subject, html });
+      }).catch(() => {});
+    } catch (err) { next(err); }
+  },
+);
+
+// ─── RECOMMENDATIONS ──────────────────────────────────────────────────────────
+const recommendationsRouter = Router();
+recommendationsRouter.get("/", protect, async (req, res, next) => {
+  try {
+    const prefs = await PreferencesModel.findByUser(req.user.id);
+    if (!prefs) {
+      return success(res, { ceremonies: [], lineage: [], noPreferences: true });
+    }
+    const interests = Array.isArray(prefs.interests)
+      ? prefs.interests
+      : (JSON.parse(prefs.interests || '[]'));
+    if (!interests.length) {
+      return success(res, { ceremonies: [], lineage: [], noPreferences: true });
+    }
+    const placeholders = interests.map(() => '?').join(',');
+    const [ceremonies, lineage] = await Promise.all([
+      query(
+        `SELECT c.*, u.name AS creator_name FROM ceremonies c
+         JOIN users u ON c.created_by = u.id
+         WHERE c.status = 'published' AND c.category IN (${placeholders})
+         ORDER BY c.created_at DESC LIMIT 6`,
+        interests,
+      ),
+      query(
+        `SELECT lr.*, u.name AS creator_name FROM lineage_records lr
+         JOIN users u ON lr.created_by = u.id
+         WHERE lr.status = 'published' AND lr.category IN (${placeholders})
+         ORDER BY lr.created_at DESC LIMIT 4`,
+        interests,
+      ),
+    ]);
+    success(res, { ceremonies, lineage, interests });
+  } catch (err) { next(err); }
+});
+
 // ─── AGGREGATE ROUTER ─────────────────────────────────────────────────────────
 router.use("/auth", authRouter);
 router.use("/ceremonies", ceremonyRouter);
@@ -790,5 +1022,7 @@ router.use("/clans", clanRouter);
 router.use("/cinema", cinemaRouter);
 router.use("/prompts", promptRouter);
 router.use("/admin", adminRouter);
+router.use("/services", servicesRouter);
+router.use("/recommendations", recommendationsRouter);
 
 export default router;

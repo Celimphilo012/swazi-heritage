@@ -89,8 +89,9 @@ const UserLayout = () => {
   const closeMenu = () => setMenuOpen(false);
 
   const navLinks = [
-    { to: '/explore', label: ui(lang, 'navExplore') },
-    { to: '/cinema',  label: ui(lang, 'navCinema')  },
+    { to: '/explore',     label: ui(lang, 'navExplore')     },
+    { to: '/marketplace', label: ui(lang, 'navMarketplace') },
+    { to: '/cinema',      label: ui(lang, 'navCinema')      },
     ...(user ? [{ to: '/chat', label: ui(lang, 'navChat') }] : []),
   ];
 

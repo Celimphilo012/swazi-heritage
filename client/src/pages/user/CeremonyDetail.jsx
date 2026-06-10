@@ -1,8 +1,10 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getCeremony } from "../../api/ceremonies.api";
+import { getCeremonyRatings, rateCeremony } from "../../api/ratings.api";
 import YouTubeAudioPlayer from "../../components/common/YouTubeAudioPlayer";
 import { useLang, t } from "../../context/LanguageContext";
+import { useAuth } from "../../context/AuthContext";
 const CultureMap = lazy(() => import("../../components/common/CultureMap"));
 
 const GENDER_LABEL = { male: "Men", female: "Women", both: "All", child: "Children" };
@@ -138,6 +140,170 @@ const SongItem = ({ song, index }) => (
   </div>
 );
 
+/* ── Star rating display ── */
+const Stars = ({ score, size = 16, interactive = false, onRate }) => (
+  <div className="flex gap-0.5">
+    {[1, 2, 3, 4, 5].map(n => (
+      <svg key={n} style={{ width: size, height: size, cursor: interactive ? 'pointer' : 'default' }}
+        fill={n <= score ? '#FFD600' : 'none'} viewBox="0 0 24 24" stroke="#FFD600" strokeWidth={1.5}
+        onClick={() => interactive && onRate && onRate(n)}>
+        <path strokeLinecap="round" strokeLinejoin="round"
+          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+      </svg>
+    ))}
+  </div>
+);
+
+/* ── Ratings section ── */
+const RatingsSection = ({ ceremonyId }) => {
+  const { user } = useAuth();
+  const [data,        setData]        = useState({ reviews: [], summary: {} });
+  const [hovered,     setHovered]     = useState(0);
+  const [myScore,     setMyScore]     = useState(0);
+  const [myComment,   setMyComment]   = useState("");
+  const [submitting,  setSubmitting]  = useState(false);
+  const [msg,         setMsg]         = useState("");
+
+  useEffect(() => {
+    getCeremonyRatings(ceremonyId).then(setData).catch(() => {});
+  }, [ceremonyId]);
+
+  const handleSubmit = async () => {
+    if (!myScore) return;
+    setSubmitting(true); setMsg("");
+    try {
+      const summary = await rateCeremony(ceremonyId, { score: myScore, comment: myComment.trim() || undefined });
+      setData(d => ({ ...d, summary }));
+      setMsg("Thank you for your feedback!");
+      getCeremonyRatings(ceremonyId).then(setData).catch(() => {});
+    } catch { setMsg("Failed to save rating. Please try again."); }
+    finally { setSubmitting(false); }
+  };
+
+  const { summary = {}, reviews = [] } = data;
+
+  return (
+    <div className="mt-8 pb-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="h-px flex-1" style={{ background: "#e5e7eb" }} />
+        <span className="text-xs font-bold uppercase tracking-widest text-gray-400">Community Reviews</span>
+        <div className="h-px flex-1" style={{ background: "#e5e7eb" }} />
+      </div>
+
+      {/* Summary */}
+      {summary.count > 0 && (
+        <div className="flex items-center gap-4 mb-6 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
+          <div className="text-center">
+            <div className="text-3xl font-black text-gray-900">{summary.average}</div>
+            <Stars score={Math.round(summary.average)} size={14} />
+            <div className="text-xs text-gray-400 mt-1">{summary.count} review{summary.count !== 1 ? 's' : ''}</div>
+          </div>
+          <div className="flex-1 space-y-1">
+            {[5,4,3,2,1].map(n => {
+              const cnt = reviews.filter(r => r.score === n).length;
+              const pct = summary.count ? (cnt / summary.count) * 100 : 0;
+              return (
+                <div key={n} className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 w-2">{n}</span>
+                  <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "#FFD600" }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Submit form */}
+      {user ? (
+        <div className="mb-6 rounded-2xl border border-gray-100 shadow-sm p-5 bg-white">
+          <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">Rate this ceremony</p>
+          <div className="flex gap-1 mb-3"
+            onMouseLeave={() => setHovered(0)}>
+            {[1,2,3,4,5].map(n => (
+              <svg key={n} style={{ width: 28, height: 28, cursor: 'pointer' }}
+                fill={n <= (hovered || myScore) ? '#FFD600' : 'none'}
+                viewBox="0 0 24 24" stroke="#FFD600" strokeWidth={1.5}
+                onMouseEnter={() => setHovered(n)}
+                onClick={() => setMyScore(n)}>
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              </svg>
+            ))}
+            {myScore > 0 && (
+              <span className="ml-2 text-xs text-gray-500 self-center">
+                {["","Poor","Fair","Good","Very Good","Excellent"][myScore]}
+              </span>
+            )}
+          </div>
+          <textarea rows={2} value={myComment} onChange={e => setMyComment(e.target.value)}
+            placeholder="Share your experience with this ceremony (optional)…"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-700
+                       placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none mb-3" />
+          {msg && (
+            <p className="text-xs mb-2" style={{ color: msg.startsWith('Thank') ? '#10b981' : '#CE1126' }}>{msg}</p>
+          )}
+          <button onClick={handleSubmit} disabled={!myScore || submitting}
+            className="text-sm font-bold px-5 py-2 rounded-xl text-white transition-all disabled:opacity-40"
+            style={{ background: "linear-gradient(135deg,#002395,#1a4db0)" }}>
+            {submitting ? "Submitting…" : "Submit Review"}
+          </button>
+        </div>
+      ) : (
+        <div className="mb-6 rounded-2xl border border-dashed border-gray-200 p-5 text-center">
+          <p className="text-sm text-gray-500">
+            <Link to="/login" className="font-semibold hover:underline" style={{ color: "#002395" }}>Sign in</Link>
+            {" "}to leave a review.
+          </p>
+        </div>
+      )}
+
+      {/* Review list */}
+      {reviews.length > 0 ? (
+        <div className="space-y-3">
+          {reviews.map(r => (
+            <div key={r.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-semibold text-gray-800">{r.user_name}</span>
+                <span className="text-xs text-gray-400">{new Date(r.created_at).toLocaleDateString()}</span>
+              </div>
+              <Stars score={r.score} size={14} />
+              {r.comment && <p className="text-xs text-gray-600 mt-2 leading-relaxed">{r.comment}</p>}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-gray-400 text-center py-4">No reviews yet. Be the first to share your experience.</p>
+      )}
+    </div>
+  );
+};
+
+/* ── Walkthrough step card ── */
+const StepCard = ({ step }) => (
+  <div className="flex gap-4">
+    <div className="flex-shrink-0 flex flex-col items-center">
+      <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-black text-sm"
+           style={{ background: "linear-gradient(135deg,#002395,#1a4db0)" }}>
+        {step.step_number}
+      </div>
+      <div className="w-0.5 flex-1 mt-2" style={{ background: "#e5e7eb", minHeight: 16 }} />
+    </div>
+    <div className="pb-6 flex-1 min-w-0">
+      <h3 className="font-bold text-sm text-gray-900 mb-1">{step.title}</h3>
+      {step.description && (
+        <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{step.description}</p>
+      )}
+      {step.media_url && (
+        <img src={step.media_url} alt={step.title}
+          className="mt-3 rounded-xl w-full max-h-64 object-cover border border-gray-100"
+          onError={e => { e.target.style.display = 'none'; }} />
+      )}
+    </div>
+  </div>
+);
+
 /* ── Empty section state ── */
 const SectionEmpty = ({ message }) => (
   <div className="text-center py-16 rounded-2xl border-2 border-dashed border-gray-100">
@@ -170,6 +336,7 @@ const LoadingSkeleton = () => (
 const CeremonyDetail = () => {
   const { id } = useParams();
   const { lang } = useLang();
+  const { user } = useAuth();
   const [ceremony,  setCeremony]  = useState(null);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState("");
@@ -196,10 +363,11 @@ const CeremonyDetail = () => {
   }
 
   const tabs = [
-    { id: "about",  label: "About" },
-    ...(ceremony.imvunulo?.length > 0 ? [{ id: "attire", label: `Attire (${ceremony.imvunulo.length})` }] : []),
-    ...(ceremony.songs?.length    > 0 ? [{ id: "songs",  label: `Songs (${ceremony.songs.length})`    }] : []),
-    ...(ceremony.latitude         ? [{ id: "location", label: "Location" }]                              : []),
+    { id: "about",     label: "About" },
+    ...(ceremony.steps?.length    > 0 ? [{ id: "walkthrough", label: `Walkthrough (${ceremony.steps.length})` }] : []),
+    ...(ceremony.imvunulo?.length > 0 ? [{ id: "attire",      label: `Attire (${ceremony.imvunulo.length})`   }] : []),
+    ...(ceremony.songs?.length    > 0 ? [{ id: "songs",       label: `Songs (${ceremony.songs.length})`       }] : []),
+    ...(ceremony.latitude         ? [{ id: "location",        label: "Location" }]                               : []),
   ];
 
   const displayName = t(lang, ceremony, 'name', 'swati_name');
@@ -362,6 +530,23 @@ const CeremonyDetail = () => {
               )
             )}
 
+            {/* WALKTHROUGH */}
+            {activeTab === "walkthrough" && (
+              ceremony.steps?.length > 0 ? (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                  <h2 className="text-xs font-bold uppercase tracking-widest mb-5"
+                      style={{ color: "#002395" }}>
+                    Step-by-step walkthrough
+                  </h2>
+                  <div>
+                    {ceremony.steps.map(step => <StepCard key={step.id} step={step} />)}
+                  </div>
+                </div>
+              ) : (
+                <SectionEmpty message="No walkthrough steps documented for this ceremony yet." />
+              )
+            )}
+
             {/* LOCATION */}
             {activeTab === "location" && ceremony.latitude && (
               <div className="space-y-4">
@@ -386,6 +571,9 @@ const CeremonyDetail = () => {
               </div>
             )}
           </div>
+
+          {/* ══ RATINGS ══ */}
+          <RatingsSection ceremonyId={id} />
         </div>
       </div>
     </div>

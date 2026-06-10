@@ -11,13 +11,16 @@ import CulturalChat          from '../pages/user/CulturalChat';
 import CinemaListing         from '../pages/user/CinemaListing';
 import CinemaRoom            from '../pages/user/CinemaRoom';
 import MyBookings            from '../pages/user/MyBookings';
+import Marketplace           from '../pages/user/Marketplace';
 import PractitionerOverview  from '../pages/practitioner/PractitionerOverview';
 import LineageRecords        from '../pages/practitioner/history/LineageRecords';
 import LineageFormPage       from '../pages/practitioner/history/LineageFormPage';
 import ClansManager          from '../pages/practitioner/history/ClansManager';
 import Ceremonies            from '../pages/practitioner/ceremony/Ceremonies';
 import CeremonyFormPage      from '../pages/practitioner/ceremony/CeremonyFormPage';
+import WalkthroughManager    from '../pages/practitioner/ceremony/WalkthroughManager';
 import SongsLibrary          from '../pages/practitioner/ceremony/SongsLibrary';
+import Services              from '../pages/practitioner/services/Services';
 import Notifications         from '../pages/practitioner/shared/Notifications';
 import ProfileSettings       from '../pages/practitioner/shared/ProfileSettings';
 import AdminOverview         from '../pages/admin/AdminOverview';
@@ -29,6 +32,7 @@ import SystemConfig          from '../pages/admin/SystemConfig';
 import Analytics             from '../pages/admin/Analytics';
 import AuditLog              from '../pages/admin/AuditLog';
 import ModelTraining         from '../pages/admin/ModelTraining';
+import Ratings               from '../pages/admin/Ratings';
 import UserLayout            from '../components/layout/UserLayout/UserLayout';
 import PractitionerLayout    from '../components/layout/PractitionerLayout/PractitionerLayout';
 import AdminLayout           from '../components/layout/AdminLayout/AdminLayout';
@@ -46,6 +50,7 @@ const AppRouter = () => (
       <Route path="/explore"                   element={<CultureExplorer />} />
       <Route path="/explore/ceremonies/:id"    element={<CeremonyDetail />} />
       <Route path="/explore/lineage"           element={<LineageExplorer />} />
+      <Route path="/marketplace"               element={<Marketplace />} />
       <Route path="/cinema"                    element={<CinemaListing />} />
     </Route>
 
@@ -66,11 +71,13 @@ const AppRouter = () => (
         <Route path="/practitioner/lineage/new"            element={<LineageFormPage />} />
         <Route path="/practitioner/lineage/:id/edit"       element={<LineageFormPage />} />
         <Route path="/practitioner/clans"                  element={<ClansManager />} />
-        <Route path="/practitioner/ceremonies"             element={<Ceremonies />} />
-        <Route path="/practitioner/ceremonies/new"         element={<CeremonyFormPage />} />
-        <Route path="/practitioner/ceremonies/:id/edit"    element={<CeremonyFormPage />} />
-        <Route path="/practitioner/songs"                  element={<SongsLibrary />} />
-        <Route path="/practitioner/profile"               element={<ProfileSettings />} />
+        <Route path="/practitioner/ceremonies"                    element={<Ceremonies />} />
+        <Route path="/practitioner/ceremonies/new"             element={<CeremonyFormPage />} />
+        <Route path="/practitioner/ceremonies/:id/edit"        element={<CeremonyFormPage />} />
+        <Route path="/practitioner/ceremonies/:id/walkthrough" element={<WalkthroughManager />} />
+        <Route path="/practitioner/songs"                      element={<SongsLibrary />} />
+        <Route path="/practitioner/services"                   element={<Services />} />
+        <Route path="/practitioner/profile"                    element={<ProfileSettings />} />
       </Route>
     </Route>
 
@@ -83,6 +90,7 @@ const AppRouter = () => (
         <Route path="/admin/cinema"       element={<CinemaManagement />} />
         <Route path="/admin/config"       element={<SystemConfig />} />
         <Route path="/admin/analytics"    element={<Analytics />} />
+        <Route path="/admin/ratings"      element={<Ratings />} />
         <Route path="/admin/audit"        element={<AuditLog />} />
         <Route path="/admin/model"        element={<ModelTraining />} />
       </Route>

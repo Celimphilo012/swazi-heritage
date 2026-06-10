@@ -1,12 +1,12 @@
 import { query } from '../config/db.js';
 
 export const CeremonyModel = {
-  create: ({ name, description, month_celebrated, immunology_notes, swati_name, swati_description, location_name, latitude, longitude, created_by }) =>
-    query('INSERT INTO ceremonies (name, description, month_celebrated, immunology_notes, swati_name, swati_description, location_name, latitude, longitude, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, description, month_celebrated, immunology_notes, swati_name ?? null, swati_description ?? null, location_name ?? null, latitude ?? null, longitude ?? null, created_by]),
+  create: ({ name, description, month_celebrated, immunology_notes, swati_name, swati_description, location_name, latitude, longitude, category, created_by }) =>
+    query('INSERT INTO ceremonies (name, description, month_celebrated, immunology_notes, swati_name, swati_description, location_name, latitude, longitude, category, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [name, description, month_celebrated, immunology_notes, swati_name ?? null, swati_description ?? null, location_name ?? null, latitude ?? null, longitude ?? null, category ?? null, created_by]),
 
   update: (id, fields) => {
-    const allowed = ['name', 'description', 'month_celebrated', 'immunology_notes', 'swati_name', 'swati_description', 'location_name', 'latitude', 'longitude'];
+    const allowed = ['name', 'description', 'month_celebrated', 'immunology_notes', 'swati_name', 'swati_description', 'location_name', 'latitude', 'longitude', 'category'];
     const pairs = Object.entries(fields).filter(([k]) => allowed.includes(k));
     if (!pairs.length) return Promise.resolve();
     return query(
@@ -41,12 +41,13 @@ export const CeremonyModel = {
   },
 
   getFullDetail: async (id) => {
-    const [ceremony, songs, imvunulo] = await Promise.all([
+    const [ceremony, songs, imvunulo, steps] = await Promise.all([
       query('SELECT c.*, u.name AS creator_name FROM ceremonies c JOIN users u ON c.created_by = u.id WHERE c.id = ?', [id]).then(r => r[0]),
       query('SELECT * FROM ceremony_songs WHERE ceremony_id = ?', [id]),
       query('SELECT i.*, ip.name AS preset_name, ip.gender, ip.image_url AS preset_image_url FROM imvunulo i JOIN imvunulo_presets ip ON i.preset_id = ip.id WHERE i.ceremony_id = ?', [id]),
+      query('SELECT * FROM ceremony_steps WHERE ceremony_id = ? ORDER BY step_number ASC', [id]),
     ]);
     if (!ceremony) return null;
-    return { ...ceremony, songs, imvunulo };
+    return { ...ceremony, songs, imvunulo, steps };
   },
 };

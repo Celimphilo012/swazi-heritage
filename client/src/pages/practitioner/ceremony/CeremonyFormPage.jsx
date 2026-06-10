@@ -298,6 +298,7 @@ const CeremonyFormPage = () => {
     location_name: "",
     latitude: "",
     longitude: "",
+    category: "",
   });
 
   // ── Songs state ─────────────────────────────────────────────────────────────
@@ -350,6 +351,7 @@ const CeremonyFormPage = () => {
           location_name: c.location_name || "",
           latitude: c.latitude ?? "",
           longitude: c.longitude ?? "",
+          category: c.category || "",
         });
         // Existing songs — add a _key so React can track them
         setSongs(c.songs.map((s) => ({ ...s, _key: `s-${s.id}` })));
@@ -662,6 +664,27 @@ const CeremonyFormPage = () => {
               <p className="text-xs text-gray-400 mt-1">
                 Include any dietary restrictions, abstinence requirements, or
                 health-related protocols.
+              </p>
+            </div>
+            <div>
+              <Label>Cultural category</Label>
+              <select
+                value={form.category}
+                onChange={setField("category")}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+                           focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400
+                           bg-white disabled:bg-gray-50"
+              >
+                <option value="">— Select a category (for recommendations) —</option>
+                <option value="ceremonies">Ceremonies</option>
+                <option value="lineage">Royal Lineage</option>
+                <option value="music">Music & Songs</option>
+                <option value="attire">Traditional Attire</option>
+                <option value="royal">Royal Culture</option>
+                <option value="spiritual">Spiritual Practices</option>
+              </select>
+              <p className="text-xs text-gray-400 mt-1">
+                Used to match this ceremony with users' cultural interests.
               </p>
             </div>
           </div>

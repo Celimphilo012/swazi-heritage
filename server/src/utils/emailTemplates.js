@@ -47,6 +47,35 @@ export const pendingReviewEmail = ({ contentType, title, practitionerName, admin
   `),
 });
 
+// ── Sent to a practitioner when a user sends a service enquiry
+export const newEnquiryEmail = ({ serviceName, practitionerName, userName, userEmail, message }) => ({
+  subject: `New enquiry for your service — "${serviceName}"`,
+  html: wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:#111827">New Service Enquiry</h2>
+    <p style="margin:0 0 20px;color:#6b7280;font-size:14px">Hi ${practitionerName || 'there'}, someone is interested in your service.</p>
+
+    <div style="background:#f3f4f6;border-radius:8px;padding:16px 20px;margin-bottom:20px">
+      <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px">Service</p>
+      <p style="margin:0;font-size:15px;font-weight:700;color:#111827">${serviceName}</p>
+    </div>
+
+    <div style="background:#f3f4f6;border-radius:8px;padding:16px 20px;margin-bottom:20px">
+      <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px">From</p>
+      <p style="margin:0 0 2px;font-size:14px;font-weight:600;color:#111827">${userName}</p>
+      <p style="margin:0;font-size:13px;color:#6b7280">${userEmail}</p>
+    </div>
+
+    <div style="border-left:3px solid #002395;padding:12px 16px;background:#eff6ff;border-radius:0 8px 8px 0;margin-bottom:20px">
+      <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:1px">Message</p>
+      <p style="margin:0;font-size:14px;color:#1e3a8a;line-height:1.6">${message}</p>
+    </div>
+
+    <p style="margin:0;font-size:13px;color:#6b7280">
+      Reply directly to <strong>${userEmail}</strong> to respond to this enquiry.
+    </p>
+  `),
+});
+
 // ── Sent to the practitioner when their content status changes
 export const contentReviewedEmail = ({ contentType, title, status, rejectionNote, practitionerName }) => ({
   subject: `Your ${contentType} has been ${status} — "${title}"`,

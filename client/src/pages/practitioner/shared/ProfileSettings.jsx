@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import api from "../../../api/axiosInstance";
+import { getPreferences, savePreferences } from "../../../api/preferences.api";
 
 const FInput = (props) => (
   <input
@@ -17,11 +18,11 @@ const FLabel = ({ children, required }) => (
   </label>
 );
 
-const BtnPrimary = ({ children, ...props }) => (
+const BtnPrimary = ({ children, style, ...props }) => (
   <button
     className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white
                transition-all hover:opacity-90 disabled:opacity-50"
-    style={{ background: "linear-gradient(135deg,#0f172a,#1e293b)" }}
+    style={{ background: "linear-gradient(135deg,#0f172a,#1e293b)", ...style }}
     {...props}
   >
     {children}
@@ -53,8 +54,43 @@ const ProfileSettings = () => {
   const [pwdMsg,    setPwdMsg]    = useState("");
   const [pwdError,  setPwdError]  = useState("");
 
+  const [prefs, setPrefs] = useState({ interests: [], visitor_type: "local", preferred_lang: "en" });
+  const [savingPrefs, setSavingPrefs] = useState(false);
+  const [prefsMsg,    setPrefsMsg]    = useState("");
+  const [prefsError,  setPrefsError]  = useState("");
+
   const setProf = f => e => setProfile(d => ({ ...d, [f]: e.target.value }));
   const setPwd  = f => e => setPasswords(d => ({ ...d, [f]: e.target.value }));
+
+  useEffect(() => {
+    getPreferences().then(p => {
+      if (p) setPrefs({
+        interests:      Array.isArray(p.interests) ? p.interests : JSON.parse(p.interests || '[]'),
+        visitor_type:   p.visitor_type   || "local",
+        preferred_lang: p.preferred_lang || "en",
+      });
+    }).catch(() => {});
+  }, []);
+
+  const toggleInterest = (val) => {
+    setPrefs(p => ({
+      ...p,
+      interests: p.interests.includes(val)
+        ? p.interests.filter(i => i !== val)
+        : [...p.interests, val],
+    }));
+  };
+
+  const handleSavePrefs = async () => {
+    setSavingPrefs(true); setPrefsError(""); setPrefsMsg("");
+    try {
+      await savePreferences(prefs);
+      setPrefsMsg("Preferences saved.");
+      setTimeout(() => setPrefsMsg(""), 2500);
+    } catch {
+      setPrefsError("Failed to save preferences.");
+    } finally { setSavingPrefs(false); }
+  };
 
   const handleSaveProfile = async e => {
     e.preventDefault();
@@ -215,6 +251,80 @@ const ProfileSettings = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
                 {profileMsg}
+              </span>
+            )}
+          </div>
+        </div>
+      </Section>
+
+      {/* Cultural Preferences */}
+      <Section title="Cultural Interests & Preferences"
+        description="Tell us what aspects of Swazi culture interest you most. This powers personalised recommendations on the home page.">
+        {prefsError && (
+          <div className="p-3 rounded-xl text-sm mb-4"
+            style={{ background: "rgba(206,17,38,0.06)", border: "1px solid rgba(206,17,38,0.2)", color: "#CE1126" }}>
+            {prefsError}
+          </div>
+        )}
+        <div className="space-y-5">
+          <div>
+            <FLabel>Cultural interests (select all that apply)</FLabel>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {[
+                { val: "ceremonies", label: "Ceremonies" },
+                { val: "lineage",    label: "Royal Lineage" },
+                { val: "music",      label: "Music & Songs" },
+                { val: "attire",     label: "Traditional Attire" },
+                { val: "royal",      label: "Royal Culture" },
+                { val: "spiritual",  label: "Spiritual Practices" },
+              ].map(({ val, label }) => {
+                const active = prefs.interests.includes(val);
+                return (
+                  <button key={val} type="button" onClick={() => toggleInterest(val)}
+                    className="text-xs font-bold px-3 py-1.5 rounded-full border-2 transition-all"
+                    style={active
+                      ? { background: "linear-gradient(135deg,#0f172a,#1e293b)", color: "#FFD600", borderColor: "#FFD600" }
+                      : { background: "#fff", color: "#6b7280", borderColor: "#e2e8f0" }}>
+                    {active && "✓ "}{label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <FLabel>I am visiting as a</FLabel>
+              <select value={prefs.visitor_type} onChange={e => setPrefs(p => ({ ...p, visitor_type: e.target.value }))}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800
+                           focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-slate-300 bg-white">
+                <option value="local">Local resident</option>
+                <option value="tourist">Tourist / visitor</option>
+                <option value="researcher">Researcher</option>
+                <option value="student">Student</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <FLabel>Preferred language</FLabel>
+              <select value={prefs.preferred_lang} onChange={e => setPrefs(p => ({ ...p, preferred_lang: e.target.value }))}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800
+                           focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-slate-300 bg-white">
+                <option value="en">English</option>
+                <option value="ss">siSwati</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 pt-1">
+            <BtnPrimary type="button" onClick={handleSavePrefs} disabled={savingPrefs}>
+              {savingPrefs && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+              {savingPrefs ? "Saving…" : "Save Preferences"}
+            </BtnPrimary>
+            {prefsMsg && (
+              <span className="text-xs font-semibold flex items-center gap-1" style={{ color: "#10b981" }}>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                {prefsMsg}
               </span>
             )}
           </div>

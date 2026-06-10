@@ -1,9 +1,10 @@
 const strings = {
   en: {
     // Nav
-    navExplore: "Explore",
-    navCinema: "Cinema",
-    navChat: "AI Chat",
+    navExplore:      "Explore",
+    navMarketplace:  "Marketplace",
+    navCinema:       "Cinema",
+    navChat:         "AI Chat",
     signIn: "Sign in",
     signOut: "Sign out",
     langLabel: "Language:",
@@ -46,9 +47,10 @@ const strings = {
   },
   ss: {
     // Nav
-    navExplore: "Hlola",
-    navCinema: "Isinema",
-    navChat: "Coca ne-AI",
+    navExplore:     "Hlola",
+    navMarketplace: "Imakethe",
+    navCinema:      "Isinema",
+    navChat:        "Coca ne-AI",
     signIn: "Ngena",
     signOut: "Phuma",
     langLabel: "Lulwimi:",
