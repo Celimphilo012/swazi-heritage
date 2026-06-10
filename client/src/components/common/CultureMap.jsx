@@ -50,12 +50,19 @@ const BoundsFitter = ({ markers }) => {
 // height: number (px) or string
 const CultureMap = ({ markers = [], center, zoom = 8, height = 400, fitBounds = true }) => {
   const ESWATINI = [-26.5225, 31.4659];
-  const validMarkers = markers.filter(m => m.lat != null && m.lng != null);
+  // mysql2 returns DECIMAL columns as strings — coerce to float so Leaflet doesn't throw
+  const validMarkers = markers
+    .filter(m => m.lat != null && m.lng != null)
+    .map(m => ({ ...m, lat: parseFloat(m.lat), lng: parseFloat(m.lng) }))
+    .filter(m => !isNaN(m.lat) && !isNaN(m.lng));
+  const resolvedCenter = center
+    ? [parseFloat(center[0]), parseFloat(center[1])]
+    : ESWATINI;
 
   return (
     <div style={{ height, width: '100%', borderRadius: 16, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
       <MapContainer
-        center={center || ESWATINI}
+        center={resolvedCenter}
         zoom={zoom}
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={false}
