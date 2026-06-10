@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getServices, sendEnquiry } from "../../api/services.api";
 
@@ -77,12 +77,18 @@ const EnquiryModal = ({ service, onClose }) => {
                 </svg>
               </div>
               <p className="font-semibold text-gray-800">Enquiry sent!</p>
-              <p className="text-sm text-gray-500 mt-1">The practitioner will be in touch via email.</p>
-              <button onClick={onClose}
-                className="mt-4 text-sm font-bold px-6 py-2 rounded-xl text-white"
-                style={{ background: "linear-gradient(135deg,#0f172a,#1e293b)" }}>
-                Close
-              </button>
+              <p className="text-sm text-gray-500 mt-1">The practitioner has been notified.</p>
+              <div className="flex gap-2 justify-center mt-4">
+                <button onClick={onClose}
+                  className="text-sm font-semibold px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50">
+                  Close
+                </button>
+                <Link to="/my-enquiries" onClick={onClose}
+                  className="text-sm font-bold px-5 py-2 rounded-xl text-white"
+                  style={{ background: "linear-gradient(135deg,#002395,#1a4db0)" }}>
+                  View My Enquiries →
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -127,8 +133,9 @@ const EnquiryModal = ({ service, onClose }) => {
   );
 };
 
-const ServiceCard = ({ service, onEnquire, isLoggedIn }) => {
+const ServiceCard = ({ service, onEnquire, userId }) => {
   const catStyle = CAT_STYLE[service.category] || CAT_STYLE.other;
+  const isOwn    = userId && service.practitioner_id === userId;
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col">
       {service.image_url ? (
@@ -166,7 +173,12 @@ const ServiceCard = ({ service, onEnquire, isLoggedIn }) => {
             </svg>
             {service.practitioner_name}
           </div>
-          {isLoggedIn ? (
+          {isOwn ? (
+            <div className="w-full mt-2 text-xs font-semibold py-2 rounded-xl text-center"
+              style={{ background: "#f1f5f9", color: "#94a3b8" }}>
+              Your listing
+            </div>
+          ) : userId ? (
             <button onClick={() => onEnquire(service)}
               className="w-full mt-2 text-xs font-bold py-2 rounded-xl text-white transition-all hover:opacity-90"
               style={{ background: "linear-gradient(135deg,#002395,#1a4db0)" }}>
@@ -279,7 +291,7 @@ const Marketplace = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {services.map(s => (
-              <ServiceCard key={s.id} service={s} isLoggedIn={Boolean(user)}
+              <ServiceCard key={s.id} service={s} userId={user?.id}
                 onEnquire={setEnquiring} />
             ))}
           </div>

@@ -20,3 +20,15 @@ export const deleteService = (id) =>
 
 export const sendEnquiry = (id, data) =>
   api.post(`/services/${id}/enquire`, data).then(r => r.data);
+
+export const getMyEnquiries = () =>
+  api.get("/services/my-enquiries").then(r => r.data.data);
+
+export const getMySentEnquiries = () =>
+  api.get("/services/my-sent-enquiries").then(r => r.data.data);
+
+export const getEnquiryThread = (id) =>
+  api.get(`/services/enquiries/${id}/messages`).then(r => r.data.data);
+
+export const replyToEnquiry = (id, body) =>
+  api.post(`/services/enquiries/${id}/messages`, { body }).then(r => r.data);

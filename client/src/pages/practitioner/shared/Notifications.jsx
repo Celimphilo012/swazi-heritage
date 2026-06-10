@@ -1,18 +1,158 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { getMyCeremonies } from "../../../api/ceremonies.api";
 import { getMyLineageRecords } from "../../../api/lineage.api";
+import { getMyEnquiries, getEnquiryThread, replyToEnquiry } from "../../../api/services.api";
 
-const Notifications = () => {
-  const { user } = useAuth();
-  const isCeremony = user?.role === "ceremony_keeper";
-  const [items,   setItems]   = useState([]);
-  const [loading, setLoading] = useState(true);
+const timeAgo = (dateStr) => {
+  if (!dateStr) return "";
+  const d    = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
+  const diff = (Date.now() - d.getTime()) / 1000;
+  if (diff < 0)      return d.toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" });
+  if (diff < 60)     return "just now";
+  if (diff < 3600)   return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400)  return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return d.toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" });
+};
+
+const InlineThread = ({ enquiryId, practitionerId }) => {
+  const [thread,  setThread]  = useState(null);
+  const [reply,   setReply]   = useState("");
+  const [sending, setSending] = useState(false);
+  const [err,     setErr]     = useState("");
+  const bottomRef = useRef(null);
 
   useEffect(() => {
-    const fetch = isCeremony ? getMyCeremonies() : getMyLineageRecords();
-    fetch.then(setItems).catch(() => {}).finally(() => setLoading(false));
+    getEnquiryThread(enquiryId).then(setThread).catch(() => {});
+  }, [enquiryId]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [thread?.messages?.length]);
+
+  const handleSend = async () => {
+    if (!reply.trim()) return;
+    setSending(true); setErr("");
+    try {
+      await replyToEnquiry(enquiryId, reply.trim());
+      setReply("");
+      const updated = await getEnquiryThread(enquiryId);
+      setThread(updated);
+    } catch { setErr("Failed to send."); }
+    finally { setSending(false); }
+  };
+
+  const handleKey = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  };
+
+  if (!thread) return (
+    <div className="flex justify-center py-4">
+      <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
+  const { enquiry: enq, messages } = thread;
+
+  return (
+    <div className="mt-3 border border-gray-100 rounded-xl overflow-hidden"
+      style={{ background: "#f8fafc" }}>
+      {/* Message list */}
+      <div className="px-4 py-3 space-y-2.5 max-h-64 overflow-y-auto">
+        {/* Initial enquiry */}
+        <div className="flex items-end gap-2">
+          <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+            style={{ background: "#002395" }}>
+            {(enq.user_name || "U")[0].toUpperCase()}
+          </div>
+          <div className="max-w-[80%]">
+            <p className="text-xs text-gray-400 mb-0.5">{enq.user_name} · {timeAgo(enq.created_at)}</p>
+            <div className="px-3 py-2 rounded-2xl rounded-bl-sm text-xs leading-relaxed"
+              style={{ background: "#e2e8f0", color: "#334155" }}>
+              {enq.message}
+            </div>
+          </div>
+        </div>
+
+        {messages.map(msg => {
+          const mine = msg.sender_id === practitionerId;
+          return mine ? (
+            <div key={msg.id} className="flex items-end gap-2 justify-end">
+              <div className="max-w-[80%]">
+                <p className="text-xs text-gray-400 text-right mb-0.5">You · {timeAgo(msg.created_at)}</p>
+                <div className="px-3 py-2 rounded-2xl rounded-br-sm text-xs leading-relaxed"
+                  style={{ background: "linear-gradient(135deg,#002395,#1a4db0)", color: "#fff" }}>
+                  {msg.body}
+                </div>
+              </div>
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                style={{ background: "#92400e" }}>
+                {(msg.sender_name || "P")[0].toUpperCase()}
+              </div>
+            </div>
+          ) : (
+            <div key={msg.id} className="flex items-end gap-2">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                style={{ background: "#002395" }}>
+                {(msg.sender_name || "U")[0].toUpperCase()}
+              </div>
+              <div className="max-w-[80%]">
+                <p className="text-xs text-gray-400 mb-0.5">{msg.sender_name} · {timeAgo(msg.created_at)}</p>
+                <div className="px-3 py-2 rounded-2xl rounded-bl-sm text-xs leading-relaxed"
+                  style={{ background: "#e2e8f0", color: "#334155" }}>
+                  {msg.body}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {messages.length === 0 && (
+          <p className="text-xs text-gray-400 text-center py-2">Reply to start the conversation.</p>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Reply input */}
+      <div className="px-3 py-2.5 border-t border-gray-100 bg-white flex gap-2 items-end">
+        <textarea rows={2} value={reply} onChange={e => setReply(e.target.value)} onKeyDown={handleKey}
+          placeholder="Reply… (Enter to send)"
+          className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs resize-none
+                     focus:outline-none focus:ring-2 focus:ring-blue-200" />
+        <button onClick={handleSend} disabled={sending || !reply.trim()}
+          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-40"
+          style={{ background: "linear-gradient(135deg,#002395,#1a4db0)" }}>
+          {sending ? (
+            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+          )}
+        </button>
+      </div>
+      {err && <p className="text-xs text-red-500 px-3 pb-2">{err}</p>}
+    </div>
+  );
+};
+
+const Notifications = () => {
+  const { user }   = useAuth();
+  const [openThread, setOpenThread] = useState(null);
+  const isCeremony = user?.role === "ceremony_keeper";
+  const [items,     setItems]     = useState([]);
+  const [enquiries, setEnquiries] = useState([]);
+  const [loading,   setLoading]   = useState(true);
+
+  useEffect(() => {
+    const contentFetch = isCeremony ? getMyCeremonies() : getMyLineageRecords();
+    Promise.all([contentFetch, getMyEnquiries()])
+      .then(([content, enqs]) => { setItems(content); setEnquiries(enqs || []); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [isCeremony]);
 
   const rejected  = items.filter(i => i.status === "rejected");
@@ -22,7 +162,7 @@ const Notifications = () => {
   const editPath = id =>
     isCeremony ? `/practitioner/ceremonies/${id}/edit` : `/practitioner/lineage/${id}/edit`;
 
-  const total = rejected.length + published.length + pending.length;
+  const total = rejected.length + published.length + pending.length + enquiries.length;
 
   return (
     <div className="p-6 space-y-5">
@@ -64,7 +204,7 @@ const Notifications = () => {
             </div>
           ))}
         </div>
-      ) : items.length === 0 ? (
+      ) : items.length === 0 && enquiries.length === 0 ? (
         <div className="text-center py-16 rounded-2xl border-2 border-dashed border-slate-200">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
             style={{ background: "#f1f5f9" }}>
@@ -158,6 +298,57 @@ const Notifications = () => {
               </div>
             </div>
           ))}
+
+          {/* Service enquiries */}
+          {enquiries.length > 0 && (
+            <>
+              <div className="pt-2 pb-1">
+                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#64748b" }}>
+                  Service Enquiries ({enquiries.length})
+                </p>
+              </div>
+              {enquiries.map(enq => (
+                <div key={`enq-${enq.id}`} className="rounded-2xl overflow-hidden"
+                  style={{ background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
+                  <div className="h-0.5" style={{ background: "#002395" }} />
+                  <div className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: "rgba(0,35,149,0.08)" }}>
+                        <svg style={{ width: 18, height: 18 }} fill="none" viewBox="0 0 24 24" stroke="#002395" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-slate-800">
+                          Enquiry for: <span className="font-normal">{enq.service_title}</span>
+                        </p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          From <strong>{enq.user_name}</strong>
+                          {" · "}
+                          <a href={`mailto:${enq.user_email}`} className="text-blue-600 hover:underline">{enq.user_email}</a>
+                          {" · "}
+                          {timeAgo(enq.created_at)}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setOpenThread(openThread === enq.id ? null : enq.id)}
+                        className="flex-shrink-0 text-xs font-bold px-3 py-1.5 rounded-xl transition-all"
+                        style={openThread === enq.id
+                          ? { background: "#002395", color: "#fff" }
+                          : { background: "rgba(0,35,149,0.08)", color: "#002395" }}>
+                        {openThread === enq.id ? "Close" : "Reply"}
+                      </button>
+                    </div>
+                    {openThread === enq.id && (
+                      <InlineThread enquiryId={enq.id} practitionerId={user?.id} />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
         </div>
       )}
     </div>

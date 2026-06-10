@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Swazi Cultural Heritage Platform — User Guide</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 13px; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #1e293b;
+      background: #fff;
+      line-height: 1.65;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 32px 80px;
+    }
+
+    @media print {
+      body { max-width: 100%; padding: 0 20px 40px; font-size: 11.5px; }
+      .no-break { page-break-inside: avoid; }
+      .page-break { page-break-before: always; }
+      a { color: inherit; text-decoration: none; }
+    }
+
+    :root {
+      --navy:  #001540;
+      --blue:  #002395;
+      --red:   #CE1126;
+      --gold:  #FFD600;
+      --slate: #475569;
+      --light: #f8fafc;
+      --border:#e2e8f0;
+    }
+
+    /* ── Cover ── */
+    .cover {
+      min-height: 260px;
+      background: linear-gradient(135deg, #001540 0%, #002d80 60%, #0f172a 100%);
+      border-radius: 0 0 28px 28px;
+      padding: 48px 40px 40px;
+      margin: 0 -32px 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    .cover::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--blue) 33%, var(--gold) 33% 40%, var(--red) 40% 73%, var(--gold) 73% 80%, var(--blue) 80%);
+    }
+    .cover-diamond {
+      position: absolute;
+      transform: rotate(45deg);
+      opacity: 0.07;
+    }
+    .cover h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .cover .subtitle {
+      font-size: 1rem;
+      color: rgba(147,197,253,0.9);
+      font-weight: 400;
+      position: relative;
+      z-index: 1;
+    }
+    .cover .flag-strip {
+      display: flex;
+      gap: 8px;
+      margin-top: 24px;
+      position: relative;
+      z-index: 1;
+    }
+    .cover .flag-strip span {
+      display: inline-block;
+      height: 4px;
+      width: 32px;
+      border-radius: 2px;
+    }
+    .cover-meta {
+      display: flex;
+      gap: 24px;
+      margin-top: 20px;
+      position: relative;
+      z-index: 1;
+      flex-wrap: wrap;
+    }
+    .cover-meta .pill {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.75);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── TOC ── */
+    .toc {
+      background: var(--light);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 40px;
+    }
+    .toc h2 {
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--slate);
+      margin-bottom: 14px;
+    }
+    .toc ol {
+      list-style: none;
+      counter-reset: toc;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 32px;
+    }
+    .toc li {
+      counter-increment: toc;
+      font-size: 0.82rem;
+      color: var(--blue);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toc li::before {
+      content: counter(toc, decimal-leading-zero);
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: var(--slate);
+      opacity: 0.6;
+      min-width: 18px;
+    }
+
+    /* ── Section headings ── */
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      margin-top: 44px;
+    }
+    .section-num {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: var(--navy);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .section-num.red   { background: var(--red); }
+    .section-num.blue  { background: var(--blue); }
+    .section-num.gold  { background: #b45309; }
+    .section-num.green { background: #065f46; }
+    .section-label h2 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.01em;
+    }
+    .section-rule {
+      height: 2px;
+      background: linear-gradient(90deg, var(--blue), var(--gold), transparent);
+      border-radius: 1px;
+      margin-bottom: 20px;
+    }
+    .section-rule.red  { background: linear-gradient(90deg, var(--red), var(--gold), transparent); }
+    .section-rule.gold { background: linear-gradient(90deg, #b45309, var(--gold), transparent); }
+    .section-rule.green{ background: linear-gradient(90deg, #065f46, #34d399, transparent); }
+
+    /* ── Sub-headings ── */
+    h3 {
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--slate);
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 0.83rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin: 16px 0 6px;
+    }
+
+    /* ── Paragraphs & lists ── */
+    p  { margin-bottom: 10px; font-size: 0.88rem; color: #334155; }
+    ul, ol { padding-left: 20px; margin-bottom: 12px; }
+    li { font-size: 0.88rem; color: #334155; margin-bottom: 4px; }
+    strong { color: var(--navy); }
+
+    /* ── Code ── */
+    code {
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 1px 6px;
+      font-size: 0.8rem;
+      color: var(--red);
+    }
+
+    /* ── Info / warning / tip / success / danger boxes ── */
+    .box {
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: 0.84rem;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .box-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .box-body { flex: 1; }
+    .box-body strong { display: block; margin-bottom: 3px; }
+    .box.info    { background: rgba(0,35,149,0.05);   border: 1px solid rgba(0,35,149,0.15); }
+    .box.info    .box-icon { color: var(--blue); }
+    .box.warn    { background: rgba(255,214,0,0.08);  border: 1px solid rgba(255,214,0,0.35); }
+    .box.warn    .box-icon { color: #b45309; }
+    .box.success { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.2); }
+    .box.success .box-icon { color: #059669; }
+    .box.danger  { background: rgba(206,17,38,0.05);  border: 1px solid rgba(206,17,38,0.15); }
+    .box.danger  .box-icon { color: var(--red); }
+
+    /* ── Step cards ── */
+    .steps { counter-reset: step; margin: 16px 0 24px; }
+    .step {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 14px;
+      position: relative;
+    }
+    .step::before {
+      content: '';
+      position: absolute;
+      left: 15px; top: 34px;
+      width: 2px;
+      bottom: -14px;
+      background: var(--border);
+    }
+    .step:last-child::before { display: none; }
+    .step-num {
+      counter-increment: step;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .step-num.red  { background: var(--red); }
+    .step-num.blue { background: var(--blue); }
+    .step-num.gold { background: #b45309; }
+    .step-body { flex: 1; padding-top: 6px; }
+    .step-body strong { font-size: 0.88rem; color: var(--navy); }
+    .step-body p { margin-top: 6px; }
+
+    /* ── Role badge ── */
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+    }
+    .role-badge.user      { background: rgba(0,35,149,0.08);  color: var(--blue);  border: 1px solid rgba(0,35,149,0.2); }
+    .role-badge.ceremony  { background: rgba(180,83,9,0.08);  color: #92400e;      border: 1px solid rgba(180,83,9,0.2); }
+    .role-badge.history   { background: rgba(6,95,70,0.08);   color: #065f46;      border: 1px solid rgba(6,95,70,0.2); }
+    .role-badge.admin     { background: rgba(206,17,38,0.08); color: var(--red);   border: 1px solid rgba(206,17,38,0.2); }
+    .role-badge.public    { background: rgba(71,85,105,0.08); color: var(--slate); border: 1px solid rgba(71,85,105,0.2); }
+
+    /* ── Feature card grid ── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 16px 0 24px;
+    }
+    .feature-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      background: var(--light);
+    }
+    .feature-card .fc-icon {
+      font-size: 1.4rem;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .feature-card .fc-title {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+    .feature-card p {
+      font-size: 0.8rem;
+      color: var(--slate);
+      margin: 0;
+    }
+
+    /* ── Credential card ── */
+    .cred-card {
+      background: linear-gradient(135deg, #001540, #002d80);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .cred-card .label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(147,197,253,0.7); margin-bottom: 4px; }
+    .cred-card .value { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.9rem; font-weight: 700; color: #fff; }
+    .cred-card .badge { background: rgba(255,214,0,0.15); border: 1px solid rgba(255,214,0,0.3); border-radius: 8px; padding: 6px 14px; font-size: 0.7rem; font-weight: 800; color: #FFD600; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: 0.83rem; }
+    th { background: var(--navy); color: #fff; font-weight: 700; text-align: left; padding: 10px 14px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    th:first-child { border-radius: 8px 0 0 0; }
+    th:last-child  { border-radius: 0 8px 0 0; }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: #334155; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: var(--light); }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 28px 0;
+    }
+
+    /* ── Screen mockup ── */
+    .screen {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 14px 0 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .screen-bar {
+      background: #f1f5f9;
+      border-bottom: 1px solid var(--border);
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .screen-bar span {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #cbd5e1;
+    }
+    .screen-bar .url {
+      flex: 1;
+      background: #e2e8f0;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 0.72rem;
+      color: #64748b;
+      font-family: monospace;
+    }
+    .screen-body {
+      padding: 18px 20px;
+      background: #fff;
+      font-size: 0.82rem;
+      color: #334155;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 56px;
+      padding-top: 20px;
+      border-top: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: #94a3b8;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .footer-stripe { display: flex; gap: 4px; }
+    .footer-stripe span { width: 20px; height: 3px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════ COVER ══════════════ -->
+  <div class="cover">
+    <div class="cover-diamond" style="width:120px;height:120px;background:#FFD600;top:-30px;right:80px;"></div>
+    <div class="cover-diamond" style="width:60px;height:60px;background:#CE1126;top:80px;right:40px;"></div>
+    <div class="cover-diamond" style="width:80px;height:80px;background:#fff;bottom:-20px;right:160px;"></div>
+
+    <h1>Swazi Cultural Heritage<br>Platform — User Guide</h1>
+    <p class="subtitle">Complete interaction guide for all user roles: visitors, practitioners, and administrators</p>
+
+    <div class="flag-strip">
+      <span style="background:#002395;width:48px;"></span>
+      <span style="background:#FFD600;width:16px;"></span>
+      <span style="background:#CE1126;width:48px;"></span>
+      <span style="background:#FFD600;width:16px;"></span>
+      <span style="background:#002395;width:48px;"></span>
+    </div>
+
+    <div class="cover-meta">
+      <span class="pill">Version 1.0</span>
+      <span class="pill">4 Roles Covered</span>
+      <span class="pill">EN / SS Bilingual</span>
+      <span class="pill">June 2026</span>
+    </div>
+  </div>
+
+  <!-- ══════════════ TABLE OF CONTENTS ══════════════ -->
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li>Platform Overview &amp; Roles</li>
+      <li>Getting Started (Registration &amp; Login)</li>
+      <li>Public Visitor — Browsing Without an Account</li>
+      <li>Regular User — Full Feature Access</li>
+      <li>Ceremony Keeper — Managing Ceremonies</li>
+      <li>History Keeper — Managing Lineage Records</li>
+      <li>Practitioner Shared Features</li>
+      <li>Administrator — Platform Management</li>
+      <li>Language Support (EN / SiSwati)</li>
+      <li>Quick Reference</li>
+    </ol>
+  </div>
+
+
+  <!-- ══════════════ 1. OVERVIEW ══════════════ -->
+  <div class="section-label">
+    <div class="section-num">01</div>
+    <h2>Platform Overview &amp; Roles</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <p>The <strong>Swazi Cultural Heritage Platform</strong> is a digital preservation system for the Kingdom of Eswatini's ceremonies, royal lineages, music, and cultural traditions. It serves four distinct user types, each with their own workspace and capabilities.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Role</th>
+        <th>Who They Are</th>
+        <th>What They Can Do</th>
+        <th>Home URL</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="role-badge public">Public</span></td>
+        <td>Unauthenticated visitors</td>
+        <td>Browse ceremonies, lineage records, marketplace; view the homepage</td>
+        <td><code>/</code></td>
+      </tr>
+      <tr>
+        <td><span class="role-badge user">User</span></td>
+        <td>Registered general public</td>
+        <td>Everything public + AI chat, cinema, bookings, ratings, personalised recommendations</td>
+        <td><code>/</code></td>
+      </tr>
+      <tr>
+        <td><span class="role-badge ceremony">Ceremony Keeper</span></td>
+        <td>Registered cultural practitioner</td>
+        <td>Create &amp; manage ceremonies, songs, walkthrough steps, offer services</td>
+        <td><code>/practitioner</code></td>
+      </tr>
+      <tr>
+        <td><span class="role-badge history">History Keeper</span></td>
+        <td>Registered cultural practitioner</td>
+        <td>Create &amp; manage lineage records, clan trees, offer services</td>
+        <td><code>/practitioner</code></td>
+      </tr>
+      <tr>
+        <td><span class="role-badge admin">Admin</span></td>
+        <td>Platform administrator</td>
+        <td>Review &amp; approve content, manage users, cinema, analytics, system config</td>
+        <td><code>/admin</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="box info">
+    <span class="box-icon">ℹ️</span>
+    <div class="box-body">
+      <strong>How roles are assigned</strong>
+      Regular self-registration always creates a <strong>User</strong> account. Practitioner and Admin roles are assigned by an existing administrator from the User Management panel.
+    </div>
+  </div>
+
+
+  <!-- ══════════════ 2. GETTING STARTED ══════════════ -->
+  <div class="section-label">
+    <div class="section-num blue">02</div>
+    <h2>Getting Started</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <h3>Creating an Account</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num blue">1</div>
+      <div class="step-body">
+        <strong>Navigate to the registration page</strong>
+        <p>Open the platform in your browser and click <strong>Sign In</strong> in the top-right navigation bar, then click <strong>Create account</strong> below the login form. Alternatively visit <code>/register</code> directly.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num blue">2</div>
+      <div class="step-body">
+        <strong>Fill in your details</strong>
+        <p>Enter your <strong>full name</strong>, a valid <strong>email address</strong>, and a <strong>password</strong>. Passwords must be at least 8 characters. All three fields are required.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num blue">3</div>
+      <div class="step-body">
+        <strong>Submit and start exploring</strong>
+        <p>Click <strong>Register</strong>. You are automatically logged in and redirected to the home page as a <span class="role-badge user">User</span>.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Logging In</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Go to the login page</strong>
+        <p>Click <strong>Sign In</strong> in the navigation bar or visit <code>/login</code>.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Enter your credentials</strong>
+        <p>Type your registered <strong>email</strong> and <strong>password</strong>, then click <strong>Sign in</strong>.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>You are redirected to your role's home</strong>
+        <p>Users land on the main homepage, practitioners land on <code>/practitioner</code>, and admins land on <code>/admin</code>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="box warn">
+    <span class="box-icon">⚠️</span>
+    <div class="box-body">
+      <strong>Forgot your password?</strong>
+      Contact the platform administrator to have your account reset. Self-service password reset is handled through the admin's User Management panel.
+    </div>
+  </div>
+
+  <h3>Signing Out</h3>
+  <p>Click the <strong>Sign out</strong> button found in the top-right navigation bar (desktop) or in the mobile drawer menu. Practitioner and Admin users click <strong>Sign out</strong> at the bottom of their sidebar.</p>
+
+
+  <!-- ══════════════ 3. PUBLIC VISITOR ══════════════ -->
+  <div class="section-label">
+    <div class="section-num">03</div>
+    <h2>Public Visitor — Browsing Without an Account</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <p>No account is required to read published cultural content. The following features are available to anyone who opens the platform.</p>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <span class="fc-icon">🏛️</span>
+      <div class="fc-title">Homepage</div>
+      <p>View platform statistics (total ceremonies, lineage records, founding year), featured ceremonies, royal lineage highlights, and the Discover More section.</p>
+    </div>
+    <div class="feature-card">
+      <span class="fc-icon">🔍</span>
+      <div class="fc-title">Explore Culture</div>
+      <p>Browse all published ceremonies with search and category filters. Click any ceremony card to open its full detail page.</p>
+    </div>
+    <div class="feature-card">
+      <span class="fc-icon">📜</span>
+      <div class="fc-title">Lineage Records</div>
+      <p>Read published royal lineage and clan history records. Navigate from the <strong>Explore</strong> page's Lineage tab.</p>
+    </div>
+    <div class="feature-card">
+      <span class="fc-icon">🛒</span>
+      <div class="fc-title">Marketplace</div>
+      <p>Browse services offered by cultural practitioners — performances, crafts, teaching, and more. Filter by category.</p>
+    </div>
+    <div class="feature-card">
+      <span class="fc-icon">🎬</span>
+      <div class="fc-title">Cultural Cinema</div>
+      <p>See the schedule of upcoming live cultural streams and browse available recorded sessions.</p>
+    </div>
+    <div class="feature-card">
+      <span class="fc-icon">⭐</span>
+      <div class="fc-title">Ratings Summary</div>
+      <p>View community star ratings and reviews for any ceremony or lineage record without being logged in.</p>
+    </div>
+  </div>
+
+  <div class="box info">
+    <span class="box-icon">🔒</span>
+    <div class="box-body">
+      <strong>Gated features</strong>
+      AI Cultural Chat, cinema bookings, submitting ratings, sending marketplace enquiries, and setting personal preferences all require a registered account. A <strong>Sign In</strong> prompt appears when you try to access these features.
+    </div>
+  </div>
+
+  <h3>Reading a Ceremony Detail Page</h3>
+  <p>Click any ceremony card on Explore or the homepage to open its detail page. The page is organised into tabs:</p>
+  <table>
+    <thead><tr><th>Tab</th><th>What You See</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Overview</strong></td><td>Full description, siSwati translation, month celebrated, health/immunology notes, and GPS location if available.</td></tr>
+      <tr><td><strong>Songs</strong></td><td>Traditional songs associated with this ceremony — title, artist, lyrics, and audio player if a recording is attached.</td></tr>
+      <tr><td><strong>Attire (Imvunulo)</strong></td><td>Traditional dress items worn during the ceremony with images and descriptions.</td></tr>
+      <tr><td><strong>Walkthrough</strong></td><td>Numbered step-by-step guide through the ceremony sequence (shown only if steps have been added by the practitioner).</td></tr>
+    </tbody>
+  </table>
+  <p>Below the tabs you will find the <strong>Community Ratings</strong> section showing the average star rating and individual reviews.</p>
+
+
+  <!-- ══════════════ 4. REGULAR USER ══════════════ -->
+  <div class="section-label">
+    <div class="section-num blue">04</div>
+    <h2>Regular User — Full Feature Access</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <p>A <span class="role-badge user">User</span> account unlocks every feature available to public visitors plus personalisation, community participation, and media features.</p>
+
+  <h3>Home Page &amp; Personalised Recommendations</h3>
+  <p>After logging in, your homepage shows a <strong>Recommended for You</strong> section above the Featured Ceremonies list. Recommendations are matched to the cultural interests you set in your profile. If you have not set interests yet, a prompt guides you to the preferences section.</p>
+
+  <div class="box success">
+    <span class="box-icon">✅</span>
+    <div class="box-body">
+      <strong>Tip: Set your interests for better recommendations</strong>
+      Go to <strong>Profile → Cultural Interests &amp; Preferences</strong> and select the categories that interest you. Recommendations update immediately.
+    </div>
+  </div>
+
+  <h3>Setting Cultural Preferences</h3>
+  <p>Access your profile by clicking your name/avatar in the top-right navigation and selecting the dashboard link, then navigating to <strong>Profile Settings</strong>. Or visit <code>/profile</code> directly.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num blue">1</div>
+      <div class="step-body">
+        <strong>Scroll to "Cultural Interests &amp; Preferences"</strong>
+        <p>This section appears below the account settings on the profile page.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num blue">2</div>
+      <div class="step-body">
+        <strong>Toggle your interest categories</strong>
+        <p>Click any of the six category pills to select or deselect it: <strong>Ceremonies</strong>, <strong>Lineage</strong>, <strong>Music</strong>, <strong>Attire</strong>, <strong>Royal History</strong>, <strong>Spiritual</strong>. Selected categories turn gold.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num blue">3</div>
+      <div class="step-body">
+        <strong>Set your visitor type and preferred language</strong>
+        <p>Choose <strong>Local</strong>, <strong>Tourist</strong>, or <strong>Researcher</strong> from the Visitor Type dropdown, and English or SiSwati from the Preferred Language dropdown.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num blue">4</div>
+      <div class="step-body">
+        <strong>Click "Save Preferences"</strong>
+        <p>A confirmation message appears. Your homepage recommendations update on next visit.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Rating a Ceremony or Lineage Record</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Open any ceremony or lineage record detail page</strong>
+        <p>Navigate to <strong>Explore</strong> and click on any published entry.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Scroll to the Community Ratings section</strong>
+        <p>Below the content tabs you will see the average star rating, a rating distribution bar chart, and existing reviews.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Click your star rating (1–5)</strong>
+        <p>The interactive star row is shown for logged-in users. Click the star that matches your rating. Optionally type a comment in the text box.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>Click "Submit Rating"</strong>
+        <p>Your rating is saved. You can update it later — submitting again updates your existing rating rather than adding a duplicate.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>AI Cultural Chat</h3>
+  <p>Navigate to <strong>AI Chat</strong> in the top navigation (visible only when logged in). Type any question about Swazi culture, ceremonies, traditions, royal history, or the siSwati language. The AI assistant responds using the platform's cultural knowledge base powered by Google Gemini.</p>
+
+  <div class="box warn">
+    <span class="box-icon">⚠️</span>
+    <div class="box-body">
+      <strong>Context-aware responses</strong>
+      The chat assistant is configured for Swazi cultural topics. Off-topic questions may receive limited responses.
+    </div>
+  </div>
+
+  <h3>Cultural Cinema</h3>
+  <p>Navigate to <strong>Cinema</strong> in the top navigation to browse available live streams and recorded cultural events.</p>
+
+  <table>
+    <thead><tr><th>Type</th><th>How to Access</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Live Sessions</strong></td>
+        <td>Sessions show as cards with a scheduled date/time. Click <strong>Book a Seat</strong> to reserve your place. You receive confirmation on screen. Booked sessions appear under <strong>My Bookings</strong>.</td>
+      </tr>
+      <tr>
+        <td><strong>Recorded Videos</strong></td>
+        <td>Past sessions with an available video are marked as <strong>Recorded</strong>. Click the card to open the cinema room and watch the embedded video.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>My Bookings</h4>
+  <p>Click your avatar → dashboard, then navigate to <strong>My Bookings</strong> (or visit <code>/my-bookings</code>). This page lists all your current and past cinema seat bookings. You can cancel upcoming bookings from here.</p>
+
+  <h3>Marketplace — Sending a Service Enquiry</h3>
+  <p>Navigate to <strong>Marketplace</strong> in the top navigation to browse services offered by practitioners.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Browse and filter</strong>
+        <p>Use the category pill filters at the top (All, Performance, Crafts, Teaching, Ceremony, Attire, Music, Other) to narrow the listing.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Click "Enquire" on a service card</strong>
+        <p>An enquiry modal opens showing the service name, practitioner name, and price details.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Type your message and click "Send Enquiry"</strong>
+        <p>Your enquiry is sent directly to the practitioner's registered email address. You will see a success confirmation in the modal.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="box info">
+    <span class="box-icon">ℹ️</span>
+    <div class="box-body">
+      <strong>Account required for enquiries</strong>
+      You must be logged in to send a marketplace enquiry. Public visitors can browse services but cannot contact practitioners.
+    </div>
+  </div>
+
+
+  <!-- ══════════════ 5. CEREMONY KEEPER ══════════════ -->
+  <div class="section-label">
+    <div class="section-num gold">05</div>
+    <h2>Ceremony Keeper — Managing Ceremonies</h2>
+  </div>
+  <div class="section-rule gold"></div>
+
+  <p>A <span class="role-badge ceremony">Ceremony Keeper</span> has access to a dedicated practitioner workspace at <code>/practitioner</code>. This role is assigned by an administrator. The left sidebar provides navigation to all tools.</p>
+
+  <h3>Practitioner Dashboard Overview</h3>
+  <p>The Overview page (<code>/practitioner</code>) shows:</p>
+  <ul>
+    <li>A count of your published, pending, and rejected ceremonies</li>
+    <li>Shortcuts to create new content</li>
+    <li>A notification badge in the sidebar showing any content that has been reviewed</li>
+  </ul>
+
+  <h3>Creating a Ceremony</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num gold">1</div>
+      <div class="step-body">
+        <strong>Click "Ceremonies" in the sidebar, then "New Ceremony"</strong>
+        <p>This opens the ceremony creation form at <code>/practitioner/ceremonies/new</code>.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num gold">2</div>
+      <div class="step-body">
+        <strong>Fill in the ceremony details</strong>
+        <p>Required fields: <strong>Name</strong>, <strong>Description</strong>, <strong>Month Celebrated</strong>. Optional fields: siSwati name and description, health/immunology notes, GPS location, and <strong>Category</strong> (used for recommendations — choose one of: Ceremonies, Lineage, Music, Attire, Royal, Spiritual).</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num gold">3</div>
+      <div class="step-body">
+        <strong>Click "Submit for Review"</strong>
+        <p>The ceremony is saved with <code>pending_review</code> status and sent to admins for approval. You cannot publish directly — all content requires admin approval.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="box warn">
+    <span class="box-icon">⚠️</span>
+    <div class="box-body">
+      <strong>Editing published or rejected content resets status</strong>
+      If you edit a ceremony that has already been published or rejected, its status automatically reverts to <code>pending_review</code> so the admin can re-evaluate the changes.
+    </div>
+  </div>
+
+  <h3>Managing Existing Ceremonies</h3>
+  <p>The Ceremonies list page shows all your submissions with their current status badge (<strong>Pending</strong>, <strong>Published</strong>, <strong>Rejected</strong>). From each row you can:</p>
+  <ul>
+    <li><strong>Edit</strong> — open the ceremony form with pre-filled values</li>
+    <li><strong>Manage Walkthrough</strong> — add/edit step-by-step walkthrough content (see below)</li>
+    <li><strong>Delete</strong> — permanently remove the ceremony (confirmation required)</li>
+  </ul>
+
+  <h3>Walkthrough Manager</h3>
+  <p>Navigate to any ceremony in the list and click <strong>Manage Walkthrough</strong>, or visit <code>/practitioner/ceremonies/:id/walkthrough</code>. This tool lets you build a numbered, step-by-step guide that users can follow on the ceremony's detail page.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num gold">1</div>
+      <div class="step-body">
+        <strong>Click "Add Step"</strong>
+        <p>A form appears where you enter a <strong>title</strong>, <strong>description</strong>, and an optional <strong>image URL</strong> for that step.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num gold">2</div>
+      <div class="step-body">
+        <strong>Steps are automatically numbered</strong>
+        <p>Each new step gets the next available number. Steps are displayed in order on the public ceremony detail page under the <strong>Walkthrough</strong> tab.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num gold">3</div>
+      <div class="step-body">
+        <strong>Edit or delete existing steps</strong>
+        <p>Click the pencil icon on any step card to edit it inline. Click the trash icon to remove it.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Songs Library</h3>
+  <p>Navigate to <strong>Songs Library</strong> in the sidebar. This page manages traditional songs associated with ceremonies. You can:</p>
+  <ul>
+    <li>Add a new song with title, artist, language, lyrics, and an optional audio file URL</li>
+    <li>Link songs to specific ceremonies</li>
+    <li>Edit or delete existing songs</li>
+  </ul>
+
+  <h3>Notifications</h3>
+  <p>The <strong>Notifications</strong> page (sidebar badge shows count) lists all ceremonies that have received a status change from the admin — published approvals and rejections with the admin's feedback note. Click any notification to open the related ceremony for editing.</p>
+
+
+  <!-- ══════════════ 6. HISTORY KEEPER ══════════════ -->
+  <div class="section-label">
+    <div class="section-num green">06</div>
+    <h2>History Keeper — Managing Lineage Records</h2>
+  </div>
+  <div class="section-rule green"></div>
+
+  <p>A <span class="role-badge history">History Keeper</span> shares the same practitioner workspace as Ceremony Keepers but manages lineage and clan content instead of ceremonies. The sidebar adapts to show history-specific tools.</p>
+
+  <h3>Creating a Lineage Record</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="background:#065f46;">1</div>
+      <div class="step-body">
+        <strong>Click "Lineage Records" in the sidebar, then "New Record"</strong>
+        <p>Opens the lineage creation form at <code>/practitioner/lineage/new</code>.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num" style="background:#065f46;">2</div>
+      <div class="step-body">
+        <strong>Fill in the record details</strong>
+        <p>Fields include: <strong>Title</strong>, <strong>Content</strong> (rich text history), <strong>Clan/Kingdom</strong>, <strong>Time Period</strong>, <strong>Category</strong> (for recommendations), and optional siSwati translation fields.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num" style="background:#065f46;">3</div>
+      <div class="step-body">
+        <strong>Click "Submit for Review"</strong>
+        <p>The record enters the admin review queue. The same approval workflow as ceremonies applies.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Clans Manager</h3>
+  <p>Navigate to <strong>Clans</strong> in the sidebar (<code>/practitioner/clans</code>). This tool manages the Swazi clan structure — inkhundla groupings, totem animals, and interrelationships between clans. You can add, edit, and organise clan entries which appear in the public Lineage Explorer.</p>
+
+  <div class="box info">
+    <span class="box-icon">ℹ️</span>
+    <div class="box-body">
+      <strong>Notifications work identically for History Keepers</strong>
+      The Notifications page shows admin decisions on submitted lineage records, with the rejection reason visible when applicable.
+    </div>
+  </div>
+
+
+  <!-- ══════════════ 7. PRACTITIONER SHARED ══════════════ -->
+  <div class="section-label">
+    <div class="section-num gold">07</div>
+    <h2>Practitioner Shared Features</h2>
+  </div>
+  <div class="section-rule gold"></div>
+
+  <p>Both Ceremony Keepers and History Keepers have access to these shared tools in the practitioner sidebar.</p>
+
+  <h3>My Services — Listing Cultural Services</h3>
+  <p>Navigate to <strong>My Services</strong> in the sidebar (<code>/practitioner/services</code>). Practitioners can advertise cultural services that users can discover in the public Marketplace.</p>
+
+  <h4>Creating a Service</h4>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num gold">1</div>
+      <div class="step-body">
+        <strong>Click "Add New Service"</strong>
+        <p>A service creation form slides open.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num gold">2</div>
+      <div class="step-body">
+        <strong>Fill in service details</strong>
+        <p>Required: <strong>Title</strong>, <strong>Description</strong>, <strong>Category</strong> (Performance, Crafts, Teaching, Ceremony, Attire, Music, Other), <strong>Price / Rate</strong>. Optional: an image URL for the service card.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num gold">3</div>
+      <div class="step-body">
+        <strong>Click "Create Service"</strong>
+        <p>The service is immediately live in the public Marketplace. No admin approval is required for services.</p>
+      </div>
+    </div>
+  </div>
+
+  <h4>Editing or Deleting a Service</h4>
+  <p>Your services list shows all active listings. Click the <strong>Edit</strong> (pencil) icon to update details. Click the <strong>Delete</strong> (trash) icon to remove a listing — a confirmation prompt appears before deletion.</p>
+
+  <h4>Receiving Enquiries</h4>
+  <p>When a user sends an enquiry on one of your services, you receive an email at your registered address. The email includes the user's name, email, and their message. You reply directly to the user via email.</p>
+
+  <h3>Profile Settings</h3>
+  <p>Navigate to <strong>Profile</strong> in the sidebar or click your name at the bottom of the sidebar (<code>/practitioner/profile</code>). Here you can:</p>
+  <ul>
+    <li>Update your display name and email</li>
+    <li>Change your password (enter current password + new password)</li>
+    <li>Set your cultural interests and preferences (same interface as regular users)</li>
+  </ul>
+
+
+  <!-- ══════════════ 8. ADMIN ══════════════ -->
+  <div class="section-label">
+    <div class="section-num red">08</div>
+    <h2>Administrator — Platform Management</h2>
+  </div>
+  <div class="section-rule red"></div>
+
+  <p>Administrators access a dedicated dashboard at <code>/admin</code> with a dark sidebar organising all management tools into two groups: <strong>Management</strong> and <strong>System</strong>.</p>
+
+  <div class="cred-card">
+    <div>
+      <div class="label">Default Admin Email</div>
+      <div class="value">admin@swazi.heritage</div>
+    </div>
+    <div>
+      <div class="label">Default Password</div>
+      <div class="value">Admin@1234</div>
+    </div>
+    <div class="badge">Change on first login</div>
+  </div>
+
+  <h3>Overview Dashboard</h3>
+  <p>The Admin Overview (<code>/admin</code>) shows platform-wide statistics: total users, ceremonies, lineage records, and activity over time. A badge on the <strong>Content Review</strong> nav item shows how many submissions are awaiting approval.</p>
+
+  <h3>User Management</h3>
+  <p>Navigate to <strong>Users</strong> (<code>/admin/users</code>). This page lists all registered accounts with search and filter options.</p>
+
+  <table>
+    <thead><tr><th>Action</th><th>How</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Change Role</strong></td><td>Click the role dropdown on any user row. Select the new role (user, history_keeper, ceremony_keeper, admin). Changes take effect immediately.</td></tr>
+      <tr><td><strong>Deactivate Account</strong></td><td>Toggle the active/inactive switch. Deactivated users cannot log in.</td></tr>
+      <tr><td><strong>Reset Password</strong></td><td>Click the reset icon to generate a temporary password for the user.</td></tr>
+      <tr><td><strong>Delete User</strong></td><td>Click the delete icon. A confirmation prompt appears. Deletion is permanent.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Content Review</h3>
+  <p>Navigate to <strong>Content Review</strong> (<code>/admin/review</code>). This is the primary moderation queue where all practitioner-submitted ceremonies and lineage records appear with <code>pending_review</code> status.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num red">1</div>
+      <div class="step-body">
+        <strong>Select a submission to review</strong>
+        <p>The queue lists submissions ordered by date. Click any row to expand the full content, including siSwati translations and notes.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num red">2</div>
+      <div class="step-body">
+        <strong>Approve or Reject</strong>
+        <p>Click <strong>Approve</strong> to publish the content immediately (status → <code>published</code>). Click <strong>Reject</strong> to return it to the practitioner — you must enter a rejection reason that the practitioner will see in their Notifications.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num red">3</div>
+      <div class="step-body">
+        <strong>Practitioner is notified</strong>
+        <p>The practitioner sees the decision in their Notifications page. Rejected content can be edited and resubmitted.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Published Content</h3>
+  <p>Navigate to <strong>Published</strong> (<code>/admin/content</code>) to see all live content. From here you can:</p>
+  <ul>
+    <li>Search and filter published ceremonies and lineage records</li>
+    <li>Toggle visibility (hide content without deleting it) using the <strong>Unavailable</strong> status</li>
+    <li>Delete content permanently</li>
+  </ul>
+
+  <h3>Cinema Management</h3>
+  <p>Navigate to <strong>Cinema</strong> (<code>/admin/cinema</code>) to manage the video streaming schedule.</p>
+
+  <table>
+    <thead><tr><th>Action</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Create Session</strong></td><td>Add a new live or recorded cultural event: title, description, stream URL, scheduled date/time, and capacity.</td></tr>
+      <tr><td><strong>Set as Recorded</strong></td><td>After a live session ends, update it with the VOD recording URL so it appears in the Recorded section for users.</td></tr>
+      <tr><td><strong>Set Unavailable</strong></td><td>Hide a recorded video from users without deleting it (useful for content under review).</td></tr>
+      <tr><td><strong>Delete Session</strong></td><td>Permanently remove a cinema entry and all associated bookings.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Analytics</h3>
+  <p>Navigate to <strong>Analytics</strong> (<code>/admin/analytics</code>) to view platform usage trends: user registrations over time, ceremony views, most-engaged content, and booking volume. Charts are rendered using the platform's built-in visualisation library.</p>
+
+  <h3>Ratings</h3>
+  <p>Navigate to <strong>Ratings</strong> (<code>/admin/ratings</code>) to see all community ratings submitted across the platform. Features include:</p>
+  <ul>
+    <li>Summary statistics: total ratings, average score, rating distribution</li>
+    <li>Filter by content type (Ceremonies / Lineage Records) or by specific content item</li>
+    <li>Paginated table of individual ratings with user, content name, star score, and review text</li>
+  </ul>
+
+  <h3>System Config</h3>
+  <p>Navigate to <strong>Config</strong> (<code>/admin/config</code>) to manage global platform settings such as feature toggles, default language, and configurable UI text.</p>
+
+  <h3>Audit Log</h3>
+  <p>Navigate to <strong>Audit Log</strong> (<code>/admin/audit</code>) for a chronological record of all significant platform events: logins, content approvals, user role changes, deletions, and system configuration changes. Each entry includes the timestamp, acting user, and action performed.</p>
+
+  <h3>ML Model</h3>
+  <p>Navigate to <strong>ML Model</strong> (<code>/admin/model</code>) to view the current state of the recommendation model and initiate a retraining cycle when new content has been published. The model file is stored at <code>server/ml/model.json</code>.</p>
+
+  <div class="box danger">
+    <span class="box-icon">🔴</span>
+    <div class="box-body">
+      <strong>Admin actions are permanent</strong>
+      Deleting users, content, or cinema sessions cannot be undone. Always review the Audit Log before investigating suspected issues — it may show that a change was already made.
+    </div>
+  </div>
+
+
+  <!-- ══════════════ 9. LANGUAGE SUPPORT ══════════════ -->
+  <div class="section-label">
+    <div class="section-num">09</div>
+    <h2>Language Support (EN / SiSwati)</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <p>The platform supports both <strong>English (EN)</strong> and <strong>SiSwati (SS)</strong> for the public-facing user interface. Language selection applies to navigation labels, buttons, headings, and placeholder text throughout the site.</p>
+
+  <h3>Switching Language</h3>
+  <p>The language toggle is a compact <strong>EN | SS</strong> pill selector visible in the top-right area of the navigation bar on desktop, and inside the mobile menu drawer. Click <strong>EN</strong> for English (blue highlight) or <strong>SS</strong> for SiSwati (red highlight). The change takes effect immediately without a page reload.</p>
+
+  <div class="box info">
+    <span class="box-icon">ℹ️</span>
+    <div class="box-body">
+      <strong>Content translations are separate from the UI language</strong>
+      Switching UI language changes labels and navigation text. Ceremony and lineage record content is available in siSwati when the practitioner who submitted it filled in the siSwati translation fields. Both versions appear side-by-side on the detail pages when available.
+    </div>
+  </div>
+
+  <h3>SiSwati UI String Reference</h3>
+  <table>
+    <thead><tr><th>English</th><th>SiSwati</th></tr></thead>
+    <tbody>
+      <tr><td>Explore</td><td>Hlola</td></tr>
+      <tr><td>Marketplace</td><td>Imakethe</td></tr>
+      <tr><td>Cinema</td><td>Isinema</td></tr>
+      <tr><td>AI Chat</td><td>Coca ne-AI</td></tr>
+      <tr><td>Sign In</td><td>Ngena</td></tr>
+      <tr><td>Sign Out</td><td>Phuma</td></tr>
+      <tr><td>Featured Ceremonies</td><td>Imigidvo Leyikhetsiwe</td></tr>
+      <tr><td>Royal Lineage Records</td><td>Lirekodi Loluhlanga LwemaBandla</td></tr>
+      <tr><td>Explore Culture</td><td>Hlola Inhlalo</td></tr>
+    </tbody>
+  </table>
+
+
+  <!-- ══════════════ 10. QUICK REFERENCE ══════════════ -->
+  <div class="section-label">
+    <div class="section-num">10</div>
+    <h2>Quick Reference</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <h3>URL Map by Role</h3>
+  <table>
+    <thead><tr><th>URL</th><th>Role(s)</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>/</code></td><td>All</td><td>Homepage with stats, featured ceremonies, recommendations (logged-in users)</td></tr>
+      <tr><td><code>/explore</code></td><td>All</td><td>Browse all published ceremonies and lineage records</td></tr>
+      <tr><td><code>/explore/ceremonies/:id</code></td><td>All</td><td>Ceremony detail with tabs, walkthrough, and ratings</td></tr>
+      <tr><td><code>/marketplace</code></td><td>All</td><td>Browse practitioner services; enquire (logged-in only)</td></tr>
+      <tr><td><code>/cinema</code></td><td>All</td><td>Live &amp; recorded cultural streams</td></tr>
+      <tr><td><code>/chat</code></td><td>User+</td><td>AI cultural chat assistant</td></tr>
+      <tr><td><code>/my-bookings</code></td><td>User+</td><td>Cinema seat bookings</td></tr>
+      <tr><td><code>/profile</code></td><td>User+</td><td>Account settings and cultural preferences</td></tr>
+      <tr><td><code>/practitioner</code></td><td>Practitioners</td><td>Practitioner overview dashboard</td></tr>
+      <tr><td><code>/practitioner/ceremonies</code></td><td>Ceremony Keeper</td><td>Manage ceremony submissions</td></tr>
+      <tr><td><code>/practitioner/ceremonies/:id/walkthrough</code></td><td>Ceremony Keeper</td><td>Build step-by-step ceremony walkthrough</td></tr>
+      <tr><td><code>/practitioner/songs</code></td><td>Ceremony Keeper</td><td>Manage traditional songs</td></tr>
+      <tr><td><code>/practitioner/lineage</code></td><td>History Keeper</td><td>Manage lineage record submissions</td></tr>
+      <tr><td><code>/practitioner/clans</code></td><td>History Keeper</td><td>Manage clan structures</td></tr>
+      <tr><td><code>/practitioner/services</code></td><td>Practitioners</td><td>Manage offered services (marketplace listings)</td></tr>
+      <tr><td><code>/practitioner/notifications</code></td><td>Practitioners</td><td>Admin review decisions on submitted content</td></tr>
+      <tr><td><code>/admin</code></td><td>Admin</td><td>Admin overview and statistics</td></tr>
+      <tr><td><code>/admin/users</code></td><td>Admin</td><td>User account management and role assignment</td></tr>
+      <tr><td><code>/admin/review</code></td><td>Admin</td><td>Content moderation queue</td></tr>
+      <tr><td><code>/admin/content</code></td><td>Admin</td><td>All published content management</td></tr>
+      <tr><td><code>/admin/cinema</code></td><td>Admin</td><td>Cinema session management</td></tr>
+      <tr><td><code>/admin/analytics</code></td><td>Admin</td><td>Platform usage analytics</td></tr>
+      <tr><td><code>/admin/ratings</code></td><td>Admin</td><td>Community ratings oversight</td></tr>
+      <tr><td><code>/admin/config</code></td><td>Admin</td><td>System configuration</td></tr>
+      <tr><td><code>/admin/audit</code></td><td>Admin</td><td>Chronological audit log</td></tr>
+      <tr><td><code>/admin/model</code></td><td>Admin</td><td>ML recommendation model management</td></tr>
+    </tbody>
+  </table>
+
+  <hr class="divider" />
+
+  <h3>Content Status Lifecycle</h3>
+  <table>
+    <thead><tr><th>Status</th><th>Meaning</th><th>Who Can See It</th></tr></thead>
+    <tbody>
+      <tr><td><strong>pending_review</strong></td><td>Submitted by practitioner, awaiting admin decision</td><td>Practitioner (own content) + Admin</td></tr>
+      <tr><td><strong>published</strong></td><td>Approved by admin, live on the public site</td><td>Everyone</td></tr>
+      <tr><td><strong>rejected</strong></td><td>Returned by admin with feedback; can be edited and resubmitted</td><td>Practitioner (own content) + Admin</td></tr>
+      <tr><td><strong>unavailable</strong></td><td>Hidden from public view by admin without deletion</td><td>Admin only</td></tr>
+    </tbody>
+  </table>
+
+  <hr class="divider" />
+
+  <h3>Interest Categories for Recommendations</h3>
+  <table>
+    <thead><tr><th>Category</th><th>Content Matched</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Ceremonies</strong></td><td>Ceremonies categorised as ceremony-type rituals and national events</td></tr>
+      <tr><td><strong>Lineage</strong></td><td>Royal lineage records and clan histories</td></tr>
+      <tr><td><strong>Music</strong></td><td>Content related to traditional songs, instruments, and musical ceremonies</td></tr>
+      <tr><td><strong>Attire</strong></td><td>Traditional dress and imvunulo-focused content</td></tr>
+      <tr><td><strong>Royal</strong></td><td>Ceremonies and records relating to the royal family and monarchy</td></tr>
+      <tr><td><strong>Spiritual</strong></td><td>Ceremonies and records with spiritual, ancestral, or healing significance</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ══════════════ FOOTER ══════════════ -->
+  <div class="footer">
+    <div>
+      <strong>Swazi Cultural Heritage Platform</strong> — User Guide v1.0 &nbsp;·&nbsp; June 2026
+    </div>
+    <div class="footer-stripe">
+      <span style="background:#002395;"></span>
+      <span style="background:#FFD600;"></span>
+      <span style="background:#CE1126;"></span>
+      <span style="background:#FFD600;"></span>
+      <span style="background:#002395;"></span>
+    </div>
+  </div>
+
+</body>
+</html>

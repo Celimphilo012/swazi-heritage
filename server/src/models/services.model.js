@@ -52,4 +52,52 @@ export const ServicesModel = {
        VALUES (?, ?, ?, ?, ?)`,
       [service_id, user_id ?? null, user_name, user_email, message],
     ),
+
+  getEnquiriesForPractitioner: (practitioner_id) =>
+    query(
+      `SELECT se.*, s.title AS service_title
+       FROM service_enquiries se
+       JOIN services s ON se.service_id = s.id
+       WHERE s.practitioner_id = ?
+       ORDER BY se.created_at DESC`,
+      [practitioner_id],
+    ),
+
+  getUserEnquiries: (user_id) =>
+    query(
+      `SELECT se.*, s.title AS service_title, u.name AS practitioner_name
+       FROM service_enquiries se
+       JOIN services s ON se.service_id = s.id
+       JOIN users u ON s.practitioner_id = u.id
+       WHERE se.user_id = ?
+       ORDER BY se.created_at DESC`,
+      [user_id],
+    ),
+
+  getEnquiryById: (id) =>
+    query(
+      `SELECT se.*, s.title AS service_title, s.practitioner_id,
+              u.name AS practitioner_name
+       FROM service_enquiries se
+       JOIN services s ON se.service_id = s.id
+       JOIN users u ON s.practitioner_id = u.id
+       WHERE se.id = ?`,
+      [id],
+    ).then(r => r[0]),
+
+  getMessages: (enquiry_id) =>
+    query(
+      `SELECT em.*, u.name AS sender_name
+       FROM enquiry_messages em
+       JOIN users u ON em.sender_id = u.id
+       WHERE em.enquiry_id = ?
+       ORDER BY em.created_at ASC`,
+      [enquiry_id],
+    ),
+
+  addMessage: (enquiry_id, sender_id, body) =>
+    query(
+      `INSERT INTO enquiry_messages (enquiry_id, sender_id, body) VALUES (?, ?, ?)`,
+      [enquiry_id, sender_id, body],
+    ),
 };

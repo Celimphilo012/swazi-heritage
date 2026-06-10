@@ -5,6 +5,7 @@ import { ROLES } from '../../../utils/constants';
 import shieldPng from '../../../lib/shield.png';
 import { getMyCeremonies } from '../../../api/ceremonies.api';
 import { getMyLineageRecords } from '../../../api/lineage.api';
+import { getMyEnquiries } from '../../../api/services.api';
 
 const Icon = ({ d, d2, viewBox = "0 0 24 24" }) => (
   <svg style={{ width: 18, height: 18, flexShrink: 0 }}
@@ -47,10 +48,11 @@ const PractitionerLayout = () => {
   const [notifCount, setNotifCount] = useState(0);
 
   useEffect(() => {
-    const fetch = isHistory ? getMyLineageRecords() : getMyCeremonies();
-    fetch
-      .then(items => {
-        setNotifCount(items.filter(i => i.status === 'rejected' || i.status === 'published').length);
+    const contentFetch = isHistory ? getMyLineageRecords() : getMyCeremonies();
+    Promise.all([contentFetch, getMyEnquiries()])
+      .then(([items, enqs]) => {
+        const reviewCount = items.filter(i => i.status === 'rejected' || i.status === 'published').length;
+        setNotifCount(reviewCount + (enqs?.length || 0));
       })
       .catch(() => {});
   }, [isHistory]);

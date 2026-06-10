@@ -250,6 +250,18 @@ CREATE TABLE IF NOT EXISTS ceremony_steps (
   INDEX idx_ceremony (ceremony_id)
 );
 
+-- 018 enquiry_messages (in-app thread replies for marketplace enquiries)
+CREATE TABLE IF NOT EXISTS enquiry_messages (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  enquiry_id  INT NOT NULL,
+  sender_id   INT NOT NULL,
+  body        TEXT NOT NULL,
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (enquiry_id) REFERENCES service_enquiries(id) ON DELETE CASCADE,
+  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_enquiry (enquiry_id)
+);
+
 -- 017 ratings (Objective 5 — evaluation/feedback)
 CREATE TABLE IF NOT EXISTS ratings (
   id           INT AUTO_INCREMENT PRIMARY KEY,

@@ -12,6 +12,7 @@ import CinemaListing         from '../pages/user/CinemaListing';
 import CinemaRoom            from '../pages/user/CinemaRoom';
 import MyBookings            from '../pages/user/MyBookings';
 import Marketplace           from '../pages/user/Marketplace';
+import MyEnquiries           from '../pages/user/MyEnquiries';
 import PractitionerOverview  from '../pages/practitioner/PractitionerOverview';
 import LineageRecords        from '../pages/practitioner/history/LineageRecords';
 import LineageFormPage       from '../pages/practitioner/history/LineageFormPage';
@@ -56,10 +57,11 @@ const AppRouter = () => (
 
     <Route element={<ProtectedRoute />}>
       <Route element={<UserLayout />}>
-        <Route path="/chat"         element={<CulturalChat />} />
-        <Route path="/cinema/:id"   element={<CinemaRoom />} />
-        <Route path="/my-bookings"  element={<MyBookings />} />
-        <Route path="/profile"      element={<ProfileSettings />} />
+        <Route path="/chat"           element={<CulturalChat />} />
+        <Route path="/cinema/:id"     element={<CinemaRoom />} />
+        <Route path="/my-bookings"    element={<MyBookings />} />
+        <Route path="/my-enquiries"   element={<MyEnquiries />} />
+        <Route path="/profile"        element={<ProfileSettings />} />
       </Route>
     </Route>
 

@@ -906,6 +906,38 @@ servicesRouter.get("/", async (req, res, next) => {
 servicesRouter.get("/mine", protect, practitionersOnly, async (req, res, next) => {
   try { success(res, await ServicesModel.findByPractitioner(req.user.id)); } catch (err) { next(err); }
 });
+servicesRouter.get("/my-enquiries", protect, practitionersOnly, async (req, res, next) => {
+  try { success(res, await ServicesModel.getEnquiriesForPractitioner(req.user.id)); } catch (err) { next(err); }
+});
+servicesRouter.get("/my-sent-enquiries", protect, async (req, res, next) => {
+  try { success(res, await ServicesModel.getUserEnquiries(req.user.id)); } catch (err) { next(err); }
+});
+servicesRouter.get("/enquiries/:id/messages", protect, async (req, res, next) => {
+  try {
+    const enq = await ServicesModel.getEnquiryById(req.params.id);
+    if (!enq) throw new AppError("Enquiry not found.", 404);
+    if (enq.user_id !== req.user.id && enq.practitioner_id !== req.user.id)
+      throw new AppError("Forbidden.", 403);
+    const messages = await ServicesModel.getMessages(req.params.id);
+    success(res, { enquiry: enq, messages });
+  } catch (err) { next(err); }
+});
+servicesRouter.post(
+  "/enquiries/:id/messages",
+  protect,
+  [body("body").notEmpty().withMessage("Message body is required.")],
+  validate,
+  async (req, res, next) => {
+    try {
+      const enq = await ServicesModel.getEnquiryById(req.params.id);
+      if (!enq) throw new AppError("Enquiry not found.", 404);
+      if (enq.user_id !== req.user.id && enq.practitioner_id !== req.user.id)
+        throw new AppError("Forbidden.", 403);
+      await ServicesModel.addMessage(req.params.id, req.user.id, req.body.body);
+      success(res, null, "Message sent.");
+    } catch (err) { next(err); }
+  },
+);
 servicesRouter.get("/:id", async (req, res, next) => {
   try {
     const svc = await ServicesModel.findById(req.params.id);
@@ -954,6 +986,8 @@ servicesRouter.post(
     try {
       const svc = await ServicesModel.findById(req.params.id);
       if (!svc) throw new AppError("Service not found.", 404);
+      if (svc.practitioner_id === req.user.id)
+        throw new AppError("You cannot send an enquiry about your own service.", 403);
       const { message, user_email } = req.body;
       await ServicesModel.createEnquiry({
         service_id: req.params.id,
