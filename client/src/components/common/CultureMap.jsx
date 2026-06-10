@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -31,68 +30,64 @@ const makeIcon = (type) => L.divIcon({
   className: '',
 });
 
-// Fits map bounds to all markers when they change
-const BoundsFitter = ({ markers }) => {
-  const map = useMap();
+// Uses vanilla Leaflet (no react-leaflet) to avoid React 18.3 context incompatibility.
+// markers: [{ lat, lng, title, subtitle?, type: 'ceremony'|'lineage'|'clan' }]
+const CultureMap = ({ markers = [], center, zoom = 8, height = 400, fitBounds = true }) => {
+  const containerRef = useRef(null);
+  const mapRef       = useRef(null);
+
   useEffect(() => {
-    const valid = markers.filter(m => m.lat != null && m.lng != null);
-    if (valid.length === 0) return;
-    if (valid.length === 1) {
-      map.setView([valid[0].lat, valid[0].lng], 10);
-    } else {
+    if (!containerRef.current || mapRef.current) return;
+
+    const ESWATINI = [-26.5225, 31.4659];
+
+    // mysql2 returns DECIMAL as strings — coerce to float
+    const valid = markers
+      .map(m => ({ ...m, lat: parseFloat(m.lat), lng: parseFloat(m.lng) }))
+      .filter(m => !isNaN(m.lat) && !isNaN(m.lng));
+
+    const resolvedCenter = center
+      ? [parseFloat(center[0]), parseFloat(center[1])]
+      : (valid.length === 1 ? [valid[0].lat, valid[0].lng] : ESWATINI);
+
+    const map = L.map(containerRef.current, {
+      center: resolvedCenter,
+      zoom,
+      scrollWheelZoom: false,
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+
+    valid.forEach(m => {
+      L.marker([m.lat, m.lng], { icon: makeIcon(m.type) })
+        .addTo(map)
+        .bindPopup(`
+          <div style="min-width:140px">
+            <p style="font-weight:700;font-size:13px;margin:0 0 2px">${m.title}</p>
+            ${m.subtitle ? `<p style="font-size:11px;color:#6b7280;margin:0">${m.subtitle}</p>` : ''}
+          </div>
+        `);
+    });
+
+    if (fitBounds && valid.length > 1) {
       map.fitBounds(valid.map(m => [m.lat, m.lng]), { padding: [40, 40] });
     }
-  }, [markers, map]);
-  return null;
-};
 
-// markers: [{ lat, lng, title, subtitle?, type: 'ceremony'|'lineage'|'clan', id? }]
-// height: number (px) or string
-const CultureMap = ({ markers = [], center, zoom = 8, height = 400, fitBounds = true }) => {
-  const ESWATINI = [-26.5225, 31.4659];
-  // mysql2 returns DECIMAL columns as strings — coerce to float so Leaflet doesn't throw
-  const validMarkers = markers
-    .filter(m => m.lat != null && m.lng != null)
-    .map(m => ({ ...m, lat: parseFloat(m.lat), lng: parseFloat(m.lng) }))
-    .filter(m => !isNaN(m.lat) && !isNaN(m.lng));
-  const resolvedCenter = center
-    ? [parseFloat(center[0]), parseFloat(center[1])]
-    : ESWATINI;
+    mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div style={{ height, width: '100%', borderRadius: 16, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-      <MapContainer
-        center={resolvedCenter}
-        zoom={zoom}
-        style={{ height: '100%', width: '100%' }}
-        scrollWheelZoom={false}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {fitBounds && <BoundsFitter markers={validMarkers} />}
-        {validMarkers.map((m, i) => (
-          <Marker key={i} position={[m.lat, m.lng]} icon={makeIcon(m.type)}>
-            <Popup>
-              <div style={{ minWidth: 140 }}>
-                <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 2 }}>{m.title}</p>
-                {m.subtitle && <p style={{ fontSize: 11, color: '#6b7280' }}>{m.subtitle}</p>}
-                {m.type && (
-                  <span style={{
-                    display: 'inline-block', marginTop: 4, fontSize: 10,
-                    fontWeight: 700, textTransform: 'capitalize',
-                    padding: '1px 7px', borderRadius: 99,
-                    background: MARKER_COLORS[m.type] + '18',
-                    color: MARKER_COLORS[m.type],
-                  }}>{m.type}</span>
-                )}
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
-    </div>
+    <div
+      ref={containerRef}
+      style={{ height, width: '100%', borderRadius: 16, overflow: 'hidden', border: '1px solid #e5e7eb' }}
+    />
   );
 };
 
