@@ -365,6 +365,11 @@ const Ceremonies = () => {
                         Edit
                       </Link>
                     )}
+                    <Link to={`/practitioner/ceremonies/${ceremony.id}/walkthrough`}
+                      className="px-3 py-1.5 rounded-xl text-xs font-semibold border text-center transition-colors hover:bg-blue-50"
+                      style={{ borderColor: "rgba(0,35,149,0.25)", color: "#002395", background: "rgba(0,35,149,0.04)" }}>
+                      Walkthrough
+                    </Link>
                     <button
                       type="button"
                       onClick={() => setAttireModal(ceremony)}
