@@ -436,10 +436,10 @@
     </div>
 
     <div class="cover-meta">
-      <span class="pill">Version 1.0</span>
+      <span class="pill">Version 2.0</span>
       <span class="pill">4 Roles Covered</span>
       <span class="pill">EN / SS Bilingual</span>
-      <span class="pill">June 2026</span>
+      <span class="pill">August 2026</span>
     </div>
   </div>
 
@@ -451,6 +451,7 @@
       <li>Getting Started (Registration &amp; Login)</li>
       <li>Public Visitor — Browsing Without an Account</li>
       <li>Regular User — Full Feature Access</li>
+      <li>Seminars, Imvunulo, Tourism &amp; Library</li>
       <li>Ceremony Keeper — Managing Ceremonies</li>
       <li>History Keeper — Managing Lineage Records</li>
       <li>Practitioner Shared Features</li>
@@ -631,13 +632,33 @@
       <div class="fc-title">Ratings Summary</div>
       <p>View community star ratings and reviews for any ceremony or lineage record without being logged in.</p>
     </div>
+    <div class="feature-card">
+      <span class="fc-icon">🎓</span>
+      <div class="fc-title">Seminars &amp; Workshops</div>
+      <p>Browse online and in-person cultural workshops hosted by practitioners, with a live map of physical venues.</p>
+    </div>
+    <div class="feature-card">
+      <span class="fc-icon">👘</span>
+      <div class="fc-title">Imvunulo Catalogue</div>
+      <p>Browse traditional attire listed for rental or sale, with a map showing where sellers are located.</p>
+    </div>
+    <div class="feature-card">
+      <span class="fc-icon">🗺️</span>
+      <div class="fc-title">Tourism</div>
+      <p>Discover heritage sites, lodges, cultural villages, and nature reserves across Eswatini on an interactive map.</p>
+    </div>
+    <div class="feature-card">
+      <span class="fc-icon">📚</span>
+      <div class="fc-title">Library &amp; Publications</div>
+      <p>Search articles, books, papers, and theses on Swazi history and culture, with relevance-ranked full-text search.</p>
+    </div>
   </div>
 
   <div class="box info">
     <span class="box-icon">🔒</span>
     <div class="box-body">
       <strong>Gated features</strong>
-      AI Cultural Chat, cinema bookings, submitting ratings, sending marketplace enquiries, and setting personal preferences all require a registered account. A <strong>Sign In</strong> prompt appears when you try to access these features.
+      AI Cultural Chat, cinema bookings, seminar bookings, submitting ratings, sending marketplace or imvunulo enquiries, and setting personal preferences all require a registered account. A <strong>Sign In</strong> prompt appears when you try to access these features. Tourism and the Library are browsable by everyone, no account required.
     </div>
   </div>
 
@@ -665,7 +686,7 @@
   <p>A <span class="role-badge user">User</span> account unlocks every feature available to public visitors plus personalisation, community participation, and media features.</p>
 
   <h3>Home Page &amp; Personalised Recommendations</h3>
-  <p>After logging in, your homepage shows a <strong>Recommended for You</strong> section above the Featured Ceremonies list. Recommendations are matched to the cultural interests you set in your profile. If you have not set interests yet, a prompt guides you to the preferences section.</p>
+  <p>After logging in, your homepage shows a <strong>Recommended for You</strong> section above the Featured Ceremonies list. Recommendations combine three signals: ceremonies and lineage records matched to your <strong>cultural interests</strong>, imvunulo listings matched to your <strong>budget</strong>, and tourist sites matched to your interests (shown on the Tourism page). If you have not set interests or a budget yet, a prompt guides you to the preferences section.</p>
 
   <div class="box success">
     <span class="box-icon">✅</span>
@@ -696,15 +717,22 @@
     <div class="step">
       <div class="step-num blue">3</div>
       <div class="step-body">
-        <strong>Set your visitor type and preferred language</strong>
-        <p>Choose <strong>Local</strong>, <strong>Tourist</strong>, or <strong>Researcher</strong> from the Visitor Type dropdown, and English or SiSwati from the Preferred Language dropdown.</p>
+        <strong>Set an imvunulo budget (optional)</strong>
+        <p>Enter a maximum amount in SZL in the <strong>Imvunulo budget</strong> field. Imvunulo listings priced at or below this amount will appear in your homepage recommendations. Leave it blank to skip budget-based recommendations.</p>
       </div>
     </div>
     <div class="step">
       <div class="step-num blue">4</div>
       <div class="step-body">
+        <strong>Set your visitor type and preferred language</strong>
+        <p>Choose <strong>Local</strong>, <strong>Tourist</strong>, or <strong>Researcher</strong> from the Visitor Type dropdown, and English or SiSwati from the Preferred Language dropdown.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num blue">5</div>
+      <div class="step-body">
         <strong>Click "Save Preferences"</strong>
-        <p>A confirmation message appears. Your homepage recommendations update on next visit.</p>
+        <p>A confirmation message appears and your homepage recommendations refresh immediately.</p>
       </div>
     </div>
   </div>
@@ -794,7 +822,14 @@
       <div class="step-num">3</div>
       <div class="step-body">
         <strong>Type your message and click "Send Enquiry"</strong>
-        <p>Your enquiry is sent directly to the practitioner's registered email address. You will see a success confirmation in the modal.</p>
+        <p>The practitioner is emailed your message immediately, and a conversation thread is created. You will see a success confirmation in the modal with a link to <strong>My Enquiries</strong>.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>Continue the conversation in "My Enquiries"</strong>
+        <p>Visit <code>/my-enquiries</code> (or click your avatar → My Enquiries) to see every conversation you've started, split into a <strong>Marketplace</strong> tab and an <strong>Imvunulo</strong> tab. Select a conversation on the left to read replies and send follow-up messages in the chat panel on the right — no need to use email.</p>
       </div>
     </div>
   </div>
@@ -803,14 +838,118 @@
     <span class="box-icon">ℹ️</span>
     <div class="box-body">
       <strong>Account required for enquiries</strong>
-      You must be logged in to send a marketplace enquiry. Public visitors can browse services but cannot contact practitioners.
+      You must be logged in to send a marketplace or imvunulo enquiry, and you cannot enquire about your own listing. Public visitors can browse but cannot contact sellers.
     </div>
   </div>
 
 
-  <!-- ══════════════ 5. CEREMONY KEEPER ══════════════ -->
+  <!-- ══════════════ 5. SEMINARS, IMVUNULO, TOURISM & LIBRARY ══════════════ -->
   <div class="section-label">
-    <div class="section-num gold">05</div>
+    <div class="section-num blue">05</div>
+    <h2>Seminars, Imvunulo, Tourism &amp; Library</h2>
+  </div>
+  <div class="section-rule"></div>
+
+  <p>Four platform-wide features available to any logged-in <span class="role-badge user">User</span> (browsing is open to everyone; booking, enquiring, and submitting content requires an account).</p>
+
+  <h3>Booking a Seminar or Workshop</h3>
+  <p>Navigate to <strong>Seminars</strong> in the top navigation (<code>/seminars</code>) to browse workshops scheduled by practitioners.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num blue">1</div>
+      <div class="step-body">
+        <strong>Filter by format</strong>
+        <p>Use the <strong>All / Online / In person</strong> pills to narrow the list. Seminars with a physical location appear as pins on the map above the list.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num blue">2</div>
+      <div class="step-body">
+        <strong>Click "Book a spot"</strong>
+        <p>If the seminar has limited capacity and is full, the button is replaced with <strong>Fully booked</strong>. Otherwise your seat is confirmed immediately.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num blue">3</div>
+      <div class="step-body">
+        <strong>Find your booking under "My Bookings"</strong>
+        <p>Visit <code>/my-bookings</code> and switch to the <strong>Seminars</strong> tab. Online seminars show a <strong>Join link</strong> button once the session starts; you can cancel an upcoming booking from here.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="box info">
+    <span class="box-icon">🔔</span>
+    <div class="box-body">
+      <strong>You'll be notified of changes</strong>
+      If a practitioner reschedules or cancels a seminar you've booked, you receive both an in-app notification (bell icon, top of the page) and an email.
+    </div>
+  </div>
+
+  <h3>Renting or Buying Imvunulo</h3>
+  <p>Navigate to <strong>Imvunulo</strong> in the top navigation (<code>/imvunulo</code>) to browse traditional attire listed for rental or sale.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num blue">1</div>
+      <div class="step-body">
+        <strong>Check the map for sellers near you</strong>
+        <p>Listings with a pickup location on file appear as pins. A counter above the map shows how many of the current listings have a location set.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num blue">2</div>
+      <div class="step-body">
+        <strong>Filter by type and gender</strong>
+        <p>Use the <strong>For sale / For rental</strong> and gender pills to narrow results.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num blue">3</div>
+      <div class="step-body">
+        <strong>Click "Send Enquiry"</strong>
+        <p>Message the seller directly about sizing, availability, or pickup. Track the conversation under <strong>My Enquiries → Imvunulo</strong>.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Discovering Tourist Sites</h3>
+  <p>Navigate to <strong>Tourism</strong> in the top navigation (<code>/tourism</code>) to discover heritage sites, lodges, cultural villages, nature reserves, and restaurants across Eswatini.</p>
+  <ul>
+    <li>The map is the primary way to browse — every site with a location appears as a pin you can click for details.</li>
+    <li>If you're logged in and have set cultural interests in your profile, a <strong>Recommended for you</strong> row appears above the map, matched to those interests.</li>
+    <li>Filter the list below the map by category, and use the price range and contact details shown on each card to plan a visit.</li>
+  </ul>
+
+  <h3>Searching the Library</h3>
+  <p>Navigate to <strong>Library</strong> in the top navigation (<code>/library</code>) — no account required. This works like a small-scale Google Scholar for Swazi history and culture.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num blue">1</div>
+      <div class="step-body">
+        <strong>Type a search term</strong>
+        <p>The search bar searches titles, authors, abstracts, and keywords together and ranks results by relevance, not just keyword matches.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num blue">2</div>
+      <div class="step-body">
+        <strong>Filter by type</strong>
+        <p>Narrow results to Articles, Books, Papers, or Theses using the filter pills.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num blue">3</div>
+      <div class="step-body">
+        <strong>Click a result to expand it</strong>
+        <p>Read the full abstract and keywords. Click <strong>Cite</strong> to copy a ready-to-paste citation to your clipboard, or <strong>Read full text</strong> if the author attached a PDF or external link.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════ 6. CEREMONY KEEPER ══════════════ -->
+  <div class="section-label">
+    <div class="section-num gold">06</div>
     <h2>Ceremony Keeper — Managing Ceremonies</h2>
   </div>
   <div class="section-rule gold"></div>
@@ -905,9 +1044,9 @@
   <p>The <strong>Notifications</strong> page (sidebar badge shows count) lists all ceremonies that have received a status change from the admin — published approvals and rejections with the admin's feedback note. Click any notification to open the related ceremony for editing.</p>
 
 
-  <!-- ══════════════ 6. HISTORY KEEPER ══════════════ -->
+  <!-- ══════════════ 7. HISTORY KEEPER ══════════════ -->
   <div class="section-label">
-    <div class="section-num green">06</div>
+    <div class="section-num green">07</div>
     <h2>History Keeper — Managing Lineage Records</h2>
   </div>
   <div class="section-rule green"></div>
@@ -951,9 +1090,9 @@
   </div>
 
 
-  <!-- ══════════════ 7. PRACTITIONER SHARED ══════════════ -->
+  <!-- ══════════════ 8. PRACTITIONER SHARED ══════════════ -->
   <div class="section-label">
-    <div class="section-num gold">07</div>
+    <div class="section-num gold">08</div>
     <h2>Practitioner Shared Features</h2>
   </div>
   <div class="section-rule gold"></div>
@@ -992,20 +1131,98 @@
   <p>Your services list shows all active listings. Click the <strong>Edit</strong> (pencil) icon to update details. Click the <strong>Delete</strong> (trash) icon to remove a listing — a confirmation prompt appears before deletion.</p>
 
   <h4>Receiving Enquiries</h4>
-  <p>When a user sends an enquiry on one of your services, you receive an email at your registered address. The email includes the user's name, email, and their message. You reply directly to the user via email.</p>
+  <p>When a user sends an enquiry on one of your services, you're emailed at your registered address and the enquiry appears under <strong>Reviews &amp; Enquiries</strong> in your sidebar. Click <strong>Reply</strong> on the enquiry card to open an inline chat thread and respond without leaving the platform — no need to reply by email.</p>
+
+  <h3>Seminars &amp; Workshops</h3>
+  <p>Navigate to <strong>Seminars</strong> in the sidebar (<code>/practitioner/seminars</code>) to schedule online or in-person workshops that users can book.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num gold">1</div>
+      <div class="step-body">
+        <strong>Click "New seminar"</strong>
+        <p>Fill in a <strong>title</strong>, <strong>description</strong>, <strong>date &amp; time</strong>, <strong>duration</strong>, and an optional <strong>capacity</strong> (leave blank for unlimited spots).</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num gold">2</div>
+      <div class="step-body">
+        <strong>Choose a format</strong>
+        <p>For <strong>Online</strong>, provide a meeting link. For <strong>In person</strong>, type a place name into the location field — suggestions appear as you type — and its coordinates are filled in automatically, or use the <strong>Use my current location</strong> button.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num gold">3</div>
+      <div class="step-body">
+        <strong>Manage bookings</strong>
+        <p>Click <strong>Attendees</strong> on any seminar to see who has booked. Editing the date, time, or format after people have booked notifies every attendee automatically (bell + email). <strong>Cancel</strong> does the same.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Imvunulo Listings</h3>
+  <p>Navigate to <strong>Imvunulo Listings</strong> in the sidebar (<code>/practitioner/imvunulo</code>) to list traditional attire for rental or sale.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num gold">1</div>
+      <div class="step-body">
+        <strong>Click "New listing"</strong>
+        <p>Fill in a <strong>title</strong>, <strong>description</strong>, <strong>listing type</strong> (sale, rental, or both), <strong>gender</strong>, and a <strong>price</strong> with an optional unit (e.g. "per day").</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num gold">2</div>
+      <div class="step-body">
+        <strong>Add a pickup location (recommended)</strong>
+        <p>Listings without a location don't appear on the buyer-facing map, so type a place name to get suggestions, or use your current location.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num gold">3</div>
+      <div class="step-body">
+        <strong>Respond to enquiries</strong>
+        <p>Buyer messages appear under <strong>Reviews &amp; Enquiries</strong> and trigger both a bell notification and an email. Reply inline the same way as service enquiries.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Publications</h3>
+  <p>Navigate to <strong>Publications</strong> in the sidebar (<code>/practitioner/library</code>) to contribute to the Library. Both Ceremony Keepers and History Keepers can submit.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num gold">1</div>
+      <div class="step-body">
+        <strong>Click "Submit publication"</strong>
+        <p>Provide a <strong>title</strong>, <strong>authors</strong>, <strong>abstract</strong>, <strong>type</strong> (article, book, paper, or thesis), <strong>year</strong>, and <strong>keywords</strong> — keywords improve how well your work is found in Library search.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num gold">2</div>
+      <div class="step-body">
+        <strong>Attach the full text (optional)</strong>
+        <p>Paste a link or upload a PDF directly.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num gold">3</div>
+      <div class="step-body">
+        <strong>Submit for review</strong>
+        <p>Like ceremonies and lineage records, publications go to the admin review queue before appearing in the public Library. Editing a published or rejected publication resubmits it for review.</p>
+      </div>
+    </div>
+  </div>
 
   <h3>Profile Settings</h3>
   <p>Navigate to <strong>Profile</strong> in the sidebar or click your name at the bottom of the sidebar (<code>/practitioner/profile</code>). Here you can:</p>
   <ul>
     <li>Update your display name and email</li>
     <li>Change your password (enter current password + new password)</li>
-    <li>Set your cultural interests and preferences (same interface as regular users)</li>
+    <li>Set your cultural interests, imvunulo budget, and preferences (same interface as regular users)</li>
   </ul>
 
 
-  <!-- ══════════════ 8. ADMIN ══════════════ -->
+  <!-- ══════════════ 9. ADMIN ══════════════ -->
   <div class="section-label">
-    <div class="section-num red">08</div>
+    <div class="section-num red">09</div>
     <h2>Administrator — Platform Management</h2>
   </div>
   <div class="section-rule red"></div>
@@ -1041,7 +1258,7 @@
   </table>
 
   <h3>Content Review</h3>
-  <p>Navigate to <strong>Content Review</strong> (<code>/admin/review</code>). This is the primary moderation queue where all practitioner-submitted ceremonies and lineage records appear with <code>pending_review</code> status.</p>
+  <p>Navigate to <strong>Content Review</strong> (<code>/admin/review</code>). This is the primary moderation queue, split into three tabs — <strong>Ceremonies</strong>, <strong>Lineage Records</strong>, and <strong>Publications</strong> — each showing practitioner submissions with <code>pending_review</code> status by default (use the status dropdown to see published or rejected items instead).</p>
 
   <div class="steps">
     <div class="step">
@@ -1088,6 +1305,32 @@
     </tbody>
   </table>
 
+  <h3>Tourism Management</h3>
+  <p>Navigate to <strong>Tourism</strong> (<code>/admin/tourism</code>) to manage the sites shown on the public Tourism page. Unlike ceremonies and lineage records, tourist sites are admin-curated directly — there is no practitioner submission or review step.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num red">1</div>
+      <div class="step-body">
+        <strong>Click "Add Site"</strong>
+        <p>Fill in a <strong>name</strong>, <strong>description</strong>, <strong>category</strong> (Heritage Site, Lodge, Cultural Village, Nature Reserve, Restaurant, or Other), and an optional <strong>price range</strong> and photo.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num red">2</div>
+      <div class="step-body">
+        <strong>Select related interests</strong>
+        <p>Toggle the interest tags (Ceremonies, Royal Lineage, Music, Attire, Royal Culture, Spiritual) that best describe the site. These drive the "Recommended for you" matching on the public Tourism page.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num red">3</div>
+      <div class="step-body">
+        <strong>Add a location</strong>
+        <p>Type a place name to get suggestions and auto-fill coordinates. Sites without a location won't appear on the public map.</p>
+      </div>
+    </div>
+  </div>
+
   <h3>Analytics</h3>
   <p>Navigate to <strong>Analytics</strong> (<code>/admin/analytics</code>) to view platform usage trends: user registrations over time, ceremony views, most-engaged content, and booking volume. Charts are rendered using the platform's built-in visualisation library.</p>
 
@@ -1117,9 +1360,9 @@
   </div>
 
 
-  <!-- ══════════════ 9. LANGUAGE SUPPORT ══════════════ -->
+  <!-- ══════════════ 10. LANGUAGE SUPPORT ══════════════ -->
   <div class="section-label">
-    <div class="section-num">09</div>
+    <div class="section-num">10</div>
     <h2>Language Support (EN / SiSwati)</h2>
   </div>
   <div class="section-rule"></div>
@@ -1142,9 +1385,14 @@
     <thead><tr><th>English</th><th>SiSwati</th></tr></thead>
     <tbody>
       <tr><td>Explore</td><td>Hlola</td></tr>
+      <tr><td>Tourism</td><td>Buvakashi</td></tr>
       <tr><td>Marketplace</td><td>Imakethe</td></tr>
+      <tr><td>Imvunulo</td><td>Imvunulo</td></tr>
+      <tr><td>Library</td><td>Umtapo</td></tr>
       <tr><td>Cinema</td><td>Isinema</td></tr>
+      <tr><td>Seminars</td><td>Ema-Seminar</td></tr>
       <tr><td>AI Chat</td><td>Coca ne-AI</td></tr>
+      <tr><td>My Enquiries</td><td>Tibuzo Tami</td></tr>
       <tr><td>Sign In</td><td>Ngena</td></tr>
       <tr><td>Sign Out</td><td>Phuma</td></tr>
       <tr><td>Featured Ceremonies</td><td>Imigidvo Leyikhetsiwe</td></tr>
@@ -1153,10 +1401,18 @@
     </tbody>
   </table>
 
+  <div class="box info">
+    <span class="box-icon">ℹ️</span>
+    <div class="box-body">
+      <strong>Bilingual coverage</strong>
+      Navigation labels are fully bilingual across all sections, including Tourism, Imvunulo, and Library. Body copy within the Seminars, Imvunulo, Tourism, and Library pages themselves is currently English-only, matching the Marketplace and Cinema pages.
+    </div>
+  </div>
 
-  <!-- ══════════════ 10. QUICK REFERENCE ══════════════ -->
+
+  <!-- ══════════════ 11. QUICK REFERENCE ══════════════ -->
   <div class="section-label">
-    <div class="section-num">10</div>
+    <div class="section-num">11</div>
     <h2>Quick Reference</h2>
   </div>
   <div class="section-rule"></div>
@@ -1169,10 +1425,15 @@
       <tr><td><code>/explore</code></td><td>All</td><td>Browse all published ceremonies and lineage records</td></tr>
       <tr><td><code>/explore/ceremonies/:id</code></td><td>All</td><td>Ceremony detail with tabs, walkthrough, and ratings</td></tr>
       <tr><td><code>/marketplace</code></td><td>All</td><td>Browse practitioner services; enquire (logged-in only)</td></tr>
+      <tr><td><code>/imvunulo</code></td><td>All</td><td>Browse imvunulo for rental/sale, with a location map; enquire (logged-in only)</td></tr>
+      <tr><td><code>/tourism</code></td><td>All</td><td>Discover heritage sites, lodges &amp; more on an interactive map</td></tr>
+      <tr><td><code>/library</code></td><td>All</td><td>Search published articles, books, papers &amp; theses</td></tr>
       <tr><td><code>/cinema</code></td><td>All</td><td>Live &amp; recorded cultural streams</td></tr>
+      <tr><td><code>/seminars</code></td><td>All</td><td>Browse online/in-person workshops; book (logged-in only)</td></tr>
       <tr><td><code>/chat</code></td><td>User+</td><td>AI cultural chat assistant</td></tr>
-      <tr><td><code>/my-bookings</code></td><td>User+</td><td>Cinema seat bookings</td></tr>
-      <tr><td><code>/profile</code></td><td>User+</td><td>Account settings and cultural preferences</td></tr>
+      <tr><td><code>/my-bookings</code></td><td>User+</td><td>Cinema seat bookings and seminar bookings (tabbed)</td></tr>
+      <tr><td><code>/my-enquiries</code></td><td>User+</td><td>Marketplace and imvunulo enquiry conversations (tabbed)</td></tr>
+      <tr><td><code>/profile</code></td><td>User+</td><td>Account settings, cultural preferences, and imvunulo budget</td></tr>
       <tr><td><code>/practitioner</code></td><td>Practitioners</td><td>Practitioner overview dashboard</td></tr>
       <tr><td><code>/practitioner/ceremonies</code></td><td>Ceremony Keeper</td><td>Manage ceremony submissions</td></tr>
       <tr><td><code>/practitioner/ceremonies/:id/walkthrough</code></td><td>Ceremony Keeper</td><td>Build step-by-step ceremony walkthrough</td></tr>
@@ -1180,12 +1441,16 @@
       <tr><td><code>/practitioner/lineage</code></td><td>History Keeper</td><td>Manage lineage record submissions</td></tr>
       <tr><td><code>/practitioner/clans</code></td><td>History Keeper</td><td>Manage clan structures</td></tr>
       <tr><td><code>/practitioner/services</code></td><td>Practitioners</td><td>Manage offered services (marketplace listings)</td></tr>
-      <tr><td><code>/practitioner/notifications</code></td><td>Practitioners</td><td>Admin review decisions on submitted content</td></tr>
+      <tr><td><code>/practitioner/seminars</code></td><td>Practitioners</td><td>Schedule and manage seminars/workshops</td></tr>
+      <tr><td><code>/practitioner/imvunulo</code></td><td>Practitioners</td><td>Manage imvunulo rental/sale listings</td></tr>
+      <tr><td><code>/practitioner/library</code></td><td>Practitioners</td><td>Submit and manage publications</td></tr>
+      <tr><td><code>/practitioner/notifications</code></td><td>Practitioners</td><td>Reviews &amp; Enquiries — content review decisions and buyer/enquirer messages</td></tr>
       <tr><td><code>/admin</code></td><td>Admin</td><td>Admin overview and statistics</td></tr>
       <tr><td><code>/admin/users</code></td><td>Admin</td><td>User account management and role assignment</td></tr>
-      <tr><td><code>/admin/review</code></td><td>Admin</td><td>Content moderation queue</td></tr>
+      <tr><td><code>/admin/review</code></td><td>Admin</td><td>Content moderation queue (ceremonies, lineage, publications)</td></tr>
       <tr><td><code>/admin/content</code></td><td>Admin</td><td>All published content management</td></tr>
       <tr><td><code>/admin/cinema</code></td><td>Admin</td><td>Cinema session management</td></tr>
+      <tr><td><code>/admin/tourism</code></td><td>Admin</td><td>Manage tourist sites, lodges &amp; cultural villages</td></tr>
       <tr><td><code>/admin/analytics</code></td><td>Admin</td><td>Platform usage analytics</td></tr>
       <tr><td><code>/admin/ratings</code></td><td>Admin</td><td>Community ratings oversight</td></tr>
       <tr><td><code>/admin/config</code></td><td>Admin</td><td>System configuration</td></tr>
@@ -1222,10 +1487,18 @@
     </tbody>
   </table>
 
+  <div class="box info">
+    <span class="box-icon">ℹ️</span>
+    <div class="box-body">
+      <strong>Also used for Tourism</strong>
+      The same six categories tag tourist sites in the admin Tourism panel, so your homepage "Recommended for you" and the Tourism page's recommendation row use one consistent interest profile. Imvunulo recommendations work differently — they're matched by your <strong>budget</strong>, not by interest tags.
+    </div>
+  </div>
+
   <!-- ══════════════ FOOTER ══════════════ -->
   <div class="footer">
     <div>
-      <strong>Swazi Cultural Heritage Platform</strong> — User Guide v1.0 &nbsp;·&nbsp; June 2026
+      <strong>Swazi Cultural Heritage Platform</strong> — User Guide v2.0 &nbsp;·&nbsp; August 2026
     </div>
     <div class="footer-stripe">
       <span style="background:#002395;"></span>

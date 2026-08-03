@@ -371,7 +371,7 @@
     <div class="cover-meta">
       <span class="pill">Full-Stack Web App</span>
       <span class="pill">React + Node.js + MySQL</span>
-      <span class="pill">v1.0.0</span>
+      <span class="pill">v2.0.0</span>
     </div>
   </div>
 
@@ -420,10 +420,11 @@
       <tr><td><strong>Backend</strong></td><td>Node.js, Express 4, JWT Auth, Multer, Winston</td><td>5000</td></tr>
       <tr><td><strong>Database</strong></td><td>MySQL 8 (via mysql2)</td><td>3306</td></tr>
       <tr><td><strong>AI Chat</strong></td><td>Google Gemini API (with local NLP fallback)</td><td>—</td></tr>
-      <tr><td><strong>Cinema Scheduler</strong></td><td>Built-in Node.js interval (auto-starts sessions)</td><td>—</td></tr>
+      <tr><td><strong>Cinema / Seminar Scheduler</strong></td><td>Built-in Node.js interval (auto-starts cinema sessions and transitions seminars scheduled → ongoing → completed)</td><td>—</td></tr>
       <tr><td><strong>siSwati Translation</strong></td><td>Google Cloud Translation API — auto-translates ceremony &amp; lineage content on save</td><td>—</td></tr>
-      <tr><td><strong>Email Notifications</strong></td><td>nodemailer (SMTP) — notifies admin on new submissions, practitioner on publish/reject</td><td>—</td></tr>
-      <tr><td><strong>Culture Map</strong></td><td>react-leaflet v5 — interactive map with custom teardrop markers for cultural sites</td><td>—</td></tr>
+      <tr><td><strong>Email + In-App Notifications</strong></td><td>nodemailer (SMTP) for submissions/reviews/seminar &amp; imvunulo events, plus an in-app notification bell backed by the <code>notifications</code> table</td><td>—</td></tr>
+      <tr><td><strong>Culture Map</strong></td><td>Vanilla Leaflet (not react-leaflet — avoids a React 18.3 context incompatibility) — used on Explore, Seminars, Imvunulo, and Tourism pages</td><td>—</td></tr>
+      <tr><td><strong>Library Search</strong></td><td>MySQL FULLTEXT index with <code>MATCH...AGAINST</code> relevance ranking across publication title/authors/abstract/keywords</td><td>—</td></tr>
     </tbody>
   </table>
 
@@ -843,20 +844,34 @@ UPDATE cinemas SET status = 'available' WHERE type = 'recorded';</code></pre>
   </div>
 
   <h3>Database Tables Created</h3>
+  <p>The schema is applied incrementally — new tables use <code>CREATE TABLE IF NOT EXISTS</code> and new columns on existing tables use <code>ALTER TABLE ... ADD COLUMN IF NOT EXISTS</code>, so re-running <code>npm run migrate</code> on an existing database is always safe and picks up new tables/columns without touching existing data.</p>
   <table>
     <thead><tr><th>Table</th><th>Purpose</th></tr></thead>
     <tbody>
       <tr><td><code>users</code></td><td>All platform accounts with roles, status flags, and optional <code>notification_email</code> for review alerts</td></tr>
-      <tr><td><code>ceremonies</code></td><td>Cultural ceremony records with review workflow; includes <code>swati_name</code>, <code>swati_description</code> (auto-translated siSwati) and <code>lat</code>, <code>lng</code>, <code>location_name</code> for map display</td></tr>
+      <tr><td><code>ceremonies</code></td><td>Cultural ceremony records with review workflow; includes <code>swati_name</code>, <code>swati_description</code> (auto-translated siSwati), <code>category</code> (recommendation matching), and <code>lat</code>, <code>lng</code>, <code>location_name</code> for map display</td></tr>
       <tr><td><code>ceremony_songs</code></td><td>Songs linked to a ceremony</td></tr>
-      <tr><td><code>imvunulo_presets</code></td><td>Pre-seeded traditional attire reference data</td></tr>
-      <tr><td><code>ceremony_imvunulo</code></td><td>Attire items attached to ceremonies</td></tr>
-      <tr><td><code>lineage_records</code></td><td>Historical lineage records with review workflow; includes <code>swati_title</code>, <code>swati_description</code> and <code>lat</code>, <code>lng</code>, <code>location_name</code></td></tr>
+      <tr><td><code>ceremony_steps</code></td><td>Ordered walkthrough steps shown on the public ceremony detail page</td></tr>
+      <tr><td><code>imvunulo_presets</code></td><td>Admin-managed vocabulary of attire types, referenced by ceremonies (not the rental/sale catalogue below)</td></tr>
+      <tr><td><code>imvunulo</code></td><td>Attire items attached to a specific ceremony (descriptive, not commerce)</td></tr>
+      <tr><td><code>lineage_records</code></td><td>Historical lineage records with review workflow; includes <code>swati_title</code>, <code>swati_description</code>, <code>category</code>, and <code>lat</code>, <code>lng</code>, <code>location_name</code></td></tr>
       <tr><td><code>clans</code></td><td>Clan entries linked to lineage records; includes <code>lat</code>, <code>lng</code>, <code>location_name</code></td></tr>
-      <tr><td><code>notifications</code></td><td>In-app notifications for practitioners</td></tr>
+      <tr><td><code>ratings</code></td><td>1–5 star ratings + optional comment, one per user per ceremony/lineage record</td></tr>
       <tr><td><code>cinemas</code></td><td>Live &amp; recorded cinema sessions</td></tr>
       <tr><td><code>bookings</code></td><td>User seat reservations for cinema sessions</td></tr>
-      <tr><td><code>audit_logs</code></td><td>Admin audit trail of user and content actions</td></tr>
+      <tr><td><code>services</code></td><td>Practitioner marketplace listings (performance, crafts, teaching, etc.)</td></tr>
+      <tr><td><code>service_enquiries</code></td><td>Buyer enquiries sent against a marketplace service</td></tr>
+      <tr><td><code>enquiry_messages</code></td><td>Threaded replies on a service enquiry</td></tr>
+      <tr><td><code>seminars</code></td><td>Practitioner-scheduled online/physical workshops; auto-transitions scheduled → ongoing → completed via the scheduler</td></tr>
+      <tr><td><code>seminar_bookings</code></td><td>User bookings against a seminar, capacity-enforced</td></tr>
+      <tr><td><code>imvunulo_listings</code></td><td>The imvunulo rental/sale catalogue — practitioner listings with price, gender, listing type, and pickup location. Distinct from <code>imvunulo_presets</code>/<code>imvunulo</code> above</td></tr>
+      <tr><td><code>imvunulo_listing_enquiries</code> / <code>imvunulo_listing_enquiry_messages</code></td><td>Buyer enquiries and threaded replies for imvunulo listings, mirroring the services enquiry shape</td></tr>
+      <tr><td><code>tourist_sites</code></td><td>Admin-curated heritage sites, lodges, cultural villages, nature reserves &amp; restaurants; <code>interest_tags</code> JSON drives homepage/Tourism recommendation matching</td></tr>
+      <tr><td><code>publications</code></td><td>Library articles/books/papers/theses with the same review workflow as ceremonies/lineage, plus a FULLTEXT index for search</td></tr>
+      <tr><td><code>notifications</code></td><td>Generic in-app notification feed (bell icon) — seminar booking/reschedule/cancel, imvunulo enquiries</td></tr>
+      <tr><td><code>user_preferences</code></td><td>Per-user cultural interests (JSON), visitor type, preferred language, and <code>imvunulo_budget_max</code> — powers all recommendation matching</td></tr>
+      <tr><td><code>ai_prompts</code></td><td>Log of AI chat questions/answers and whether they were answered from the DB, AI, or a hybrid of both</td></tr>
+      <tr><td><code>audit_log</code></td><td>Admin audit trail of user and content actions</td></tr>
       <tr><td><code>system_config</code></td><td>Key-value platform configuration — AI prompt, Google Translate key, SMTP settings, platform name. Editable at runtime via <strong>Admin → Config</strong></td></tr>
     </tbody>
   </table>
@@ -908,10 +923,23 @@ UPDATE cinemas SET status = 'available' WHERE type = 'recorded';</code></pre>
   <div class="box info">
     <span class="box-icon">🔄</span>
     <div class="box-body">
-      <strong>Cinema session auto-scheduler</strong>
+      <strong>Cinema &amp; seminar auto-scheduler</strong>
       The server runs a background task every 30 seconds that automatically transitions
-      cinema sessions from <code>scheduled → live</code> once their <code>scheduled_at</code>
-      datetime is reached.
+      cinema sessions from <code>scheduled → live</code>, and seminars from
+      <code>scheduled → ongoing → completed</code>, once their <code>scheduled_at</code>
+      datetime (plus <code>duration_minutes</code> for completion) is reached.
+      See <code>server/src/utils/scheduler.js</code>.
+    </div>
+  </div>
+
+  <div class="box info">
+    <span class="box-icon">📄</span>
+    <div class="box-body">
+      <strong>File upload types</strong>
+      The shared <code>/upload</code> endpoint (used by <code>MediaInput</code> throughout the app — ceremony/service/tourism
+      images, song audio, and Library publication full text) accepts images (<code>jpg</code>, <code>png</code>, <code>gif</code>,
+      <code>webp</code>), audio (<code>mp3</code>, <code>wav</code>, <code>ogg</code>, <code>m4a</code>, <code>aac</code>), and PDFs,
+      up to 20MB, defined in <code>server/src/routes/index.js</code>.
     </div>
   </div>
 
@@ -1153,8 +1181,13 @@ UPDATE cinemas SET status = 'available' WHERE type = 'recorded';</code></pre>
       </tr>
       <tr>
         <td>Culture map shows no markers</td>
-        <td>Ceremony or lineage records have no location set</td>
-        <td>Edit records in the practitioner dashboard and fill in the latitude, longitude, and location name fields in the Location tab</td>
+        <td>Ceremony, lineage, seminar, imvunulo, or tourist site records have no location set</td>
+        <td>Edit the record and fill in the location field (autocomplete via Nominatim/OpenStreetMap) or the latitude/longitude fields directly</td>
+      </tr>
+      <tr>
+        <td>Library search returns nothing for a short search term</td>
+        <td>MySQL's InnoDB FULLTEXT index has a default minimum indexed word length (<code>innodb_ft_min_token_size</code>, 3 characters)</td>
+        <td>Search with a longer term, or raise <code>innodb_ft_min_token_size</code> in <code>my.cnf</code> and rebuild the <code>publications</code> table's FULLTEXT index</td>
       </tr>
     </tbody>
   </table>
@@ -1181,7 +1214,7 @@ UPDATE cinemas SET status = 'available' WHERE type = 'recorded';</code></pre>
   ══════════════════════════════════════════════════ -->
   <div class="footer">
     <div>
-      <strong>Swazi Cultural Heritage Platform</strong> — Developer Setup Guide
+      <strong>Swazi Cultural Heritage Platform</strong> — Developer Setup Guide v2.0.0
     </div>
     <div class="footer-stripe">
       <span style="background:#002395;"></span>
