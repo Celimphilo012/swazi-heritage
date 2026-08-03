@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getMyBookings, cancelBooking } from "../../api/cinema.api";
+import { getMySeminarBookings, cancelSeminarBooking } from "../../api/seminars.api";
 
 /* ── Shared primitives ── */
 const FlagStripe = () => (
@@ -222,6 +223,116 @@ const BookingCard = ({ booking, onCancelRequest, cancellingId, confirmId, onCanc
   );
 };
 
+/* ── Seminar booking card ── */
+const SEMINAR_SESSION_CFG = {
+  scheduled: { label: "Scheduled", dot: "#FFD600", text: "#b86800", bg: "rgba(255,214,0,0.10)", border: "rgba(255,214,0,0.3)" },
+  ongoing:   { label: "Ongoing",   dot: "#CE1126", text: "#CE1126", bg: "rgba(206,17,38,0.12)", border: "rgba(206,17,38,0.3)" },
+  completed: { label: "Completed",dot: "#6b7280", text: "#6b7280", bg: "rgba(107,114,128,0.10)", border: "rgba(107,114,128,0.25)" },
+  cancelled: { label: "Cancelled",dot: "#9ca3af", text: "#9ca3af", bg: "rgba(156,163,175,0.10)", border: "rgba(156,163,175,0.2)" },
+};
+
+const SeminarBookingCard = ({ booking, onCancelRequest, cancellingId, confirmId, onCancelConfirm, onCancelDismiss }) => {
+  const isOngoing   = booking.session_status === "ongoing";
+  const isScheduled = booking.session_status === "scheduled";
+  const isDone       = booking.session_status === "completed" || booking.session_status === "cancelled";
+  const canCancel   = isScheduled && (!booking.booking_status || booking.booking_status === "confirmed");
+  const isCancelled = booking.booking_status === "cancelled";
+  const sessCfg     = SEMINAR_SESSION_CFG[booking.session_status] || SEMINAR_SESSION_CFG.completed;
+  const bookCfg     = BOOKING_CFG[booking.booking_status || "confirmed"] || BOOKING_CFG.confirmed;
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden transition-all duration-300 hover:translate-y-[-2px]"
+      style={{
+        background: isOngoing
+          ? "linear-gradient(135deg,#1a0010,#4a0018,#1a0010)"
+          : isCancelled || isDone
+          ? "linear-gradient(135deg,#18181b,#27272a,#18181b)"
+          : "linear-gradient(135deg,#0a0f2e,#0d1a4a,#0a0f2e)",
+        boxShadow: isOngoing ? "0 4px 24px rgba(206,17,38,0.25), 0 1px 4px rgba(0,0,0,0.4)" : "0 2px 16px rgba(0,0,0,0.35)",
+        border: isOngoing ? "1px solid rgba(206,17,38,0.35)" : "1px solid rgba(255,255,255,0.07)",
+      }}>
+      <div className="h-0.5 w-full" style={{
+        background: isOngoing
+          ? "linear-gradient(90deg,#CE1126,#ff6b6b,#CE1126)"
+          : isCancelled
+          ? "#374151"
+          : "linear-gradient(90deg,#002395,#FFD600,#CE1126)",
+      }} />
+
+      <div className="p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center mt-0.5"
+            style={{ background: isOngoing ? "rgba(206,17,38,0.2)" : isCancelled ? "rgba(75,85,99,0.2)" : "rgba(0,35,149,0.2)" }}>
+            <svg className="w-4 h-4" style={{ color: isCancelled ? "#6b7280" : "#93c5fd" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-sm leading-snug" style={{ color: isCancelled ? "#9ca3af" : "#f8fafc" }}>
+              {booking.title}
+            </h3>
+
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: sessCfg.bg, color: sessCfg.text, border: `1px solid ${sessCfg.border}` }}>
+                {sessCfg.label}
+              </span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: bookCfg.bg, color: bookCfg.color }}>
+                {bookCfg.label}
+              </span>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full capitalize"
+                style={{ background: "rgba(255,255,255,0.06)", color: "#94a3b8" }}>
+                {booking.format === "online" ? "Online" : "In person"}
+              </span>
+            </div>
+
+            <p className="text-xs mt-1.5" style={{ color: "#64748b" }}>{fmt(booking.scheduled_at)}</p>
+            {booking.format === "physical" && booking.location_name && (
+              <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{booking.location_name}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 mt-3 ml-12">
+          {booking.format === "online" && !isCancelled && !isDone && booking.meeting_url && (
+            <a href={booking.meeting_url} target="_blank" rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-1.5 rounded-full transition-all hover:scale-105"
+              style={{ background: "linear-gradient(135deg,#002395,#1a4db0)", color: "#fff" }}>
+              Join link
+            </a>
+          )}
+          {canCancel && (
+            <button onClick={() => onCancelRequest(booking.id)}
+              className="text-xs px-3 py-1.5 rounded-full transition-all hover:scale-105"
+              style={{ background: "rgba(206,17,38,0.12)", color: "#f87171", border: "1px solid rgba(206,17,38,0.25)" }}>
+              Cancel Booking
+            </button>
+          )}
+        </div>
+
+        {confirmId === booking.id && (
+          <div className="ml-12">
+            <CancelConfirm
+              loading={cancellingId === booking.id}
+              onConfirm={() => onCancelConfirm(booking)}
+              onDismiss={onCancelDismiss}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const filterSeminarBookings = (bookings, tab) => {
+  if (tab === "all")      return bookings;
+  if (tab === "live")     return bookings.filter(b => b.session_status === "ongoing");
+  if (tab === "upcoming") return bookings.filter(b => b.session_status === "scheduled" && b.booking_status !== "cancelled");
+  if (tab === "past")     return bookings.filter(b => ["completed", "cancelled"].includes(b.session_status) || b.booking_status === "cancelled");
+  return bookings;
+};
+
 /* ── Skeleton ── */
 const SkeletonCard = () => (
   <div className="rounded-2xl overflow-hidden animate-pulse"
@@ -258,7 +369,14 @@ const filterBookings = (bookings, tab) => {
 };
 
 /* ── Page ── */
+const SOURCES = [
+  { key: "cinema",  label: "Cinema" },
+  { key: "seminar", label: "Seminars" },
+];
+
 const MyBookings = () => {
+  const [source,      setSource]      = useState("cinema");
+
   const [bookings,    setBookings]    = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState("");
@@ -266,11 +384,22 @@ const MyBookings = () => {
   const [confirmId,   setConfirmId]   = useState(null);
   const [activeTab,   setActiveTab]   = useState("all");
 
+  const [seminarBookings, setSeminarBookings] = useState([]);
+  const [seminarLoading,  setSeminarLoading]  = useState(true);
+  const [seminarError,    setSeminarError]    = useState("");
+  const [cancellingSeminar, setCancellingSeminar] = useState(null);
+  const [confirmSeminarId,  setConfirmSeminarId]  = useState(null);
+  const [seminarTab,        setSeminarTab]        = useState("all");
+
   useEffect(() => {
     getMyBookings()
       .then(setBookings)
       .catch(() => setError("Failed to load bookings."))
       .finally(() => setLoading(false));
+    getMySeminarBookings()
+      .then(setSeminarBookings)
+      .catch(() => setSeminarError("Failed to load seminar bookings."))
+      .finally(() => setSeminarLoading(false));
   }, []);
 
   const handleCancelRequest = (id) => { setConfirmId(id); };
@@ -289,9 +418,26 @@ const MyBookings = () => {
     }
   };
 
+  const handleSeminarCancelRequest = (id) => { setConfirmSeminarId(id); };
+  const handleSeminarCancelDismiss = ()  => { setConfirmSeminarId(null); };
+
+  const handleSeminarCancelConfirm = async (booking) => {
+    setCancellingSeminar(booking.id);
+    try {
+      await cancelSeminarBooking(booking.id);
+      setSeminarBookings(bs => bs.map(b => b.id === booking.id ? { ...b, booking_status: "cancelled" } : b));
+      setConfirmSeminarId(null);
+    } catch {
+      setSeminarError("Failed to cancel booking.");
+    } finally {
+      setCancellingSeminar(null);
+    }
+  };
+
   const liveCount     = bookings.filter(b => b.session_status === "live").length;
   const confirmedCount = bookings.filter(b => b.booking_status !== "cancelled").length;
   const filtered       = filterBookings(bookings, activeTab);
+  const filteredSeminars = filterSeminarBookings(seminarBookings, seminarTab);
 
   return (
     <div className="-mt-8 -mx-4">
@@ -334,7 +480,7 @@ const MyBookings = () => {
           </div>
           <p className="text-base max-w-sm mx-auto animate-fade-in-up"
             style={{ color: "#93c5fd", animationDelay: "0.2s" }}>
-            Your cinema session reservations for cultural events
+            Your cinema sessions and seminar reservations for cultural events
           </p>
 
           {/* Quick stats */}
@@ -362,6 +508,22 @@ const MyBookings = () => {
       </section>
 
       <div className="px-4">
+
+        {/* ── Source toggle ── */}
+        <div className="flex gap-2 mt-6 p-1 rounded-xl" style={{ background: "#f3f4f6" }}>
+          {SOURCES.map(s => (
+            <button key={s.key} onClick={() => setSource(s.key)}
+              className="flex-1 text-sm font-bold px-4 py-2 rounded-lg transition-all"
+              style={source === s.key
+                ? { background: "#002395", color: "#fff", boxShadow: "0 2px 10px rgba(0,35,149,0.25)" }
+                : { background: "transparent", color: "#6b7280" }}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+
+        {source === "cinema" && (
+        <>
         {error && (
           <div className="mt-6 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>
         )}
@@ -437,6 +599,84 @@ const MyBookings = () => {
               />
             ))}
           </div>
+        )}
+        </>
+        )}
+
+        {source === "seminar" && (
+        <>
+        {seminarError && (
+          <div className="mt-6 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{seminarError}</div>
+        )}
+
+        {/* ── Filter tabs ── */}
+        {!seminarLoading && seminarBookings.length > 0 && (
+          <div className="flex gap-2 mt-6 overflow-x-auto scrollbar-hide pb-1">
+            {TABS.map(t => {
+              const count = filterSeminarBookings(seminarBookings, t.key).length;
+              const active = seminarTab === t.key;
+              return (
+                <button key={t.key} onClick={() => setSeminarTab(t.key)}
+                  className="flex-shrink-0 flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full transition-all duration-200 hover:scale-105"
+                  style={active
+                    ? { background: "#002395", color: "#fff", boxShadow: "0 2px 10px rgba(0,35,149,0.35)" }
+                    : { background: "#f3f4f6", color: "#6b7280" }}>
+                  {t.label}
+                  <span className="text-xs px-1.5 py-0.5 rounded-full"
+                    style={active ? { background: "rgba(255,255,255,0.2)", color: "#fff" } : { background: "#e5e7eb", color: "#6b7280" }}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {seminarLoading ? (
+          <div className="mt-6 space-y-3">
+            {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : seminarBookings.length === 0 ? (
+          <div className="text-center py-20 rounded-2xl mt-8"
+            style={{ background: "linear-gradient(135deg,#0a0f2e,#0d1a4a,#0a0f2e)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+              style={{ background: "rgba(0,35,149,0.2)" }}>
+              <svg className="w-7 h-7" style={{ color: "#93c5fd" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <p className="text-sm font-bold text-white mb-1">No seminar bookings yet</p>
+            <p className="text-xs mb-5" style={{ color: "#64748b" }}>
+              Book a seminar or workshop led by one of our practitioners.
+            </p>
+            <Link to="/seminars"
+              className="inline-flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-full transition-all hover:scale-105"
+              style={{ background: "linear-gradient(135deg,#002395,#1a4db0)", color: "#fff", boxShadow: "0 2px 14px rgba(0,35,149,0.4)" }}>
+              Browse Seminars
+            </Link>
+          </div>
+        ) : filteredSeminars.length === 0 ? (
+          <div className="text-center py-12 rounded-2xl mt-6"
+            style={{ background: "#f9fafb", border: "2px dashed #e5e7eb" }}>
+            <p className="text-sm font-medium text-gray-500">No {seminarTab} bookings</p>
+          </div>
+        ) : (
+          <div className="mt-6 space-y-3 mb-6">
+            {filteredSeminars.map(b => (
+              <SeminarBookingCard
+                key={b.id}
+                booking={b}
+                cancellingId={cancellingSeminar}
+                confirmId={confirmSeminarId}
+                onCancelRequest={handleSeminarCancelRequest}
+                onCancelConfirm={handleSeminarCancelConfirm}
+                onCancelDismiss={handleSeminarCancelDismiss}
+              />
+            ))}
+          </div>
+        )}
+        </>
         )}
       </div>
     </div>

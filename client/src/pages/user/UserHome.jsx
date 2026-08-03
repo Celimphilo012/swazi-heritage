@@ -135,6 +135,23 @@ const LineageCard = ({ r, lang }) => {
   );
 };
 
+const ImvunuloCard = ({ l }) => (
+  <Link to="/imvunulo"
+    className="group bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 block">
+    <div className="h-1" style={{ background: "linear-gradient(90deg,#d97706,#FFD600)" }} />
+    <div className="p-5">
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="text-sm font-semibold text-gray-900 group-hover:text-red-800 transition-colors">{l.title}</h3>
+        <span className="flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "#fef3c7", color: "#92400e" }}>
+          E{Number(l.price).toFixed(2)}
+        </span>
+      </div>
+      <p className="text-xs text-gray-400 mt-1">Within your budget · {l.practitioner_name}</p>
+      {l.description && <p className="text-xs text-gray-600 mt-2 line-clamp-2">{l.description}</p>}
+    </div>
+  </Link>
+);
+
 const CardSkeleton = () => (
   <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
     <div className="h-1 bg-gray-200" />
@@ -175,11 +192,16 @@ const UserHome = () => {
 
   useEffect(() => {
     if (!user) return;
-    setRecsLoading(true);
-    getRecommendations()
-      .then(setRecs)
-      .catch(() => {})
-      .finally(() => setRecsLoading(false));
+    const fetchRecs = () => {
+      setRecsLoading(true);
+      getRecommendations()
+        .then(setRecs)
+        .catch(() => {})
+        .finally(() => setRecsLoading(false));
+    };
+    fetchRecs();
+    window.addEventListener("swazi:preferences-updated", fetchRecs);
+    return () => window.removeEventListener("swazi:preferences-updated", fetchRecs);
   }, [user]);
 
   useEffect(() => {
@@ -329,10 +351,11 @@ const UserHome = () => {
                   Set My Interests
                 </Link>
               </div>
-            ) : (recs?.ceremonies?.length > 0 || recs?.lineage?.length > 0) ? (
+            ) : (recs?.ceremonies?.length > 0 || recs?.lineage?.length > 0 || recs?.imvunulo?.length > 0) ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {(recs.ceremonies || []).map(c => <CeremonyCard key={`rc-${c.id}`} c={c} lang={lang} />)}
                 {(recs.lineage    || []).map(r => <LineageCard  key={`rl-${r.id}`} r={r} lang={lang} />)}
+                {(recs.imvunulo   || []).map(l => <ImvunuloCard key={`ri-${l.id}`} l={l} />)}
               </div>
             ) : (
               <div className="rounded-2xl border border-gray-100 p-6 text-center bg-white">

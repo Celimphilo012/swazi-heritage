@@ -258,6 +258,158 @@ export const BookingModel = {
     query(`UPDATE bookings SET status = ? WHERE id = ?`, [status, id]),
 };
 
+// ─── Seminars / Workshops ───────────────────────────────────────────────────────
+export const SeminarModel = {
+  create: ({
+    practitioner_id,
+    title,
+    description,
+    format,
+    meeting_url,
+    location_name,
+    latitude,
+    longitude,
+    scheduled_at,
+    duration_minutes = 60,
+    capacity,
+  }) =>
+    query(
+      `INSERT INTO seminars
+           (practitioner_id, title, description, format, meeting_url, location_name, latitude, longitude, scheduled_at, duration_minutes, capacity)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        practitioner_id, title, description ?? null, format,
+        meeting_url ?? null, location_name ?? null, latitude ?? null, longitude ?? null,
+        scheduled_at, duration_minutes, capacity ?? null,
+      ],
+    ),
+
+  update: (id, fields) => {
+    const allowed = [
+      "title", "description", "format", "meeting_url",
+      "location_name", "latitude", "longitude",
+      "scheduled_at", "duration_minutes", "capacity", "status",
+    ];
+    const updates = Object.entries(fields).filter(([k]) => allowed.includes(k)).map(([k]) => `${k} = ?`);
+    const values = Object.entries(fields).filter(([k]) => allowed.includes(k)).map(([, v]) => v);
+    if (!updates.length) return Promise.resolve();
+    return query(`UPDATE seminars SET ${updates.join(", ")} WHERE id = ?`, [...values, id]);
+  },
+
+  findById: (id) =>
+    query(
+      `SELECT s.*, u.name AS practitioner_name,
+           (SELECT COUNT(*) FROM seminar_bookings WHERE seminar_id = s.id AND status = 'confirmed') AS booking_count
+           FROM seminars s JOIN users u ON s.practitioner_id = u.id WHERE s.id = ?`,
+      [id],
+    ).then((r) => r[0]),
+
+  getAll: ({ format, status, statuses, page = 1, limit = 20 }) => {
+    const offset = (page - 1) * limit;
+    const conditions = [];
+    const params = [];
+    if (format) { conditions.push("s.format = ?"); params.push(format); }
+    if (status) { conditions.push("s.status = ?"); params.push(status); }
+    else if (statuses && statuses.length) {
+      conditions.push(`s.status IN (${statuses.map(() => "?").join(",")})`);
+      params.push(...statuses);
+    }
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    return Promise.all([
+      query(
+        `SELECT s.*, u.name AS practitioner_name,
+             (SELECT COUNT(*) FROM seminar_bookings WHERE seminar_id = s.id AND status = 'confirmed') AS booking_count
+             FROM seminars s JOIN users u ON s.practitioner_id = u.id ${where}
+             ORDER BY s.scheduled_at ASC LIMIT ? OFFSET ?`,
+        [...params, limit, offset],
+      ),
+      query(`SELECT COUNT(*) AS total FROM seminars s ${where}`, params),
+    ]).then(([rows, count]) => ({ rows, total: count[0].total }));
+  },
+
+  findByPractitioner: (practitioner_id) =>
+    query(
+      `SELECT s.*,
+           (SELECT COUNT(*) FROM seminar_bookings WHERE seminar_id = s.id AND status = 'confirmed') AS booking_count
+           FROM seminars s WHERE s.practitioner_id = ? ORDER BY s.scheduled_at DESC`,
+      [practitioner_id],
+    ),
+};
+
+// ─── Seminar Bookings ────────────────────────────────────────────────────────
+export const SeminarBookingModel = {
+  create: ({ user_id, seminar_id }) =>
+    query(`INSERT INTO seminar_bookings (user_id, seminar_id) VALUES (?, ?)`, [user_id, seminar_id]),
+
+  findByUser: (user_id) =>
+    query(
+      `SELECT sb.id, sb.seminar_id, sb.user_id, sb.booked_at,
+              sb.status AS booking_status,
+              s.title, s.format, s.scheduled_at, s.duration_minutes,
+              s.meeting_url, s.location_name, s.latitude, s.longitude,
+              s.status AS session_status
+           FROM seminar_bookings sb JOIN seminars s ON sb.seminar_id = s.id
+           WHERE sb.user_id = ? ORDER BY sb.booked_at DESC`,
+      [user_id],
+    ),
+
+  findBySeminar: (seminar_id) =>
+    query(
+      `SELECT sb.*, u.name, u.email FROM seminar_bookings sb
+           JOIN users u ON sb.user_id = u.id WHERE sb.seminar_id = ?`,
+      [seminar_id],
+    ),
+
+  exists: (user_id, seminar_id) =>
+    query(`SELECT id FROM seminar_bookings WHERE user_id = ? AND seminar_id = ?`, [user_id, seminar_id])
+      .then((r) => r.length > 0),
+
+  countConfirmed: (seminar_id) =>
+    query(`SELECT COUNT(*) AS total FROM seminar_bookings WHERE seminar_id = ? AND status = 'confirmed'`, [seminar_id])
+      .then((r) => r[0].total),
+
+  updateStatus: (id, status) =>
+    query(`UPDATE seminar_bookings SET status = ? WHERE id = ?`, [status, id]),
+
+  findById: (id) =>
+    query(`SELECT * FROM seminar_bookings WHERE id = ?`, [id]).then((r) => r[0]),
+};
+
+// ─── Notifications ───────────────────────────────────────────────────────────
+export const NotificationModel = {
+  create: ({ user_id, type, title, body, link }) =>
+    query(
+      `INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?)`,
+      [user_id, type, title, body ?? null, link ?? null],
+    ),
+
+  createMany: (rows) => {
+    if (!rows.length) return Promise.resolve();
+    const values = rows.map(() => "(?, ?, ?, ?, ?)").join(", ");
+    const params = rows.flatMap((r) => [r.user_id, r.type, r.title, r.body ?? null, r.link ?? null]);
+    return query(
+      `INSERT INTO notifications (user_id, type, title, body, link) VALUES ${values}`,
+      params,
+    );
+  },
+
+  findByUser: (user_id, { limit = 30 } = {}) =>
+    query(
+      `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ?`,
+      [user_id, limit],
+    ),
+
+  countUnread: (user_id) =>
+    query(`SELECT COUNT(*) AS total FROM notifications WHERE user_id = ? AND read_at IS NULL`, [user_id])
+      .then((r) => r[0].total),
+
+  markRead: (id, user_id) =>
+    query(`UPDATE notifications SET read_at = NOW() WHERE id = ? AND user_id = ?`, [id, user_id]),
+
+  markAllRead: (user_id) =>
+    query(`UPDATE notifications SET read_at = NOW() WHERE user_id = ? AND read_at IS NULL`, [user_id]),
+};
+
 // ─── AI Prompts ───────────────────────────────────────────────────────────────
 export const PromptModel = {
   save: ({ user_id, question, answer, source }) =>
@@ -325,5 +477,8 @@ export { UserModel } from "./user.model.js";
 // ─── Re-exports for new feature models ───────────────────────────────────────
 export { PreferencesModel } from "./preferences.model.js";
 export { ServicesModel }    from "./services.model.js";
+export { ImvunuloListingModel } from "./imvunulo-listings.model.js";
+export { TourismModel } from "./tourism.model.js";
+export { PublicationsModel } from "./publications.model.js";
 export { RatingsModel }     from "./ratings.model.js";
 export { StepsModel }       from "./steps.model.js";

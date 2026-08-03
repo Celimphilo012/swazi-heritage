@@ -14,6 +14,7 @@ const MARKER_COLORS = {
   ceremony: '#002395',
   lineage:  '#CE1126',
   clan:     '#b86800',
+  imvunulo: '#d97706',
 };
 
 const makeIcon = (type) => L.divIcon({
@@ -30,28 +31,21 @@ const makeIcon = (type) => L.divIcon({
   className: '',
 });
 
+const ESWATINI = [-26.5225, 31.4659];
+
 // Uses vanilla Leaflet (no react-leaflet) to avoid React 18.3 context incompatibility.
 // markers: [{ lat, lng, title, subtitle?, type: 'ceremony'|'lineage'|'clan' }]
 const CultureMap = ({ markers = [], center, zoom = 8, height = 400, fitBounds = true }) => {
-  const containerRef = useRef(null);
-  const mapRef       = useRef(null);
+  const containerRef  = useRef(null);
+  const mapRef        = useRef(null);
+  const markersRef     = useRef(null);
 
+  // Mount once — create the map instance and an empty marker layer group.
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    const ESWATINI = [-26.5225, 31.4659];
-
-    // mysql2 returns DECIMAL as strings — coerce to float
-    const valid = markers
-      .map(m => ({ ...m, lat: parseFloat(m.lat), lng: parseFloat(m.lng) }))
-      .filter(m => !isNaN(m.lat) && !isNaN(m.lng));
-
-    const resolvedCenter = center
-      ? [parseFloat(center[0]), parseFloat(center[1])]
-      : (valid.length === 1 ? [valid[0].lat, valid[0].lng] : ESWATINI);
-
     const map = L.map(containerRef.current, {
-      center: resolvedCenter,
+      center: center ? [parseFloat(center[0]), parseFloat(center[1])] : ESWATINI,
       zoom,
       scrollWheelZoom: false,
     });
@@ -60,9 +54,31 @@ const CultureMap = ({ markers = [], center, zoom = 8, height = 400, fitBounds = 
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
 
+    markersRef.current = L.layerGroup().addTo(map);
+    mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      markersRef.current = null;
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-run whenever the marker set (or center/zoom) changes on an already-mounted map.
+  useEffect(() => {
+    const map = mapRef.current;
+    const layer = markersRef.current;
+    if (!map || !layer) return;
+
+    // mysql2 returns DECIMAL as strings — coerce to float
+    const valid = markers
+      .map(m => ({ ...m, lat: parseFloat(m.lat), lng: parseFloat(m.lng) }))
+      .filter(m => !isNaN(m.lat) && !isNaN(m.lng));
+
+    layer.clearLayers();
     valid.forEach(m => {
       L.marker([m.lat, m.lng], { icon: makeIcon(m.type) })
-        .addTo(map)
+        .addTo(layer)
         .bindPopup(`
           <div style="min-width:140px">
             <p style="font-weight:700;font-size:13px;margin:0 0 2px">${m.title}</p>
@@ -73,15 +89,12 @@ const CultureMap = ({ markers = [], center, zoom = 8, height = 400, fitBounds = 
 
     if (fitBounds && valid.length > 1) {
       map.fitBounds(valid.map(m => [m.lat, m.lng]), { padding: [40, 40] });
+    } else if (valid.length === 1) {
+      map.setView([valid[0].lat, valid[0].lng], zoom);
+    } else if (center) {
+      map.setView([parseFloat(center[0]), parseFloat(center[1])], zoom);
     }
-
-    mapRef.current = map;
-
-    return () => {
-      map.remove();
-      mapRef.current = null;
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [markers, center, zoom, fitBounds]);
 
   return (
     <div

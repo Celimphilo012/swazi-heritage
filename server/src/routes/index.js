@@ -24,7 +24,7 @@ const upload = multer({
   storage: uploadStorage,
   limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowed = /\.(jpe?g|png|gif|webp|mp3|wav|ogg|m4a|aac)$/i;
+    const allowed = /\.(jpe?g|png|gif|webp|mp3|wav|ogg|m4a|aac|pdf)$/i;
     cb(null, allowed.test(path.extname(file.originalname)));
   },
 });
@@ -50,19 +50,39 @@ import {
   ClanModel,
   CinemaModel,
   BookingModel,
+  SeminarModel,
+  SeminarBookingModel,
+  NotificationModel,
   ImvunuloModel,
   UserModel,
   ConfigModel,
   AuditLogModel,
   PreferencesModel,
   ServicesModel,
+  ImvunuloListingModel,
+  TourismModel,
+  PublicationsModel,
   RatingsModel,
   StepsModel,
 } from "../models/models.js";
 import { success, created, paginated, AppError } from "../utils/apiResponse.js";
 import { autoTranslateLineage } from "../utils/translate.js";
 import { sendMail } from "../utils/mailer.js";
-import { pendingReviewEmail, contentReviewedEmail, newEnquiryEmail } from "../utils/emailTemplates.js";
+import {
+  pendingReviewEmail,
+  contentReviewedEmail,
+  newEnquiryEmail,
+  imvunuloListingEnquiryEmail,
+  seminarBookingConfirmedEmail,
+  seminarUpdatedEmail,
+  seminarCancelledEmail,
+  newSeminarBookingEmail,
+} from "../utils/emailTemplates.js";
+
+// Fire-and-forget in-app notification helper — errors never bubble to the caller.
+const notify = ({ user_id, type, title, body, link }) =>
+  NotificationModel.create({ user_id, type, title, body, link }).catch(() => {});
+const notifyMany = (rows) => NotificationModel.createMany(rows).catch(() => {});
 
 const router = Router();
 router.use(attachAuditLogger);
@@ -125,12 +145,15 @@ authRouter.get("/preferences", protect, async (req, res, next) => {
 authRouter.put(
   "/preferences",
   protect,
-  [body("visitor_type").optional().isIn(["local", "tourist", "researcher", "student", "other"])],
+  [
+    body("visitor_type").optional().isIn(["local", "tourist", "researcher", "student", "other"]),
+    body("imvunulo_budget_max").optional({ nullable: true }).isFloat({ min: 0 }),
+  ],
   validate,
   async (req, res, next) => {
     try {
-      const { interests, visitor_type, preferred_lang } = req.body;
-      await PreferencesModel.upsert(req.user.id, { interests, visitor_type, preferred_lang });
+      const { interests, visitor_type, preferred_lang, imvunulo_budget_max } = req.body;
+      await PreferencesModel.upsert(req.user.id, { interests, visitor_type, preferred_lang, imvunulo_budget_max });
       success(res, await PreferencesModel.findByUser(req.user.id), "Preferences saved.");
     } catch (err) { next(err); }
   },
@@ -588,6 +611,202 @@ cinemaRouter.get("/:id/bookings", adminOnly, async (req, res, next) => {
   }
 });
 
+// ─── SEMINARS / WORKSHOPS ─────────────────────────────────────────────────────
+const fmtDateTime = (d) =>
+  new Date(d).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+
+const assertSeminarOwner = (seminar, req) => {
+  if (!seminar) throw new AppError("Seminar not found.", 404);
+  if (seminar.practitioner_id !== req.user.id && req.user.role !== "admin")
+    throw new AppError("You can only manage your own seminars.", 403);
+};
+
+const seminarRouter = Router();
+seminarRouter.get("/", async (req, res, next) => {
+  try {
+    const { format, page = 1, limit = 20 } = req.query;
+    const { rows, total } = await SeminarModel.getAll({
+      format,
+      statuses: ["scheduled", "ongoing"],
+      page: Number(page),
+      limit: Number(limit),
+    });
+    paginated(res, rows, { total, page: Number(page), limit: Number(limit) });
+  } catch (err) { next(err); }
+});
+seminarRouter.get("/:id", async (req, res, next) => {
+  try {
+    const seminar = await SeminarModel.findById(req.params.id);
+    if (!seminar) throw new AppError("Seminar not found.", 404);
+    success(res, seminar);
+  } catch (err) { next(err); }
+});
+seminarRouter.use(protect);
+seminarRouter.get("/mine/all", practitionersOnly, async (req, res, next) => {
+  try { success(res, await SeminarModel.findByPractitioner(req.user.id)); }
+  catch (err) { next(err); }
+});
+seminarRouter.get("/my/bookings", async (req, res, next) => {
+  try { success(res, await SeminarBookingModel.findByUser(req.user.id)); }
+  catch (err) { next(err); }
+});
+seminarRouter.post(
+  "/",
+  practitionersOnly,
+  [
+    body("title").notEmpty(),
+    body("format").isIn(["online", "physical"]),
+    body("scheduled_at").notEmpty(),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const result = await SeminarModel.create({ ...req.body, practitioner_id: req.user.id });
+      created(res, { id: result.insertId, ...req.body });
+    } catch (err) { next(err); }
+  },
+);
+seminarRouter.put("/:id", practitionersOnly, async (req, res, next) => {
+  try {
+    const seminar = await SeminarModel.findById(req.params.id);
+    assertSeminarOwner(seminar, req);
+
+    const scheduleChanged =
+      req.body.scheduled_at && new Date(req.body.scheduled_at).getTime() !== new Date(seminar.scheduled_at).getTime();
+    await SeminarModel.update(req.params.id, req.body);
+    success(res, null, "Seminar updated.");
+
+    if (scheduleChanged) {
+      const updated = { ...seminar, ...req.body };
+      SeminarBookingModel.findBySeminar(req.params.id).then((bookings) => {
+        const confirmed = bookings.filter((b) => b.status === "confirmed");
+        notifyMany(confirmed.map((b) => ({
+          user_id: b.user_id,
+          type: "seminar_updated",
+          title: `Schedule changed: "${updated.title}"`,
+          body: `New time: ${fmtDateTime(updated.scheduled_at)}`,
+          link: `/seminars/${updated.id}`,
+        })));
+        confirmed.forEach((b) => {
+          const { subject, html } = seminarUpdatedEmail({
+            title: updated.title,
+            scheduledAt: fmtDateTime(updated.scheduled_at),
+            format: updated.format,
+            locationName: updated.location_name,
+            meetingUrl: updated.meeting_url,
+            userName: b.name,
+          });
+          sendMail({ to: b.email, subject, html });
+        });
+      }).catch(() => {});
+    }
+  } catch (err) { next(err); }
+});
+seminarRouter.patch("/:id/cancel", practitionersOnly, async (req, res, next) => {
+  try {
+    const seminar = await SeminarModel.findById(req.params.id);
+    assertSeminarOwner(seminar, req);
+    await SeminarModel.update(req.params.id, { status: "cancelled" });
+    success(res, null, "Seminar cancelled.");
+
+    SeminarBookingModel.findBySeminar(req.params.id).then((bookings) => {
+      const confirmed = bookings.filter((b) => b.status === "confirmed");
+      notifyMany(confirmed.map((b) => ({
+        user_id: b.user_id,
+        type: "seminar_cancelled",
+        title: `Cancelled: "${seminar.title}"`,
+        link: `/bookings`,
+      })));
+      confirmed.forEach((b) => {
+        const { subject, html } = seminarCancelledEmail({ title: seminar.title, userName: b.name });
+        sendMail({ to: b.email, subject, html });
+      });
+    }).catch(() => {});
+  } catch (err) { next(err); }
+});
+seminarRouter.get("/:id/bookings", practitionersOnly, async (req, res, next) => {
+  try {
+    const seminar = await SeminarModel.findById(req.params.id);
+    assertSeminarOwner(seminar, req);
+    success(res, await SeminarBookingModel.findBySeminar(req.params.id));
+  } catch (err) { next(err); }
+});
+seminarRouter.post("/:id/book", async (req, res, next) => {
+  try {
+    const seminar = await SeminarModel.findById(req.params.id);
+    if (!seminar) throw new AppError("Seminar not found.", 404);
+    const exists = await SeminarBookingModel.exists(req.user.id, req.params.id);
+    if (exists) throw new AppError("You already have a booking for this seminar.", 409);
+    if (seminar.capacity) {
+      const confirmedCount = await SeminarBookingModel.countConfirmed(req.params.id);
+      if (confirmedCount >= seminar.capacity) throw new AppError("This seminar is fully booked.", 409);
+    }
+    await SeminarBookingModel.create({ user_id: req.user.id, seminar_id: req.params.id });
+    success(res, null, "Booking confirmed.", 201);
+
+    notify({
+      user_id: seminar.practitioner_id,
+      type: "seminar_booking",
+      title: `New booking: "${seminar.title}"`,
+      body: `${req.user.name} booked a spot.`,
+      link: `/practitioner/seminars`,
+    });
+    UserModel.findById(seminar.practitioner_id).then((practitioner) => {
+      if (practitioner?.email) {
+        const { subject, html } = newSeminarBookingEmail({
+          title: seminar.title,
+          userName: req.user.name,
+          scheduledAt: fmtDateTime(seminar.scheduled_at),
+          practitionerName: practitioner.name,
+        });
+        sendMail({ to: practitioner.notification_email || practitioner.email, subject, html });
+      }
+    }).catch(() => {});
+    const { subject, html } = seminarBookingConfirmedEmail({
+      title: seminar.title,
+      scheduledAt: fmtDateTime(seminar.scheduled_at),
+      format: seminar.format,
+      locationName: seminar.location_name,
+      meetingUrl: seminar.meeting_url,
+      userName: req.user.name,
+    });
+    sendMail({ to: req.user.notification_email || req.user.email, subject, html });
+  } catch (err) { next(err); }
+});
+seminarRouter.patch("/bookings/:id/cancel", async (req, res, next) => {
+  try {
+    const booking = await SeminarBookingModel.findById(req.params.id);
+    if (!booking) throw new AppError("Booking not found.", 404);
+    if (booking.user_id !== req.user.id) throw new AppError("You can only cancel your own bookings.", 403);
+    await SeminarBookingModel.updateStatus(req.params.id, "cancelled");
+    success(res, null, "Booking cancelled.");
+  } catch (err) { next(err); }
+});
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+const notificationsRouter = Router();
+notificationsRouter.use(protect);
+notificationsRouter.get("/", async (req, res, next) => {
+  try { success(res, await NotificationModel.findByUser(req.user.id)); }
+  catch (err) { next(err); }
+});
+notificationsRouter.get("/unread-count", async (req, res, next) => {
+  try { success(res, { count: await NotificationModel.countUnread(req.user.id) }); }
+  catch (err) { next(err); }
+});
+notificationsRouter.patch("/:id/read", async (req, res, next) => {
+  try {
+    await NotificationModel.markRead(req.params.id, req.user.id);
+    success(res, null, "Marked as read.");
+  } catch (err) { next(err); }
+});
+notificationsRouter.patch("/read-all", async (req, res, next) => {
+  try {
+    await NotificationModel.markAllRead(req.user.id);
+    success(res, null, "All marked as read.");
+  } catch (err) { next(err); }
+});
+
 // ─── AI PROMPTS ───────────────────────────────────────────────────────────────
 const promptRouter = Router();
 promptRouter.use(protect);
@@ -769,6 +988,34 @@ adminRouter.put("/imvunulo-presets/:id", auditLog("update_imvunulo_preset"), asy
   } catch (err) {
     next(err);
   }
+});
+// Tourism (tourist sites / lodges — Objective 1)
+adminRouter.get("/tourism", async (_req, res, next) => {
+  try { success(res, await TourismModel.getAllAdmin()); } catch (err) { next(err); }
+});
+adminRouter.post(
+  "/tourism",
+  auditLog("create_tourist_site"),
+  [body("name").notEmpty()],
+  validate,
+  async (req, res, next) => {
+    try {
+      const result = await TourismModel.create({ ...req.body, created_by: req.user.id });
+      created(res, { id: result.insertId, ...req.body });
+    } catch (err) { next(err); }
+  },
+);
+adminRouter.put("/tourism/:id", auditLog("update_tourist_site"), async (req, res, next) => {
+  try {
+    await TourismModel.update(req.params.id, req.body);
+    success(res, null, "Site updated.");
+  } catch (err) { next(err); }
+});
+adminRouter.delete("/tourism/:id", auditLog("delete_tourist_site"), async (req, res, next) => {
+  try {
+    await TourismModel.delete(req.params.id);
+    success(res, null, "Site removed.");
+  } catch (err) { next(err); }
 });
 // System config
 adminRouter.get("/config", async (_req, res, next) => {
@@ -1013,38 +1260,329 @@ servicesRouter.post(
   },
 );
 
+// ─── IMVUNULO LISTINGS (rental/sale catalogue) ─────────────────────────────────
+const imvunuloListingsRouter = Router();
+imvunuloListingsRouter.get("/", async (req, res, next) => {
+  try {
+    const { listing_type, gender, page = 1, limit = 20 } = req.query;
+    const { rows, total } = await ImvunuloListingModel.getAll({ listing_type, gender, page: +page, limit: +limit });
+    paginated(res, rows, { total, page: +page, limit: +limit });
+  } catch (err) { next(err); }
+});
+imvunuloListingsRouter.get("/mine", protect, practitionersOnly, async (req, res, next) => {
+  try { success(res, await ImvunuloListingModel.findByPractitioner(req.user.id)); } catch (err) { next(err); }
+});
+imvunuloListingsRouter.get("/my-enquiries", protect, practitionersOnly, async (req, res, next) => {
+  try { success(res, await ImvunuloListingModel.getEnquiriesForPractitioner(req.user.id)); } catch (err) { next(err); }
+});
+imvunuloListingsRouter.get("/my-sent-enquiries", protect, async (req, res, next) => {
+  try { success(res, await ImvunuloListingModel.getUserEnquiries(req.user.id)); } catch (err) { next(err); }
+});
+imvunuloListingsRouter.get("/enquiries/:id/messages", protect, async (req, res, next) => {
+  try {
+    const enq = await ImvunuloListingModel.getEnquiryById(req.params.id);
+    if (!enq) throw new AppError("Enquiry not found.", 404);
+    if (enq.user_id !== req.user.id && enq.practitioner_id !== req.user.id)
+      throw new AppError("Forbidden.", 403);
+    const messages = await ImvunuloListingModel.getMessages(req.params.id);
+    success(res, { enquiry: enq, messages });
+  } catch (err) { next(err); }
+});
+imvunuloListingsRouter.post(
+  "/enquiries/:id/messages",
+  protect,
+  [body("body").notEmpty().withMessage("Message body is required.")],
+  validate,
+  async (req, res, next) => {
+    try {
+      const enq = await ImvunuloListingModel.getEnquiryById(req.params.id);
+      if (!enq) throw new AppError("Enquiry not found.", 404);
+      if (enq.user_id !== req.user.id && enq.practitioner_id !== req.user.id)
+        throw new AppError("Forbidden.", 403);
+      await ImvunuloListingModel.addMessage(req.params.id, req.user.id, req.body.body);
+      success(res, null, "Message sent.");
+    } catch (err) { next(err); }
+  },
+);
+imvunuloListingsRouter.get("/:id", async (req, res, next) => {
+  try {
+    const listing = await ImvunuloListingModel.findById(req.params.id);
+    if (!listing) throw new AppError("Listing not found.", 404);
+    success(res, listing);
+  } catch (err) { next(err); }
+});
+imvunuloListingsRouter.post(
+  "/",
+  protect,
+  practitionersOnly,
+  [body("title").notEmpty()],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { title, description, listing_type, gender, price, price_unit, image_url, location_name, latitude, longitude, contact } = req.body;
+      const result = await ImvunuloListingModel.create({
+        practitioner_id: req.user.id, title, description, listing_type, gender,
+        price, price_unit, image_url, location_name, latitude, longitude, contact,
+      });
+      created(res, { id: result.insertId, title }, "Listing created.");
+    } catch (err) { next(err); }
+  },
+);
+imvunuloListingsRouter.put("/:id", protect, practitionersOnly, async (req, res, next) => {
+  try {
+    const listing = await ImvunuloListingModel.findById(req.params.id);
+    if (!listing) throw new AppError("Listing not found.", 404);
+    if (listing.practitioner_id !== req.user.id) throw new AppError("Forbidden.", 403);
+    await ImvunuloListingModel.update(req.params.id, req.body);
+    success(res, null, "Listing updated.");
+  } catch (err) { next(err); }
+});
+imvunuloListingsRouter.delete("/:id", protect, practitionersOnly, async (req, res, next) => {
+  try {
+    const listing = await ImvunuloListingModel.findById(req.params.id);
+    if (!listing) throw new AppError("Listing not found.", 404);
+    if (listing.practitioner_id !== req.user.id) throw new AppError("Forbidden.", 403);
+    await ImvunuloListingModel.delete(req.params.id);
+    success(res, null, "Listing removed.");
+  } catch (err) { next(err); }
+});
+imvunuloListingsRouter.post(
+  "/:id/enquire",
+  protect,
+  [body("message").notEmpty(), body("user_email").isEmail()],
+  validate,
+  async (req, res, next) => {
+    try {
+      const listing = await ImvunuloListingModel.findById(req.params.id);
+      if (!listing) throw new AppError("Listing not found.", 404);
+      if (listing.practitioner_id === req.user.id)
+        throw new AppError("You cannot send an enquiry about your own listing.", 403);
+      const { message, user_email } = req.body;
+      await ImvunuloListingModel.createEnquiry({
+        listing_id: req.params.id,
+        user_id: req.user.id,
+        user_name: req.user.name,
+        user_email,
+        message,
+      });
+      success(res, null, "Enquiry sent.");
+      // Notify practitioner in-app + email (fire-and-forget)
+      notify({
+        user_id: listing.practitioner_id,
+        type: "imvunulo_enquiry",
+        title: "New imvunulo enquiry",
+        body: `${req.user.name} is interested in "${listing.title}".`,
+        link: "/practitioner/notifications",
+      });
+      UserModel.findById(listing.practitioner_id).then(practitioner => {
+        if (!practitioner?.email) return;
+        const { subject, html } = imvunuloListingEnquiryEmail({
+          listingTitle: listing.title,
+          practitionerName: practitioner.name,
+          userName: req.user.name,
+          userEmail: user_email,
+          message,
+        });
+        sendMail({ to: practitioner.notification_email || practitioner.email, subject, html });
+      }).catch(() => {});
+    } catch (err) { next(err); }
+  },
+);
+
+// ─── TOURISM (public browse) ───────────────────────────────────────────────────
+const tourismRouter = Router();
+tourismRouter.get("/", async (req, res, next) => {
+  try {
+    const { category, page = 1, limit = 30 } = req.query;
+    const { rows, total } = await TourismModel.getAll({ category, page: +page, limit: +limit });
+    paginated(res, rows, { total, page: +page, limit: +limit });
+  } catch (err) { next(err); }
+});
+tourismRouter.get("/:id", async (req, res, next) => {
+  try {
+    const site = await TourismModel.findById(req.params.id);
+    if (!site) throw new AppError("Site not found.", 404);
+    success(res, site);
+  } catch (err) { next(err); }
+});
+
+// ─── PUBLICATIONS (Library — mini Google Scholar) ──────────────────────────────
+const publicationsRouter = Router();
+publicationsRouter.get("/", async (req, res, next) => {
+  try {
+    const { search, publication_type, page = 1, limit = 20 } = req.query;
+    const { rows, total } = await PublicationsModel.getPublished({ search, publication_type, page: +page, limit: +limit });
+    paginated(res, rows, { total, page: +page, limit: +limit });
+  } catch (err) { next(err); }
+});
+publicationsRouter.get("/:id", async (req, res, next) => {
+  try {
+    const pub = await PublicationsModel.findById(req.params.id);
+    if (!pub || pub.status !== "published") throw new AppError("Publication not found.", 404);
+    success(res, pub);
+    PublicationsModel.incrementViews(req.params.id).catch(() => {});
+  } catch (err) { next(err); }
+});
+publicationsRouter.use(protect);
+publicationsRouter.get("/mine/all", practitionersOnly, async (req, res, next) => {
+  try { success(res, await PublicationsModel.findByCreator(req.user.id)); } catch (err) { next(err); }
+});
+publicationsRouter.get("/admin/all", adminOnly, async (req, res, next) => {
+  try {
+    const { status, page = 1, limit = 15 } = req.query;
+    const { rows, total } = await PublicationsModel.getAllAdmin({ status, page: +page, limit: +limit });
+    paginated(res, rows, { total, page: +page, limit: +limit });
+  } catch (err) { next(err); }
+});
+publicationsRouter.post(
+  "/",
+  practitionersOnly,
+  [body("title").notEmpty()],
+  validate,
+  async (req, res, next) => {
+    try {
+      const result = await PublicationsModel.create({ ...req.body, created_by: req.user.id });
+      const pub = await PublicationsModel.findById(result.insertId);
+      created(res, pub, "Publication submitted for review.");
+      UserModel.getAdmins().then(admins => {
+        admins.forEach(admin => {
+          const { subject, html } = pendingReviewEmail({
+            contentType: "Publication", title: pub.title,
+            practitionerName: req.user.name, adminName: admin.name,
+          });
+          sendMail({ to: admin.email, subject, html });
+        });
+      }).catch(() => {});
+    } catch (err) { next(err); }
+  },
+);
+publicationsRouter.put("/:id", practitionersOnly, async (req, res, next) => {
+  try {
+    const pub = await PublicationsModel.findById(req.params.id);
+    if (!pub) throw new AppError("Publication not found.", 404);
+    if (pub.created_by !== req.user.id) throw new AppError("You can only edit your own publications.", 403);
+    if (pub.status === "published" || pub.status === "rejected")
+      await PublicationsModel.updateStatus(req.params.id, "pending_review", null, null);
+    await PublicationsModel.update(req.params.id, req.body);
+    success(res, null, "Publication updated and resubmitted for review.");
+  } catch (err) { next(err); }
+});
+publicationsRouter.delete("/:id", practitionersOnly, async (req, res, next) => {
+  try {
+    const pub = await PublicationsModel.findById(req.params.id);
+    if (!pub) throw new AppError("Publication not found.", 404);
+    if (pub.created_by !== req.user.id) throw new AppError("You can only remove your own publications.", 403);
+    await PublicationsModel.delete(req.params.id);
+    success(res, null, "Publication removed.");
+  } catch (err) { next(err); }
+});
+publicationsRouter.patch(
+  "/:id/review",
+  adminOnly,
+  auditLog("review_publication"),
+  [body("status").isIn(["published", "rejected", "pending_review"])],
+  validate,
+  async (req, res, next) => {
+    try {
+      const pub = await PublicationsModel.findById(req.params.id);
+      await PublicationsModel.updateStatus(req.params.id, req.body.status, req.user.id, req.body.rejection_note);
+      success(res, null, `Publication ${req.body.status}.`);
+      if (pub && (req.body.status === "published" || req.body.status === "rejected")) {
+        UserModel.findById(pub.created_by).then(author => {
+          if (!author?.email) return;
+          const { subject, html } = contentReviewedEmail({
+            contentType: "Publication", title: pub.title,
+            status: req.body.status, rejectionNote: req.body.rejection_note,
+            practitionerName: author.name,
+          });
+          sendMail({ to: author.notification_email || author.email, subject, html });
+        }).catch(() => {});
+      }
+    } catch (err) { next(err); }
+  },
+);
+
 // ─── RECOMMENDATIONS ──────────────────────────────────────────────────────────
 const recommendationsRouter = Router();
 recommendationsRouter.get("/", protect, async (req, res, next) => {
   try {
     const prefs = await PreferencesModel.findByUser(req.user.id);
+    // Budget-based imvunulo recommendations (Objective 2) run independently of
+    // cultural interests — a user can set a budget without picking any interest tags.
+    const budgetRecs = prefs?.imvunulo_budget_max
+      ? query(
+          `SELECT l.*, u.name AS practitioner_name FROM imvunulo_listings l
+           JOIN users u ON l.practitioner_id = u.id
+           WHERE l.status = 'active' AND l.price IS NOT NULL AND l.price <= ?
+           ORDER BY l.price DESC LIMIT 6`,
+          [prefs.imvunulo_budget_max],
+        )
+      : Promise.resolve([]);
+
     if (!prefs) {
-      return success(res, { ceremonies: [], lineage: [], noPreferences: true });
+      const imvunulo = await budgetRecs;
+      return success(res, { ceremonies: [], lineage: [], imvunulo, noPreferences: true });
     }
     const interests = Array.isArray(prefs.interests)
       ? prefs.interests
       : (JSON.parse(prefs.interests || '[]'));
     if (!interests.length) {
-      return success(res, { ceremonies: [], lineage: [], noPreferences: true });
+      const imvunulo = await budgetRecs;
+      return success(res, { ceremonies: [], lineage: [], imvunulo, noPreferences: !prefs.imvunulo_budget_max });
     }
-    const placeholders = interests.map(() => '?').join(',');
-    const [ceremonies, lineage] = await Promise.all([
-      query(
-        `SELECT c.*, u.name AS creator_name FROM ceremonies c
-         JOIN users u ON c.created_by = u.id
-         WHERE c.status = 'published' AND c.category IN (${placeholders})
-         ORDER BY c.created_at DESC LIMIT 6`,
-        interests,
-      ),
-      query(
-        `SELECT lr.*, u.name AS creator_name FROM lineage_records lr
-         JOIN users u ON lr.created_by = u.id
-         WHERE lr.status = 'published' AND lr.category IN (${placeholders})
-         ORDER BY lr.created_at DESC LIMIT 4`,
-        interests,
-      ),
+
+    // 'ceremonies'/'lineage' interests mean "all of that content type" — most rows
+    // never get an explicit `category` tag (it's an optional field on the form), so
+    // matching on category alone made the list barely change no matter which
+    // interests were picked. Widen matching to also cover the content's own type
+    // and a keyword search over the text fields for the other interests.
+    const wantsCeremonies = interests.includes('ceremonies');
+    const wantsLineage = interests.includes('lineage');
+    const tagInterests = interests.filter(i => i !== 'ceremonies' && i !== 'lineage');
+
+    const buildConditions = (fields) => {
+      const conditions = [];
+      const params = [];
+      if (tagInterests.length) {
+        conditions.push(`category IN (${tagInterests.map(() => '?').join(',')})`);
+        params.push(...tagInterests);
+      }
+      tagInterests.forEach((interest) => {
+        conditions.push(`(${fields.map(f => `${f} LIKE ?`).join(' OR ')})`);
+        params.push(...fields.map(() => `%${interest}%`));
+      });
+      return { conditions, params };
+    };
+
+    const ceremonyMatch = buildConditions(['c.name', 'c.description', 'c.swati_name', 'c.swati_description']);
+    if (wantsCeremonies) ceremonyMatch.conditions.push('1');
+
+    const lineageMatch = buildConditions(['lr.title', 'lr.description', 'lr.swati_title', 'lr.swati_description']);
+    if (wantsLineage) lineageMatch.conditions.push('1');
+
+    const [ceremonies, lineage, imvunulo, tourism] = await Promise.all([
+      ceremonyMatch.conditions.length
+        ? query(
+            `SELECT c.*, u.name AS creator_name FROM ceremonies c
+             JOIN users u ON c.created_by = u.id
+             WHERE c.status = 'published' AND (${ceremonyMatch.conditions.join(' OR ')})
+             ORDER BY c.created_at DESC LIMIT 6`,
+            ceremonyMatch.params,
+          )
+        : Promise.resolve([]),
+      lineageMatch.conditions.length
+        ? query(
+            `SELECT lr.*, u.name AS creator_name FROM lineage_records lr
+             JOIN users u ON lr.created_by = u.id
+             WHERE lr.status = 'published' AND (${lineageMatch.conditions.join(' OR ')})
+             ORDER BY lr.created_at DESC LIMIT 4`,
+            lineageMatch.params,
+          )
+        : Promise.resolve([]),
+      budgetRecs,
+      TourismModel.getRecommended(tagInterests),
     ]);
-    success(res, { ceremonies, lineage, interests });
+    success(res, { ceremonies, lineage, imvunulo, tourism, interests });
   } catch (err) { next(err); }
 });
 
@@ -1054,9 +1592,14 @@ router.use("/ceremonies", ceremonyRouter);
 router.use("/lineage", lineageRouter);
 router.use("/clans", clanRouter);
 router.use("/cinema", cinemaRouter);
+router.use("/seminars", seminarRouter);
+router.use("/notifications", notificationsRouter);
 router.use("/prompts", promptRouter);
 router.use("/admin", adminRouter);
 router.use("/services", servicesRouter);
+router.use("/imvunulo-listings", imvunuloListingsRouter);
+router.use("/tourism", tourismRouter);
+router.use("/publications", publicationsRouter);
 router.use("/recommendations", recommendationsRouter);
 
 export default router;

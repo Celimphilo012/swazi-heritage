@@ -63,6 +63,19 @@ export const createImvunuloPreset = (data) =>
 export const updateImvunuloPreset = (id, data) =>
   api.put(`/admin/imvunulo-presets/${id}`, data).then((r) => r.data);
 
+// ─── Tourism (tourist sites / lodges) ────────────────────────────────────────
+export const getAdminTourismSites = () =>
+  api.get("/admin/tourism").then((r) => r.data.data);
+
+export const createTourismSite = (data) =>
+  api.post("/admin/tourism", data).then((r) => r.data.data);
+
+export const updateTourismSite = (id, data) =>
+  api.put(`/admin/tourism/${id}`, data).then((r) => r.data);
+
+export const deleteTourismSite = (id) =>
+  api.delete(`/admin/tourism/${id}`).then((r) => r.data);
+
 // ─── Ollama ───────────────────────────────────────────────────────────────────
 export const getOllamaStatus = () =>
   api.get("/admin/ollama/status").then((r) => r.data.data);

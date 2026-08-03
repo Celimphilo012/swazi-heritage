@@ -202,8 +202,10 @@ CREATE TABLE IF NOT EXISTS user_preferences (
   preferred_lang ENUM('en','ss') NOT NULL DEFAULT 'en',
   created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  imvunulo_budget_max DECIMAL(10,2) DEFAULT NULL,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS imvunulo_budget_max DECIMAL(10,2) DEFAULT NULL;
 
 -- 014 services (Objective 3 — cultural marketplace)
 CREATE TABLE IF NOT EXISTS services (
@@ -275,4 +277,146 @@ CREATE TABLE IF NOT EXISTS ratings (
   UNIQUE KEY uniq_user_content (user_id, content_type, content_id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_content (content_type, content_id)
+);
+
+-- 019 seminars (practitioner-scheduled online/physical workshops)
+CREATE TABLE IF NOT EXISTS seminars (
+  id               INT AUTO_INCREMENT PRIMARY KEY,
+  practitioner_id  INT NOT NULL,
+  title            VARCHAR(200) NOT NULL,
+  description      TEXT,
+  format           ENUM('online','physical') NOT NULL,
+  meeting_url      VARCHAR(500),
+  location_name    VARCHAR(255),
+  latitude         DECIMAL(10,7),
+  longitude        DECIMAL(10,7),
+  scheduled_at     DATETIME NOT NULL,
+  duration_minutes INT NOT NULL DEFAULT 60,
+  capacity         INT,
+  status           ENUM('scheduled','ongoing','completed','cancelled') NOT NULL DEFAULT 'scheduled',
+  created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (practitioner_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_status (status),
+  INDEX idx_scheduled (scheduled_at)
+);
+
+-- 020 seminar_bookings
+CREATE TABLE IF NOT EXISTS seminar_bookings (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT NOT NULL,
+  seminar_id INT NOT NULL,
+  booked_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  status     ENUM('confirmed','cancelled','attended') NOT NULL DEFAULT 'confirmed',
+  UNIQUE KEY unique_seminar_booking (user_id, seminar_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (seminar_id) REFERENCES seminars(id) ON DELETE CASCADE
+);
+
+-- 021 notifications (in-app notification feed)
+CREATE TABLE IF NOT EXISTS notifications (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT NOT NULL,
+  type       VARCHAR(50) NOT NULL,
+  title      VARCHAR(200) NOT NULL,
+  body       TEXT,
+  link       VARCHAR(255),
+  read_at    TIMESTAMP NULL DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_user_unread (user_id, read_at)
+);
+
+-- 022 imvunulo_listings (Objective 6 — rental/sale catalogue)
+CREATE TABLE IF NOT EXISTS imvunulo_listings (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  practitioner_id INT NOT NULL,
+  title           VARCHAR(200) NOT NULL,
+  description     TEXT,
+  listing_type    ENUM('rental','sale','both') NOT NULL DEFAULT 'sale',
+  gender          ENUM('male','female','unisex') NOT NULL DEFAULT 'unisex',
+  price           DECIMAL(10,2),
+  price_unit      VARCHAR(50),
+  image_url       VARCHAR(500),
+  location_name   VARCHAR(255),
+  latitude        DECIMAL(10,7),
+  longitude       DECIMAL(10,7),
+  contact         VARCHAR(255),
+  status          ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (practitioner_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_status (status),
+  INDEX idx_type (listing_type)
+);
+
+-- 023 imvunulo_listing_enquiries
+CREATE TABLE IF NOT EXISTS imvunulo_listing_enquiries (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  listing_id  INT NOT NULL,
+  user_id     INT,
+  user_name   VARCHAR(120) NOT NULL,
+  user_email  VARCHAR(255) NOT NULL,
+  message     TEXT NOT NULL,
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (listing_id) REFERENCES imvunulo_listings(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- 024 imvunulo_listing_enquiry_messages
+CREATE TABLE IF NOT EXISTS imvunulo_listing_enquiry_messages (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  enquiry_id  INT NOT NULL,
+  sender_id   INT NOT NULL,
+  body        TEXT NOT NULL,
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (enquiry_id) REFERENCES imvunulo_listing_enquiries(id) ON DELETE CASCADE,
+  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_enquiry (enquiry_id)
+);
+
+-- 025 tourist_sites (Objective 1 — tourism section, admin-curated)
+CREATE TABLE IF NOT EXISTS tourist_sites (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  name          VARCHAR(200) NOT NULL,
+  description   TEXT,
+  category      ENUM('heritage_site','lodge','cultural_village','nature_reserve','restaurant','other') NOT NULL DEFAULT 'heritage_site',
+  interest_tags JSON,
+  price_range   VARCHAR(100),
+  image_url     VARCHAR(500),
+  location_name VARCHAR(255),
+  latitude      DECIMAL(10,7),
+  longitude     DECIMAL(10,7),
+  contact       VARCHAR(255),
+  website       VARCHAR(500),
+  status        ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  created_by    INT,
+  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_status (status),
+  INDEX idx_category (category)
+);
+
+-- 026 publications (Objective 5 — Library & Publications, mini Google Scholar)
+CREATE TABLE IF NOT EXISTS publications (
+  id                INT AUTO_INCREMENT PRIMARY KEY,
+  title             VARCHAR(300) NOT NULL,
+  authors           VARCHAR(300),
+  abstract          TEXT,
+  publication_type  ENUM('article','book','paper','thesis','other') NOT NULL DEFAULT 'article',
+  publication_year  SMALLINT,
+  keywords          VARCHAR(300),
+  file_url          VARCHAR(500),
+  status            ENUM('draft','pending_review','published','rejected') NOT NULL DEFAULT 'pending_review',
+  rejection_note    TEXT,
+  created_by        INT NOT NULL,
+  reviewed_by       INT,
+  view_count        INT NOT NULL DEFAULT 0,
+  created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_status (status),
+  FULLTEXT INDEX ft_search (title, authors, abstract, keywords)
 );

@@ -1,6 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { getMySentEnquiries, getEnquiryThread, replyToEnquiry } from "../../api/services.api";
+import { getMySentImvunuloEnquiries, getImvunuloEnquiryThread, replyToImvunuloEnquiry } from "../../api/imvunulo.api";
+
+const SOURCES = {
+  services: {
+    label: "Marketplace",
+    titleField: "service_title",
+    getThread: getEnquiryThread,
+    reply: replyToEnquiry,
+  },
+  imvunulo: {
+    label: "Imvunulo",
+    titleField: "listing_title",
+    getThread: getImvunuloEnquiryThread,
+    reply: replyToImvunuloEnquiry,
+  },
+};
 
 const Avatar = ({ name, size = 28, color = "#002395" }) => {
   const initial = (name || "?")[0].toUpperCase();
@@ -35,7 +51,8 @@ const timeAgo = (dateStr) => {
   return d.toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" });
 };
 
-const ThreadView = ({ enquiry, userId, onBack }) => {
+const ThreadView = ({ enquiry, userId, onBack, source }) => {
+  const { titleField, getThread, reply: replyFn } = SOURCES[source];
   const [thread,   setThread]   = useState(null);
   const [reply,    setReply]    = useState("");
   const [sending,  setSending]  = useState(false);
@@ -43,10 +60,10 @@ const ThreadView = ({ enquiry, userId, onBack }) => {
   const bottomRef = useRef(null);
 
   useEffect(() => {
-    getEnquiryThread(enquiry.id)
+    getThread(enquiry.id)
       .then(setThread)
       .catch(() => setErr("Could not load messages."));
-  }, [enquiry.id]);
+  }, [enquiry.id, source]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -56,9 +73,9 @@ const ThreadView = ({ enquiry, userId, onBack }) => {
     if (!reply.trim()) return;
     setSending(true); setErr("");
     try {
-      await replyToEnquiry(enquiry.id, reply.trim());
+      await replyFn(enquiry.id, reply.trim());
       setReply("");
-      const updated = await getEnquiryThread(enquiry.id);
+      const updated = await getThread(enquiry.id);
       setThread(updated);
     } catch {
       setErr("Failed to send. Please try again.");
@@ -97,7 +114,7 @@ const ThreadView = ({ enquiry, userId, onBack }) => {
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-gray-900 truncate">{enq.service_title}</p>
+          <p className="text-sm font-bold text-gray-900 truncate">{enq[titleField]}</p>
           <p className="text-xs text-gray-400 truncate">
             with <span className="font-medium text-gray-600">{enq.practitioner_name}</span>
           </p>
@@ -188,9 +205,15 @@ const ThreadView = ({ enquiry, userId, onBack }) => {
 
 const MyEnquiries = () => {
   const { user }                        = useAuth();
+  const [source,    setSource]          = useState("services");
+
   const [enquiries, setEnquiries]       = useState([]);
   const [loading,   setLoading]         = useState(true);
   const [selected,  setSelected]        = useState(null);
+
+  const [imvunuloEnquiries, setImvunuloEnquiries] = useState([]);
+  const [imvunuloLoading,   setImvunuloLoading]   = useState(true);
+  const [imvunuloSelected,  setImvunuloSelected]  = useState(null);
 
   useEffect(() => {
     getMySentEnquiries()
@@ -200,7 +223,20 @@ const MyEnquiries = () => {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+    getMySentImvunuloEnquiries()
+      .then(data => {
+        setImvunuloEnquiries(data || []);
+        if (data?.length > 0) setImvunuloSelected(data[0]);
+      })
+      .catch(() => {})
+      .finally(() => setImvunuloLoading(false));
   }, []);
+
+  const activeEnquiries = source === "services" ? enquiries : imvunuloEnquiries;
+  const activeLoading   = source === "services" ? loading : imvunuloLoading;
+  const activeSelected  = source === "services" ? selected : imvunuloSelected;
+  const setActiveSelected = source === "services" ? setSelected : setImvunuloSelected;
+  const activeTitleField  = SOURCES[source].titleField;
 
   return (
     <div className="-mt-8 -mx-4 min-h-screen" style={{ background: "#f8fafc" }}>
@@ -220,17 +256,32 @@ const MyEnquiries = () => {
           <div>
             <h1 className="text-xl font-bold text-white">My Enquiries</h1>
             <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>
-              Your marketplace conversations with practitioners
+              Your conversations with practitioners
             </p>
           </div>
         </div>
       </div>
 
-      {loading ? (
+      <div className="px-4">
+        {/* Source toggle */}
+        <div className="flex gap-2 mt-6 mb-2 p-1 rounded-xl max-w-5xl mx-auto" style={{ background: "#f3f4f6" }}>
+          {Object.entries(SOURCES).map(([key, cfg]) => (
+            <button key={key} onClick={() => setSource(key)}
+              className="flex-1 text-sm font-bold px-4 py-2 rounded-lg transition-all"
+              style={source === key
+                ? { background: "#002395", color: "#fff", boxShadow: "0 2px 10px rgba(0,35,149,0.25)" }
+                : { background: "transparent", color: "#6b7280" }}>
+              {cfg.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {activeLoading ? (
         <div className="flex items-center justify-center py-20">
           <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : enquiries.length === 0 ? (
+      ) : activeEnquiries.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 px-4">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
             style={{ background: "#f1f5f9" }}>
@@ -241,7 +292,9 @@ const MyEnquiries = () => {
           </div>
           <p className="text-sm font-semibold text-gray-500">No enquiries yet</p>
           <p className="text-xs text-gray-400 mt-1 text-center">
-            When you contact a practitioner from the Marketplace, your conversations will appear here.
+            {source === "services"
+              ? "When you contact a practitioner from the Marketplace, your conversations will appear here."
+              : "When you contact a seller from the Imvunulo catalogue, your conversations will appear here."}
           </p>
         </div>
       ) : (
@@ -249,17 +302,17 @@ const MyEnquiries = () => {
 
           {/* Left: enquiry list */}
           <div className={`w-full md:w-80 flex-shrink-0 border-r border-gray-100 overflow-y-auto bg-white
-                           ${selected ? "hidden md:flex md:flex-col" : "flex flex-col"}`}>
+                           ${activeSelected ? "hidden md:flex md:flex-col" : "flex flex-col"}`}>
             <div className="px-4 py-3 border-b border-gray-100">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                {enquiries.length} Conversation{enquiries.length !== 1 ? "s" : ""}
+                {activeEnquiries.length} Conversation{activeEnquiries.length !== 1 ? "s" : ""}
               </p>
             </div>
-            {enquiries.map(enq => (
-              <button key={enq.id} onClick={() => setSelected(enq)}
+            {activeEnquiries.map(enq => (
+              <button key={enq.id} onClick={() => setActiveSelected(enq)}
                 className="w-full text-left px-4 py-3.5 border-b border-gray-50 transition-colors hover:bg-gray-50"
-                style={selected?.id === enq.id ? { background: "rgba(0,35,149,0.05)", borderLeft: "3px solid #002395" } : {}}>
-                <p className="text-sm font-semibold text-gray-900 truncate">{enq.service_title}</p>
+                style={activeSelected?.id === enq.id ? { background: "rgba(0,35,149,0.05)", borderLeft: "3px solid #002395" } : {}}>
+                <p className="text-sm font-semibold text-gray-900 truncate">{enq[activeTitleField]}</p>
                 <p className="text-xs text-gray-400 mt-0.5 truncate">
                   {enq.practitioner_name} · {timeAgo(enq.created_at)}
                 </p>
@@ -270,12 +323,14 @@ const MyEnquiries = () => {
 
           {/* Right: thread view */}
           <div className={`flex-1 bg-white flex flex-col min-w-0
-                           ${selected ? "flex" : "hidden md:flex"}`}>
-            {selected ? (
+                           ${activeSelected ? "flex" : "hidden md:flex"}`}>
+            {activeSelected ? (
               <ThreadView
-                enquiry={selected}
+                key={`${source}-${activeSelected.id}`}
+                enquiry={activeSelected}
                 userId={user?.id}
-                onBack={() => setSelected(null)}
+                onBack={() => setActiveSelected(null)}
+                source={source}
               />
             ) : (
               <div className="flex-1 flex items-center justify-center text-gray-400">

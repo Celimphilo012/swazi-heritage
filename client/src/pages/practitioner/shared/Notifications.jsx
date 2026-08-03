@@ -4,6 +4,12 @@ import { useAuth } from "../../../context/AuthContext";
 import { getMyCeremonies } from "../../../api/ceremonies.api";
 import { getMyLineageRecords } from "../../../api/lineage.api";
 import { getMyEnquiries, getEnquiryThread, replyToEnquiry } from "../../../api/services.api";
+import { getMyImvunuloEnquiries, getImvunuloEnquiryThread, replyToImvunuloEnquiry } from "../../../api/imvunulo.api";
+
+const ENQUIRY_SOURCES = {
+  services: { getThread: getEnquiryThread, reply: replyToEnquiry },
+  imvunulo: { getThread: getImvunuloEnquiryThread, reply: replyToImvunuloEnquiry },
+};
 
 const timeAgo = (dateStr) => {
   if (!dateStr) return "";
@@ -18,7 +24,8 @@ const timeAgo = (dateStr) => {
   return d.toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" });
 };
 
-const InlineThread = ({ enquiryId, practitionerId }) => {
+const InlineThread = ({ enquiryId, practitionerId, source = "services" }) => {
+  const { getThread, reply: replyFn } = ENQUIRY_SOURCES[source];
   const [thread,  setThread]  = useState(null);
   const [reply,   setReply]   = useState("");
   const [sending, setSending] = useState(false);
@@ -26,8 +33,8 @@ const InlineThread = ({ enquiryId, practitionerId }) => {
   const bottomRef = useRef(null);
 
   useEffect(() => {
-    getEnquiryThread(enquiryId).then(setThread).catch(() => {});
-  }, [enquiryId]);
+    getThread(enquiryId).then(setThread).catch(() => {});
+  }, [enquiryId, source]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -37,9 +44,9 @@ const InlineThread = ({ enquiryId, practitionerId }) => {
     if (!reply.trim()) return;
     setSending(true); setErr("");
     try {
-      await replyToEnquiry(enquiryId, reply.trim());
+      await replyFn(enquiryId, reply.trim());
       setReply("");
-      const updated = await getEnquiryThread(enquiryId);
+      const updated = await getThread(enquiryId);
       setThread(updated);
     } catch { setErr("Failed to send."); }
     finally { setSending(false); }
@@ -142,15 +149,17 @@ const InlineThread = ({ enquiryId, practitionerId }) => {
 const Notifications = () => {
   const { user }   = useAuth();
   const [openThread, setOpenThread] = useState(null);
+  const [openThreadSource, setOpenThreadSource] = useState("services");
   const isCeremony = user?.role === "ceremony_keeper";
   const [items,     setItems]     = useState([]);
   const [enquiries, setEnquiries] = useState([]);
+  const [imvunuloEnquiries, setImvunuloEnquiries] = useState([]);
   const [loading,   setLoading]   = useState(true);
 
   useEffect(() => {
     const contentFetch = isCeremony ? getMyCeremonies() : getMyLineageRecords();
-    Promise.all([contentFetch, getMyEnquiries()])
-      .then(([content, enqs]) => { setItems(content); setEnquiries(enqs || []); })
+    Promise.all([contentFetch, getMyEnquiries(), getMyImvunuloEnquiries()])
+      .then(([content, enqs, imvEnqs]) => { setItems(content); setEnquiries(enqs || []); setImvunuloEnquiries(imvEnqs || []); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [isCeremony]);
@@ -162,7 +171,13 @@ const Notifications = () => {
   const editPath = id =>
     isCeremony ? `/practitioner/ceremonies/${id}/edit` : `/practitioner/lineage/${id}/edit`;
 
-  const total = rejected.length + published.length + pending.length + enquiries.length;
+  const toggleThread = (id, source) => {
+    if (openThread === id && openThreadSource === source) { setOpenThread(null); return; }
+    setOpenThread(id);
+    setOpenThreadSource(source);
+  };
+
+  const total = rejected.length + published.length + pending.length + enquiries.length + imvunuloEnquiries.length;
 
   return (
     <div className="p-6 space-y-5">
@@ -204,7 +219,7 @@ const Notifications = () => {
             </div>
           ))}
         </div>
-      ) : items.length === 0 && enquiries.length === 0 ? (
+      ) : items.length === 0 && enquiries.length === 0 && imvunuloEnquiries.length === 0 ? (
         <div className="text-center py-16 rounded-2xl border-2 border-dashed border-slate-200">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
             style={{ background: "#f1f5f9" }}>
@@ -333,16 +348,67 @@ const Notifications = () => {
                         </p>
                       </div>
                       <button
-                        onClick={() => setOpenThread(openThread === enq.id ? null : enq.id)}
+                        onClick={() => toggleThread(enq.id, "services")}
                         className="flex-shrink-0 text-xs font-bold px-3 py-1.5 rounded-xl transition-all"
-                        style={openThread === enq.id
+                        style={openThread === enq.id && openThreadSource === "services"
                           ? { background: "#002395", color: "#fff" }
                           : { background: "rgba(0,35,149,0.08)", color: "#002395" }}>
-                        {openThread === enq.id ? "Close" : "Reply"}
+                        {openThread === enq.id && openThreadSource === "services" ? "Close" : "Reply"}
                       </button>
                     </div>
-                    {openThread === enq.id && (
-                      <InlineThread enquiryId={enq.id} practitionerId={user?.id} />
+                    {openThread === enq.id && openThreadSource === "services" && (
+                      <InlineThread enquiryId={enq.id} practitionerId={user?.id} source="services" />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+
+          {/* Imvunulo listing enquiries */}
+          {imvunuloEnquiries.length > 0 && (
+            <>
+              <div className="pt-2 pb-1">
+                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#64748b" }}>
+                  Imvunulo Enquiries ({imvunuloEnquiries.length})
+                </p>
+              </div>
+              {imvunuloEnquiries.map(enq => (
+                <div key={`imv-enq-${enq.id}`} className="rounded-2xl overflow-hidden"
+                  style={{ background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
+                  <div className="h-0.5" style={{ background: "#d97706" }} />
+                  <div className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: "rgba(217,119,6,0.08)" }}>
+                        <svg style={{ width: 18, height: 18 }} fill="none" viewBox="0 0 24 24" stroke="#d97706" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-slate-800">
+                          Enquiry for: <span className="font-normal">{enq.listing_title}</span>
+                        </p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          From <strong>{enq.user_name}</strong>
+                          {" · "}
+                          <a href={`mailto:${enq.user_email}`} className="text-blue-600 hover:underline">{enq.user_email}</a>
+                          {" · "}
+                          {timeAgo(enq.created_at)}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => toggleThread(enq.id, "imvunulo")}
+                        className="flex-shrink-0 text-xs font-bold px-3 py-1.5 rounded-xl transition-all"
+                        style={openThread === enq.id && openThreadSource === "imvunulo"
+                          ? { background: "#d97706", color: "#fff" }
+                          : { background: "rgba(217,119,6,0.1)", color: "#92400e" }}>
+                        {openThread === enq.id && openThreadSource === "imvunulo" ? "Close" : "Reply"}
+                      </button>
+                    </div>
+                    {openThread === enq.id && openThreadSource === "imvunulo" && (
+                      <InlineThread enquiryId={enq.id} practitionerId={user?.id} source="imvunulo" />
                     )}
                   </div>
                 </div>

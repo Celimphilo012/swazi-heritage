@@ -5,6 +5,7 @@ import { useLang } from '../../../context/LanguageContext';
 import { ui } from '../../../lib/uiStrings';
 import { ROLE_HOME } from '../../../utils/constants';
 import shieldPng from '../../../lib/shield.png';
+import NotificationBell from '../../common/NotificationBell';
 
 /* ── Mini Swazi shield ── */
 const ShieldIcon = () => (
@@ -90,8 +91,12 @@ const UserLayout = () => {
 
   const navLinks = [
     { to: '/explore',       label: ui(lang, 'navExplore')      },
+    { to: '/tourism',       label: ui(lang, 'navTourism')      },
     { to: '/marketplace',   label: ui(lang, 'navMarketplace')  },
+    { to: '/imvunulo',      label: ui(lang, 'navImvunulo')     },
+    { to: '/library',       label: ui(lang, 'navLibrary')      },
     { to: '/cinema',        label: ui(lang, 'navCinema')       },
+    { to: '/seminars',      label: ui(lang, 'navSeminars')      },
     ...(user ? [
       { to: '/chat',          label: ui(lang, 'navChat')         },
       { to: '/my-enquiries',  label: ui(lang, 'navEnquiries')    },
@@ -126,6 +131,7 @@ const UserLayout = () => {
           {/* Desktop auth */}
           <div className="hidden md:flex items-center gap-3">
             <LangToggle />
+            {user && <NotificationBell />}
             {user ? (
               <>
                 <Link to={ROLE_HOME[user.role]}
@@ -152,6 +158,7 @@ const UserLayout = () => {
 
           {/* Mobile: avatar (if logged in) + hamburger */}
           <div className="md:hidden flex items-center gap-2">
+            {user && <NotificationBell />}
             {user && <Avatar name={user.name} email={user.email} />}
             <button
               onClick={() => setMenuOpen(o => !o)}

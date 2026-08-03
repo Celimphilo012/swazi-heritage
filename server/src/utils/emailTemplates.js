@@ -76,6 +76,35 @@ export const newEnquiryEmail = ({ serviceName, practitionerName, userName, userE
   `),
 });
 
+// ── Sent to a practitioner when a user sends an imvunulo listing enquiry
+export const imvunuloListingEnquiryEmail = ({ listingTitle, practitionerName, userName, userEmail, message }) => ({
+  subject: `New enquiry for your imvunulo listing — "${listingTitle}"`,
+  html: wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:#111827">New Imvunulo Enquiry</h2>
+    <p style="margin:0 0 20px;color:#6b7280;font-size:14px">Hi ${practitionerName || 'there'}, someone is interested in your imvunulo listing.</p>
+
+    <div style="background:#f3f4f6;border-radius:8px;padding:16px 20px;margin-bottom:20px">
+      <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px">Listing</p>
+      <p style="margin:0;font-size:15px;font-weight:700;color:#111827">${listingTitle}</p>
+    </div>
+
+    <div style="background:#f3f4f6;border-radius:8px;padding:16px 20px;margin-bottom:20px">
+      <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px">From</p>
+      <p style="margin:0 0 2px;font-size:14px;font-weight:600;color:#111827">${userName}</p>
+      <p style="margin:0;font-size:13px;color:#6b7280">${userEmail}</p>
+    </div>
+
+    <div style="border-left:3px solid #d97706;padding:12px 16px;background:#fffbeb;border-radius:0 8px 8px 0;margin-bottom:20px">
+      <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:1px">Message</p>
+      <p style="margin:0;font-size:14px;color:#78350f;line-height:1.6">${message}</p>
+    </div>
+
+    <p style="margin:0;font-size:13px;color:#6b7280">
+      Reply directly to <strong>${userEmail}</strong>, or use the in-app reply thread, to respond to this enquiry.
+    </p>
+  `),
+});
+
 // ── Sent to the practitioner when their content status changes
 export const contentReviewedEmail = ({ contentType, title, status, rejectionNote, practitionerName }) => ({
   subject: `Your ${contentType} has been ${status} — "${title}"`,
@@ -107,5 +136,83 @@ export const contentReviewedEmail = ({ contentType, title, status, rejectionNote
         </p>
       ` : ''}
     ` : ''}
+  `),
+});
+
+// ── Sent to a user when their seminar booking is confirmed
+export const seminarBookingConfirmedEmail = ({ title, scheduledAt, format, locationName, meetingUrl, userName }) => ({
+  subject: `Booking confirmed — "${title}"`,
+  html: wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:#111827">Booking Confirmed</h2>
+    <p style="margin:0 0 20px;color:#6b7280;font-size:14px">Hi ${userName || 'there'}, you're booked in for this seminar.</p>
+
+    <div style="background:#f3f4f6;border-radius:8px;padding:16px 20px;margin-bottom:20px">
+      <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#111827">${title}</p>
+      <p style="margin:0 0 4px;font-size:13px;color:#6b7280">When: ${scheduledAt}</p>
+      <p style="margin:0;font-size:13px;color:#6b7280">
+        ${format === 'online'
+          ? `Online — join link: <a href="${meetingUrl}" style="color:#002395">${meetingUrl}</a>`
+          : `In person — ${locationName || 'location to be confirmed'}`}
+      </p>
+    </div>
+
+    <p style="margin:0;font-size:13px;color:#6b7280">
+      You'll be notified here by email if the practitioner changes the schedule or cancels this session.
+    </p>
+  `),
+});
+
+// ── Sent to attendees when a seminar's schedule or format changes
+export const seminarUpdatedEmail = ({ title, scheduledAt, format, locationName, meetingUrl, userName }) => ({
+  subject: `Schedule update — "${title}"`,
+  html: wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:#111827">Seminar Updated</h2>
+    <p style="margin:0 0 20px;color:#6b7280;font-size:14px">Hi ${userName || 'there'}, the practitioner has updated a seminar you booked.</p>
+
+    <div style="background:#f3f4f6;border-radius:8px;padding:16px 20px;margin-bottom:20px">
+      <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#111827">${title}</p>
+      <p style="margin:0 0 4px;font-size:13px;color:#6b7280">New time: ${scheduledAt}</p>
+      <p style="margin:0;font-size:13px;color:#6b7280">
+        ${format === 'online'
+          ? `Online — join link: <a href="${meetingUrl}" style="color:#002395">${meetingUrl}</a>`
+          : `In person — ${locationName || 'location to be confirmed'}`}
+      </p>
+    </div>
+
+    <p style="margin:0;font-size:13px;color:#6b7280">
+      Please make note of the new details. You can view or cancel your booking from "My Bookings".
+    </p>
+  `),
+});
+
+// ── Sent to attendees when a practitioner cancels a seminar
+export const seminarCancelledEmail = ({ title, userName }) => ({
+  subject: `Cancelled — "${title}"`,
+  html: wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:#111827">Seminar Cancelled</h2>
+    <p style="margin:0 0 20px;color:#6b7280;font-size:14px">Hi ${userName || 'there'}, unfortunately this seminar has been cancelled by the practitioner.</p>
+
+    <div style="background:#fff1f2;border-left:3px solid #dc2626;border-radius:0 8px 8px 0;padding:16px 20px">
+      <p style="margin:0;font-size:15px;font-weight:700;color:#111827">${title}</p>
+    </div>
+
+    <p style="margin:16px 0 0;font-size:13px;color:#6b7280">
+      Your booking has been cancelled automatically — no action is needed.
+    </p>
+  `),
+});
+
+// ── Sent to a practitioner when a user books their seminar
+export const newSeminarBookingEmail = ({ title, userName, scheduledAt, practitionerName }) => ({
+  subject: `New booking — "${title}"`,
+  html: wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:#111827">New Seminar Booking</h2>
+    <p style="margin:0 0 20px;color:#6b7280;font-size:14px">Hi ${practitionerName || 'there'}, someone booked a spot in your seminar.</p>
+
+    <div style="background:#f3f4f6;border-radius:8px;padding:16px 20px">
+      <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#111827">${title}</p>
+      <p style="margin:0 0 4px;font-size:13px;color:#6b7280">When: ${scheduledAt}</p>
+      <p style="margin:0;font-size:13px;color:#6b7280">Attendee: ${userName}</p>
+    </div>
   `),
 });

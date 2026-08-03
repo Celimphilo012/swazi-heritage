@@ -2,8 +2,12 @@ const strings = {
   en: {
     // Nav
     navExplore:      "Explore",
+    navTourism:      "Tourism",
     navMarketplace:  "Marketplace",
+    navImvunulo:     "Imvunulo",
+    navLibrary:      "Library",
     navCinema:       "Cinema",
+    navSeminars:     "Seminars",
     navChat:         "AI Chat",
     navEnquiries:    "My Enquiries",
     signIn: "Sign in",
@@ -49,8 +53,12 @@ const strings = {
   ss: {
     // Nav
     navExplore:     "Hlola",
+    navTourism:     "Buvakashi",
     navMarketplace: "Imakethe",
+    navImvunulo:    "Imvunulo",
+    navLibrary:     "Umtapo",
     navCinema:      "Isinema",
+    navSeminars:    "Ema-Seminar",
     navChat:        "Coca ne-AI",
     navEnquiries:   "Tibuzo Tami",
     signIn: "Ngena",

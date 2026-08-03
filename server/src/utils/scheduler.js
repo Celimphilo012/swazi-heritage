@@ -12,6 +12,24 @@ const tick = async () => {
   } catch (err) {
     logger.error('Scheduler error', { error: err.message });
   }
+
+  try {
+    const started = await query(
+      "UPDATE seminars SET status = 'ongoing' WHERE status = 'scheduled' AND scheduled_at <= NOW()"
+    );
+    if (started.affectedRows > 0) {
+      logger.info(`Auto-started ${started.affectedRows} seminar(s).`);
+    }
+
+    const ended = await query(
+      "UPDATE seminars SET status = 'completed' WHERE status = 'ongoing' AND DATE_ADD(scheduled_at, INTERVAL duration_minutes MINUTE) <= NOW()"
+    );
+    if (ended.affectedRows > 0) {
+      logger.info(`Auto-completed ${ended.affectedRows} seminar(s).`);
+    }
+  } catch (err) {
+    logger.error('Seminar scheduler error', { error: err.message });
+  }
 };
 
 export const startScheduler = () => {

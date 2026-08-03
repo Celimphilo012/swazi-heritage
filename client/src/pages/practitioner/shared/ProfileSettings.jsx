@@ -54,7 +54,7 @@ const ProfileSettings = () => {
   const [pwdMsg,    setPwdMsg]    = useState("");
   const [pwdError,  setPwdError]  = useState("");
 
-  const [prefs, setPrefs] = useState({ interests: [], visitor_type: "local", preferred_lang: "en" });
+  const [prefs, setPrefs] = useState({ interests: [], visitor_type: "local", preferred_lang: "en", imvunulo_budget_max: "" });
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [prefsMsg,    setPrefsMsg]    = useState("");
   const [prefsError,  setPrefsError]  = useState("");
@@ -68,6 +68,7 @@ const ProfileSettings = () => {
         interests:      Array.isArray(p.interests) ? p.interests : JSON.parse(p.interests || '[]'),
         visitor_type:   p.visitor_type   || "local",
         preferred_lang: p.preferred_lang || "en",
+        imvunulo_budget_max: p.imvunulo_budget_max ?? "",
       });
     }).catch(() => {});
   }, []);
@@ -84,7 +85,11 @@ const ProfileSettings = () => {
   const handleSavePrefs = async () => {
     setSavingPrefs(true); setPrefsError(""); setPrefsMsg("");
     try {
-      await savePreferences(prefs);
+      await savePreferences({
+        ...prefs,
+        imvunulo_budget_max: prefs.imvunulo_budget_max === "" ? null : Number(prefs.imvunulo_budget_max),
+      });
+      window.dispatchEvent(new Event("swazi:preferences-updated"));
       setPrefsMsg("Preferences saved.");
       setTimeout(() => setPrefsMsg(""), 2500);
     } catch {
@@ -290,6 +295,13 @@ const ProfileSettings = () => {
                 );
               })}
             </div>
+          </div>
+          <div className="max-w-xs">
+            <FLabel>Imvunulo budget (SZL, optional)</FLabel>
+            <FInput type="number" min="0" step="0.01" value={prefs.imvunulo_budget_max}
+              onChange={e => setPrefs(p => ({ ...p, imvunulo_budget_max: e.target.value }))}
+              placeholder="e.g. 500" />
+            <p className="text-xs text-slate-400 mt-1">We'll surface imvunulo listings at or below this price on your home page.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

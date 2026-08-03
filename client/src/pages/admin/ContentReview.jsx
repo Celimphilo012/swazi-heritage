@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { getAdminCeremonies, reviewCeremony, getAdminLineage, reviewLineage } from "../../api/admin.api";
+import { getAdminPublications, reviewPublication } from "../../api/publications.api";
 
 const STATUS_CFG = {
   pending_review: { label: "Pending",   color: "#d97706", bg: "rgba(217,119,6,0.1)"   },
@@ -83,12 +84,13 @@ const ContentCard = ({ item, type, onApprove, onReject, saving }) => {
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-              <span>By <span className="font-medium text-slate-600">{item.creator_name}</span></span>
+              <span>By <span className="font-medium text-slate-600">{item.creator_name || item.author_name}</span></span>
               {(item.month_celebrated || item.era) && <><span>·</span><span>{item.month_celebrated || item.era}</span></>}
+              {type === "publication" && <><span>·</span><span className="capitalize">{item.publication_type}{item.publication_year ? ` (${item.publication_year})` : ""}</span></>}
               <span>·</span><span>{fmt(item.created_at)}</span>
             </div>
-            {item.description && (
-              <p className="text-sm text-slate-500 mt-2 line-clamp-2 leading-relaxed">{item.description}</p>
+            {(item.description || item.abstract) && (
+              <p className="text-sm text-slate-500 mt-2 line-clamp-2 leading-relaxed">{item.description || item.abstract}</p>
             )}
             {item.status === "rejected" && item.rejection_note && (
               <div className="mt-2 p-2.5 rounded-xl text-xs" style={{ background:"rgba(206,17,38,0.06)", color:"#CE1126" }}>
@@ -124,6 +126,15 @@ const ContentCard = ({ item, type, onApprove, onReject, saving }) => {
               </svg>
             </a>
           )}
+          {type === "publication" && item.file_url && (
+            <a href={item.file_url} target="_blank" rel="noreferrer"
+              className="ml-auto text-xs font-semibold text-slate-400 hover:text-slate-600 flex items-center gap-1">
+              Read full text
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          )}
         </div>
       </div>
     </div>
@@ -145,7 +156,10 @@ const ContentReview = () => {
   const fetchItems = useCallback(() => {
     setLoading(true); setError("");
     const params = { status: statusFilt||undefined, page, limit: 15 };
-    (tab === "ceremonies" ? getAdminCeremonies(params) : getAdminLineage(params))
+    const fetcher = tab === "ceremonies" ? getAdminCeremonies
+      : tab === "lineage" ? getAdminLineage
+      : getAdminPublications;
+    fetcher(params)
       .then(({ data, meta: m }) => { setItems(data); setMeta(m); })
       .catch(() => setError("Failed to load items."))
       .finally(() => setLoading(false));
@@ -153,11 +167,12 @@ const ContentReview = () => {
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
 
+  const reviewFn = (type) => type === "ceremony" ? reviewCeremony : type === "lineage" ? reviewLineage : reviewPublication;
+
   const handleApprove = async (item, type) => {
     setSaving(true);
     try {
-      if (type === "ceremony") await reviewCeremony(item.id, { status:"published" });
-      else await reviewLineage(item.id, { status:"published" });
+      await reviewFn(type)(item.id, { status:"published" });
       fetchItems();
     } catch { setError("Failed to approve."); }
     finally { setSaving(false); }
@@ -168,8 +183,7 @@ const ContentReview = () => {
     setSaving(true);
     try {
       const payload = { status:"rejected", rejection_note: note||undefined };
-      if (rejectTarget.type === "ceremony") await reviewCeremony(rejectTarget.item.id, payload);
-      else await reviewLineage(rejectTarget.item.id, payload);
+      await reviewFn(rejectTarget.type)(rejectTarget.item.id, payload);
       setRT(null); fetchItems();
     } catch { setError("Failed to reject."); }
     finally { setSaving(false); }
@@ -200,7 +214,7 @@ const ContentReview = () => {
       {/* Tabs + filter */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex gap-1 p-1 rounded-xl" style={{ background:"#f1f5f9" }}>
-          {[{ key:"ceremonies", label:"Ceremonies" }, { key:"lineage", label:"Lineage Records" }].map(({ key, label }) => (
+          {[{ key:"ceremonies", label:"Ceremonies" }, { key:"lineage", label:"Lineage Records" }, { key:"publications", label:"Publications" }].map(({ key, label }) => (
             <button key={key} onClick={() => switchTab(key)}
               className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
               style={tab === key
@@ -241,7 +255,7 @@ const ContentReview = () => {
         <div className="space-y-3">
           {items.map(item => (
             <ContentCard key={item.id} item={item}
-              type={tab === "ceremonies" ? "ceremony" : "lineage"}
+              type={tab === "ceremonies" ? "ceremony" : tab === "lineage" ? "lineage" : "publication"}
               onApprove={handleApprove}
               onReject={(item, type) => setRT({ item, type })}
               saving={saving} />
