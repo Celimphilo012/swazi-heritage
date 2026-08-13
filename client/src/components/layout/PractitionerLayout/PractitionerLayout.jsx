@@ -29,6 +29,7 @@ const ICONS = {
   notifications:"M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9",
   profile:      "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
   logout:       "M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1",
+  help:         "M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M9 12v.01M12 15.75h.008v.008H12v-.008zM12 21a9 9 0 100-18 9 9 0 000 18z",
 };
 
 const Avatar = ({ name, size = 32 }) => {
@@ -132,6 +133,17 @@ const PractitionerLayout = () => {
 
         {/* User panel */}
         <div className="px-3 py-4 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+          <NavLink to="/practitioner/help">
+            {({ isActive }) => (
+              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl mb-1 transition-all cursor-pointer"
+                style={isActive
+                  ? { background: "rgba(255,255,255,0.08)", boxShadow: `inset 3px 0 0 ${accent}` }
+                  : { background: "transparent" }}>
+                <span style={{ color: isActive ? accent : "#64748b" }}><Icon d={ICONS.help} /></span>
+                <span className="text-sm font-semibold" style={{ color: isActive ? "#fff" : "#94a3b8" }}>Help &amp; User Guide</span>
+              </div>
+            )}
+          </NavLink>
           <NavLink to="/practitioner/profile">
             {({ isActive }) => (
               <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl mb-1 transition-all cursor-pointer"

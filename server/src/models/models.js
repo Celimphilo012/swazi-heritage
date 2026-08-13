@@ -355,7 +355,7 @@ export const SeminarBookingModel = {
 
   findBySeminar: (seminar_id) =>
     query(
-      `SELECT sb.*, u.name, u.email FROM seminar_bookings sb
+      `SELECT sb.*, u.name, u.email, u.notification_email FROM seminar_bookings sb
            JOIN users u ON sb.user_id = u.id WHERE sb.seminar_id = ?`,
       [seminar_id],
     ),

@@ -146,6 +146,8 @@
       opacity: 0.6;
       min-width: 18px;
     }
+    .toc li a { color: inherit; text-decoration: none; }
+    .toc li a:hover { text-decoration: underline; }
 
     /* ── Section headings ── */
     .section-label {
@@ -444,24 +446,25 @@
   </div>
 
   <!-- ══════════════ TABLE OF CONTENTS ══════════════ -->
-  <div class="toc">
+  <div class="toc" id="guide-toc">
     <h2>Table of Contents</h2>
     <ol>
-      <li>Platform Overview &amp; Roles</li>
-      <li>Getting Started (Registration &amp; Login)</li>
-      <li>Public Visitor — Browsing Without an Account</li>
-      <li>Regular User — Full Feature Access</li>
-      <li>Seminars, Imvunulo, Tourism &amp; Library</li>
-      <li>Ceremony Keeper — Managing Ceremonies</li>
-      <li>History Keeper — Managing Lineage Records</li>
-      <li>Practitioner Shared Features</li>
-      <li>Administrator — Platform Management</li>
-      <li>Language Support (EN / SiSwati)</li>
-      <li>Quick Reference</li>
+      <li><a href="#overview">Platform Overview &amp; Roles</a></li>
+      <li><a href="#getting-started">Getting Started (Registration &amp; Login)</a></li>
+      <li><a href="#public-visitor">Public Visitor — Browsing Without an Account</a></li>
+      <li><a href="#regular-user">Regular User — Full Feature Access</a></li>
+      <li><a href="#platform-features">Seminars, Imvunulo, Tourism &amp; Library</a></li>
+      <li><a href="#ceremony-keeper">Ceremony Keeper — Managing Ceremonies</a></li>
+      <li><a href="#history-keeper">History Keeper — Managing Lineage Records</a></li>
+      <li><a href="#practitioner-shared">Practitioner Shared Features</a></li>
+      <li><a href="#administrator">Administrator — Platform Management</a></li>
+      <li><a href="#language-support">Language Support (EN / SiSwati)</a></li>
+      <li><a href="#quick-reference">Quick Reference</a></li>
     </ol>
   </div>
 
 
+  <section id="overview" class="guide-section" data-roles="public,user,ceremony_keeper,history_keeper,admin">
   <!-- ══════════════ 1. OVERVIEW ══════════════ -->
   <div class="section-label">
     <div class="section-num">01</div>
@@ -523,6 +526,9 @@
   </div>
 
 
+  </section>
+
+  <section id="getting-started" class="guide-section" data-roles="public,user,ceremony_keeper,history_keeper,admin">
   <!-- ══════════════ 2. GETTING STARTED ══════════════ -->
   <div class="section-label">
     <div class="section-num blue">02</div>
@@ -592,6 +598,9 @@
   <p>Click the <strong>Sign out</strong> button found in the top-right navigation bar (desktop) or in the mobile drawer menu. Practitioner and Admin users click <strong>Sign out</strong> at the bottom of their sidebar.</p>
 
 
+  </section>
+
+  <section id="public-visitor" class="guide-section" data-roles="public,admin">
   <!-- ══════════════ 3. PUBLIC VISITOR ══════════════ -->
   <div class="section-label">
     <div class="section-num">03</div>
@@ -676,6 +685,9 @@
   <p>Below the tabs you will find the <strong>Community Ratings</strong> section showing the average star rating and individual reviews.</p>
 
 
+  </section>
+
+  <section id="regular-user" class="guide-section" data-roles="user,ceremony_keeper,history_keeper,admin">
   <!-- ══════════════ 4. REGULAR USER ══════════════ -->
   <div class="section-label">
     <div class="section-num blue">04</div>
@@ -843,6 +855,9 @@
   </div>
 
 
+  </section>
+
+  <section id="platform-features" class="guide-section" data-roles="public,user,ceremony_keeper,history_keeper,admin">
   <!-- ══════════════ 5. SEMINARS, IMVUNULO, TOURISM & LIBRARY ══════════════ -->
   <div class="section-label">
     <div class="section-num blue">05</div>
@@ -947,6 +962,9 @@
   </div>
 
 
+  </section>
+
+  <section id="ceremony-keeper" class="guide-section" data-roles="ceremony_keeper,admin">
   <!-- ══════════════ 6. CEREMONY KEEPER ══════════════ -->
   <div class="section-label">
     <div class="section-num gold">06</div>
@@ -1044,6 +1062,9 @@
   <p>The <strong>Notifications</strong> page (sidebar badge shows count) lists all ceremonies that have received a status change from the admin — published approvals and rejections with the admin's feedback note. Click any notification to open the related ceremony for editing.</p>
 
 
+  </section>
+
+  <section id="history-keeper" class="guide-section" data-roles="history_keeper,admin">
   <!-- ══════════════ 7. HISTORY KEEPER ══════════════ -->
   <div class="section-label">
     <div class="section-num green">07</div>
@@ -1090,6 +1111,9 @@
   </div>
 
 
+  </section>
+
+  <section id="practitioner-shared" class="guide-section" data-roles="ceremony_keeper,history_keeper,admin">
   <!-- ══════════════ 8. PRACTITIONER SHARED ══════════════ -->
   <div class="section-label">
     <div class="section-num gold">08</div>
@@ -1220,6 +1244,9 @@
   </ul>
 
 
+  </section>
+
+  <section id="administrator" class="guide-section" data-roles="admin">
   <!-- ══════════════ 9. ADMIN ══════════════ -->
   <div class="section-label">
     <div class="section-num red">09</div>
@@ -1360,6 +1387,9 @@
   </div>
 
 
+  </section>
+
+  <section id="language-support" class="guide-section" data-roles="public,user,ceremony_keeper,history_keeper,admin">
   <!-- ══════════════ 10. LANGUAGE SUPPORT ══════════════ -->
   <div class="section-label">
     <div class="section-num">10</div>
@@ -1410,6 +1440,9 @@
   </div>
 
 
+  </section>
+
+  <section id="quick-reference" class="guide-section" data-roles="public,user,ceremony_keeper,history_keeper,admin">
   <!-- ══════════════ 11. QUICK REFERENCE ══════════════ -->
   <div class="section-label">
     <div class="section-num">11</div>
@@ -1434,6 +1467,7 @@
       <tr><td><code>/my-bookings</code></td><td>User+</td><td>Cinema seat bookings and seminar bookings (tabbed)</td></tr>
       <tr><td><code>/my-enquiries</code></td><td>User+</td><td>Marketplace and imvunulo enquiry conversations (tabbed)</td></tr>
       <tr><td><code>/profile</code></td><td>User+</td><td>Account settings, cultural preferences, and imvunulo budget</td></tr>
+      <tr><td><code>/help</code></td><td>All</td><td>In-app User Guide, showing only the sections relevant to your role</td></tr>
       <tr><td><code>/practitioner</code></td><td>Practitioners</td><td>Practitioner overview dashboard</td></tr>
       <tr><td><code>/practitioner/ceremonies</code></td><td>Ceremony Keeper</td><td>Manage ceremony submissions</td></tr>
       <tr><td><code>/practitioner/ceremonies/:id/walkthrough</code></td><td>Ceremony Keeper</td><td>Build step-by-step ceremony walkthrough</td></tr>
@@ -1456,6 +1490,8 @@
       <tr><td><code>/admin/config</code></td><td>Admin</td><td>System configuration</td></tr>
       <tr><td><code>/admin/audit</code></td><td>Admin</td><td>Chronological audit log</td></tr>
       <tr><td><code>/admin/model</code></td><td>Admin</td><td>ML recommendation model management</td></tr>
+      <tr><td><code>/practitioner/help</code></td><td>Practitioners</td><td>In-app User Guide (practitioner-scoped view)</td></tr>
+      <tr><td><code>/admin/help</code></td><td>Admin</td><td>In-app User Guide (full, all-role view)</td></tr>
     </tbody>
   </table>
 
@@ -1494,6 +1530,8 @@
       The same six categories tag tourist sites in the admin Tourism panel, so your homepage "Recommended for you" and the Tourism page's recommendation row use one consistent interest profile. Imvunulo recommendations work differently — they're matched by your <strong>budget</strong>, not by interest tags.
     </div>
   </div>
+
+  </section>
 
   <!-- ══════════════ FOOTER ══════════════ -->
   <div class="footer">

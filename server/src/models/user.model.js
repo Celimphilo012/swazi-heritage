@@ -74,5 +74,5 @@ export const UserModel = {
     query("SELECT role, COUNT(*) AS count FROM users GROUP BY role"),
 
   getAdmins: () =>
-    query("SELECT id, name, email FROM users WHERE role = 'admin' AND status = 'active'"),
+    query("SELECT id, name, email, notification_email FROM users WHERE role = 'admin' AND status = 'active'"),
 };

@@ -3,6 +3,7 @@ import { query } from "../config/db.js";
 import { body } from "express-validator";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import { validate } from "../middleware/validate.middleware.js";
 import { protect } from "../middleware/auth.middleware.js";
@@ -424,7 +425,7 @@ lineageRouter.post(
             contentType: 'Lineage Record', title: record.title,
             practitionerName: req.user.name, adminName: admin.name,
           });
-          sendMail({ to: admin.email, subject, html });
+          sendMail({ to: admin.notification_email || admin.email, subject, html });
         });
       }).catch(() => {});
     } catch (err) {
@@ -696,7 +697,7 @@ seminarRouter.put("/:id", practitionersOnly, async (req, res, next) => {
             meetingUrl: updated.meeting_url,
             userName: b.name,
           });
-          sendMail({ to: b.email, subject, html });
+          sendMail({ to: b.notification_email || b.email, subject, html });
         });
       }).catch(() => {});
     }
@@ -719,7 +720,7 @@ seminarRouter.patch("/:id/cancel", practitionersOnly, async (req, res, next) => 
       })));
       confirmed.forEach((b) => {
         const { subject, html } = seminarCancelledEmail({ title: seminar.title, userName: b.name });
-        sendMail({ to: b.email, subject, html });
+        sendMail({ to: b.notification_email || b.email, subject, html });
       });
     }).catch(() => {});
   } catch (err) { next(err); }
@@ -1450,7 +1451,7 @@ publicationsRouter.post(
             contentType: "Publication", title: pub.title,
             practitionerName: req.user.name, adminName: admin.name,
           });
-          sendMail({ to: admin.email, subject, html });
+          sendMail({ to: admin.notification_email || admin.email, subject, html });
         });
       }).catch(() => {});
     } catch (err) { next(err); }
@@ -1586,6 +1587,42 @@ recommendationsRouter.get("/", protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ─── USER GUIDE (role-filtered) ────────────────────────────────────────────────
+const GUIDE_PATH = path.join(__dirname, "..", "..", "..", "USER_GUIDE.html");
+const GUIDE_ROLES = ["public", "user", "ceremony_keeper", "history_keeper", "admin"];
+
+const guideRouter = Router();
+guideRouter.get("/", (req, res, next) => {
+  try {
+    const role = GUIDE_ROLES.includes(req.query.role) ? req.query.role : "public";
+    const raw = fs.readFileSync(GUIDE_PATH, "utf8");
+
+    const styleMatch = raw.match(/<style>[\s\S]*?<\/style>/);
+    const style = styleMatch ? styleMatch[0] : "";
+
+    const coverStart = raw.indexOf('<!-- ══════════════ COVER ══════════════ -->');
+    const firstSectionStart = raw.indexOf('<section id=');
+    const coverAndToc = coverStart >= 0 && firstSectionStart >= 0 ? raw.slice(coverStart, firstSectionStart) : "";
+
+    const footerStart = raw.indexOf('<!-- ══════════════ FOOTER ══════════════ -->');
+    const bodyEnd = raw.indexOf('</body>');
+    const footer = footerStart >= 0 && bodyEnd >= 0 ? raw.slice(footerStart, bodyEnd) : "";
+
+    const sections = [];
+    const sectionRe = /<section id="([\w-]+)" class="guide-section" data-roles="([^"]+)">([\s\S]*?)<\/section>/g;
+    let m;
+    while ((m = sectionRe.exec(raw))) {
+      const [, id, rolesAttr, body] = m;
+      if (rolesAttr.split(",").includes(role)) {
+        sections.push(`<section id="${id}" class="guide-section">${body}</section>`);
+      }
+    }
+
+    const html = `<!doctype html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>User Guide</title>${style}</head><body>${coverAndToc}${sections.join("\n")}${footer}</body></html>`;
+    success(res, { html, role });
+  } catch (err) { next(err); }
+});
+
 // ─── AGGREGATE ROUTER ─────────────────────────────────────────────────────────
 router.use("/auth", authRouter);
 router.use("/ceremonies", ceremonyRouter);
@@ -1601,5 +1638,6 @@ router.use("/imvunulo-listings", imvunuloListingsRouter);
 router.use("/tourism", tourismRouter);
 router.use("/publications", publicationsRouter);
 router.use("/recommendations", recommendationsRouter);
+router.use("/guide", guideRouter);
 
 export default router;

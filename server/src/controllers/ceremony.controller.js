@@ -18,7 +18,7 @@ export const createCeremony = async (req, res, next) => {
           contentType: 'Ceremony', title: ceremony.name,
           practitionerName: req.user.name, adminName: admin.name,
         });
-        sendMail({ to: admin.email, subject, html });
+        sendMail({ to: admin.notification_email || admin.email, subject, html });
       });
     }).catch(() => {});
   } catch (err) { next(err); }

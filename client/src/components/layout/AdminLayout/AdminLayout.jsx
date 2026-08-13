@@ -26,6 +26,7 @@ const ICONS = {
   audit:     "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
   model:     "M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18",
   logout:    "M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1",
+  help:      "M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M9 12v.01M12 15.75h.008v.008H12v-.008zM12 21a9 9 0 100-18 9 9 0 000 18z",
 };
 
 const NAV_ITEMS = [
@@ -40,6 +41,7 @@ const NAV_ITEMS = [
   { to: "/admin/config",              label: "Config",          icon: "config"    },
   { to: "/admin/audit",               label: "Audit Log",       icon: "audit"     },
   { to: "/admin/model",               label: "ML Model",        icon: "model"     },
+  { to: "/admin/help",                label: "Help & User Guide", icon: "help"    },
 ];
 
 /* ── Nguni shield logo ── */

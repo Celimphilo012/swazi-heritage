@@ -48,6 +48,18 @@ const Avatar = ({ name, email }) => {
   );
 };
 
+/* ── Help icon-link ── */
+const HelpLink = ({ label, onClick, className = '' }) => (
+  <Link to="/help" onClick={onClick} title={label}
+    className={`flex items-center justify-center w-8 h-8 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors ${className}`}>
+    <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M9 12v.01M12 15.75h.008v.008H12v-.008z" />
+      <circle cx="12" cy="12" r="9" strokeWidth={1.75} />
+    </svg>
+  </Link>
+);
+
 /* ── Language toggle ── */
 const LangToggle = () => {
   const { lang, setLang } = useLang();
@@ -130,6 +142,7 @@ const UserLayout = () => {
 
           {/* Desktop auth */}
           <div className="hidden md:flex items-center gap-3">
+            <HelpLink label={ui(lang, 'navHelp')} />
             <LangToggle />
             {user && <NotificationBell />}
             {user ? (
@@ -183,6 +196,13 @@ const UserLayout = () => {
                 {l.label}
               </NavLink>
             ))}
+
+            <NavLink to="/help" onClick={closeMenu}
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-blue-50 text-blue-800' : 'text-gray-700 hover:bg-gray-50'}`
+              }>
+              {ui(lang, 'navHelp')}
+            </NavLink>
 
             <div className="flex items-center gap-2 px-3 py-2">
               <span className="text-xs text-gray-400 font-medium">{ui(lang, 'langLabel')}</span>

@@ -34,6 +34,7 @@ import Publications           from '../pages/practitioner/library/Publications';
 import PublicationFormPage    from '../pages/practitioner/library/PublicationFormPage';
 import Notifications         from '../pages/practitioner/shared/Notifications';
 import ProfileSettings       from '../pages/practitioner/shared/ProfileSettings';
+import Help                  from '../pages/practitioner/shared/Help';
 import AdminOverview         from '../pages/admin/AdminOverview';
 import UserManagement        from '../pages/admin/UserManagement';
 import ContentReview         from '../pages/admin/ContentReview';
@@ -68,6 +69,7 @@ const AppRouter = () => (
       <Route path="/library"                   element={<Library />} />
       <Route path="/cinema"                    element={<CinemaListing />} />
       <Route path="/seminars"                  element={<Seminars />} />
+      <Route path="/help"                      element={<Help />} />
     </Route>
 
     <Route element={<ProtectedRoute />}>
@@ -104,6 +106,7 @@ const AppRouter = () => (
         <Route path="/practitioner/library/new"                element={<PublicationFormPage />} />
         <Route path="/practitioner/library/:id/edit"           element={<PublicationFormPage />} />
         <Route path="/practitioner/profile"                    element={<ProfileSettings />} />
+        <Route path="/practitioner/help"                       element={<Help />} />
       </Route>
     </Route>
 
@@ -120,6 +123,7 @@ const AppRouter = () => (
         <Route path="/admin/ratings"      element={<Ratings />} />
         <Route path="/admin/audit"        element={<AuditLog />} />
         <Route path="/admin/model"        element={<ModelTraining />} />
+        <Route path="/admin/help"         element={<Help />} />
       </Route>
     </Route>
 
