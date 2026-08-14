@@ -124,6 +124,7 @@ const AppRouter = () => (
         <Route path="/admin/audit"        element={<AuditLog />} />
         <Route path="/admin/model"        element={<ModelTraining />} />
         <Route path="/admin/help"         element={<Help />} />
+        <Route path="/admin/profile"      element={<ProfileSettings />} />
       </Route>
     </Route>
 

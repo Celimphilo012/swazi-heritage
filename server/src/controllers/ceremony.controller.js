@@ -30,11 +30,24 @@ export const updateCeremony = async (req, res, next) => {
     if (!c) throw new AppError('Ceremony not found.', 404);
     if (c.created_by !== req.user.id && req.user.role !== 'admin')
       throw new AppError('You can only edit your own ceremonies.', 403);
-    if (c.status === 'published' || c.status === 'rejected')
+    const resubmitted = c.status === 'published' || c.status === 'rejected';
+    if (resubmitted)
       await CeremonyModel.updateStatus(req.params.id, 'pending_review', null);
     const body = await autoTranslateCeremony(req.body);
     await CeremonyModel.update(req.params.id, body);
     success(res, await CeremonyModel.getFullDetail(req.params.id), 'Ceremony updated and re-submitted for review.');
+    // Notify admins (fire-and-forget)
+    if (resubmitted) {
+      UserModel.getAdmins().then(admins => {
+        admins.forEach(admin => {
+          const { subject, html } = pendingReviewEmail({
+            contentType: 'Ceremony', title: c.name,
+            practitionerName: req.user.name, adminName: admin.name,
+          });
+          sendMail({ to: admin.notification_email || admin.email, subject, html });
+        });
+      }).catch(() => {});
+    }
   } catch (err) { next(err); }
 };
 

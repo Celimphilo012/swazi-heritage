@@ -438,11 +438,24 @@ lineageRouter.put("/:id", historyKeeperOnly, async (req, res, next) => {
     const record = await LineageModel.findById(req.params.id);
     if (!record) throw new AppError("Lineage record not found.", 404);
     if (record.created_by !== req.user.id) throw new AppError("You can only edit your own records.", 403);
-    if (record.status === "published" || record.status === "rejected")
+    const resubmitted = record.status === "published" || record.status === "rejected";
+    if (resubmitted)
       await LineageModel.updateStatus(req.params.id, "pending_review", null, null);
     const body = await autoTranslateLineage(req.body);
     await LineageModel.update(req.params.id, body);
     success(res, null, "Lineage record updated and resubmitted for review.");
+    // Notify admins (fire-and-forget)
+    if (resubmitted) {
+      UserModel.getAdmins().then(admins => {
+        admins.forEach(admin => {
+          const { subject, html } = pendingReviewEmail({
+            contentType: "Lineage Record", title: record.title,
+            practitionerName: req.user.name, adminName: admin.name,
+          });
+          sendMail({ to: admin.notification_email || admin.email, subject, html });
+        });
+      }).catch(() => {});
+    }
   } catch (err) {
     next(err);
   }
@@ -1462,10 +1475,23 @@ publicationsRouter.put("/:id", practitionersOnly, async (req, res, next) => {
     const pub = await PublicationsModel.findById(req.params.id);
     if (!pub) throw new AppError("Publication not found.", 404);
     if (pub.created_by !== req.user.id) throw new AppError("You can only edit your own publications.", 403);
-    if (pub.status === "published" || pub.status === "rejected")
+    const resubmitted = pub.status === "published" || pub.status === "rejected";
+    if (resubmitted)
       await PublicationsModel.updateStatus(req.params.id, "pending_review", null, null);
     await PublicationsModel.update(req.params.id, req.body);
     success(res, null, "Publication updated and resubmitted for review.");
+    // Notify admins (fire-and-forget)
+    if (resubmitted) {
+      UserModel.getAdmins().then(admins => {
+        admins.forEach(admin => {
+          const { subject, html } = pendingReviewEmail({
+            contentType: "Publication", title: pub.title,
+            practitionerName: req.user.name, adminName: admin.name,
+          });
+          sendMail({ to: admin.notification_email || admin.email, subject, html });
+        });
+      }).catch(() => {});
+    }
   } catch (err) { next(err); }
 });
 publicationsRouter.delete("/:id", practitionersOnly, async (req, res, next) => {

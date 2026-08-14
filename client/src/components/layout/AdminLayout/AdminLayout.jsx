@@ -27,6 +27,7 @@ const ICONS = {
   model:     "M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18",
   logout:    "M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1",
   help:      "M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M9 12v.01M12 15.75h.008v.008H12v-.008zM12 21a9 9 0 100-18 9 9 0 000 18z",
+  profile:   "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
 };
 
 const NAV_ITEMS = [
@@ -154,6 +155,7 @@ const AdminLayout = () => {
 
         {/* User panel */}
         <div className="px-3 pb-4 border-t pt-3" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+          <NavItem to="/admin/profile" label="Profile" icon="profile" />
           {user && (
             <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl mb-2"
               style={{ background: "rgba(255,255,255,0.04)" }}>

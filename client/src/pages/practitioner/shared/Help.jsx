@@ -17,15 +17,16 @@ const Help = () => {
   const [html, setHtml] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retryTick, setRetryTick] = useState(0);
 
   useEffect(() => {
     setLoading(true);
     setError("");
     getGuide(role)
       .then((d) => setHtml(d.html))
-      .catch(() => setError("Failed to load the user guide."))
+      .catch(() => setError("Failed to load the user guide. This can happen on a flaky connection — try again."))
       .finally(() => setLoading(false));
-  }, [role]);
+  }, [role, retryTick]);
 
   return (
     <div className="space-y-5">
@@ -47,12 +48,18 @@ const Help = () => {
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>
+        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-center justify-between gap-3">
+          <span>{error}</span>
+          <button onClick={() => setRetryTick((t) => t + 1)}
+            className="text-xs font-bold px-3 py-1.5 rounded-lg border border-red-300 text-red-700 hover:bg-red-100 transition-colors flex-shrink-0">
+            Retry
+          </button>
+        </div>
       )}
 
       {loading ? (
         <div className="rounded-2xl h-[70vh] bg-white animate-pulse" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }} />
-      ) : (
+      ) : !error && (
         <div className="rounded-2xl overflow-hidden border border-gray-100" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
           <iframe
             title="Swazi Cultural Heritage Platform — User Guide"
